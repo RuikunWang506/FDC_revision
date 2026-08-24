@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-from functools import lru_cache
 from typing import Any
 
 from flask import has_request_context, request, session
@@ -17,20 +16,34 @@ _LOCALES_DIR = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "locales")
 )
 
+# mtime-aware cache so locales/*.json reloads without restarting the process.
+_locale_mtime: dict[str, float] = {}
+_locale_data: dict[str, dict[str, str]] = {}
+_en_index: dict[str, str] = {}
+_en_index_mtime: float | None = None
 
-@lru_cache(maxsize=8)
+
 def _load_locale_file(locale: str) -> dict[str, str]:
     path = os.path.join(_LOCALES_DIR, f"{locale}.json")
     if not os.path.isfile(path):
         return {}
     try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return {}
+    if _locale_mtime.get(locale) == mtime and locale in _locale_data:
+        return _locale_data[locale]
+    try:
         with open(path, encoding="utf-8") as fh:
             data = json.load(fh)
         if not isinstance(data, dict):
-            return {}
-        return {str(k): str(v) for k, v in data.items() if v is not None}
+            data = {}
+        parsed = {str(k): str(v) for k, v in data.items() if v is not None}
     except (OSError, json.JSONDecodeError):
-        return {}
+        parsed = {}
+    _locale_mtime[locale] = mtime
+    _locale_data[locale] = parsed
+    return parsed
 
 
 def normalize_locale(value: str | None) -> str:
@@ -100,10 +113,19 @@ def te(text: str, **kwargs: Any) -> str:
     return raw
 
 
-@lru_cache(maxsize=1)
 def _en_text_index() -> dict[str, str]:
+    global _en_index, _en_index_mtime
+    path = os.path.join(_LOCALES_DIR, f"{DEFAULT_LOCALE}.json")
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        mtime = None
+    if mtime is not None and _en_index_mtime == mtime and _en_index:
+        return _en_index
     en = _load_locale_file(DEFAULT_LOCALE)
-    return {v: k for k, v in en.items() if v}
+    _en_index = {v: k for k, v in en.items() if v}
+    _en_index_mtime = mtime
+    return _en_index
 
 
 def inject_i18n_context() -> dict[str, Any]:

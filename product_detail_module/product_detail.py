@@ -3,13 +3,16 @@ from py.utilities.setting import login_required
 import pyodbc
 import pandas as pd
 from py.utilities.setting import Config
-from py.utilities.logging_setup import log_event
+from py.utilities.logging_setup import log_event, log_user_action
 from py.utilities.database_utils import get_mysql_connection
 from datetime import datetime, timedelta
 import py.utilities.models
 from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
-from py.utilities.ocean_qty import fetch_ocean_qty_by_style_prefix
+from py.utilities.ocean_qty import fetch_ocean_pos_by_style_prefix, fetch_ocean_qty_by_style_prefix
 import os
+import re
+from urllib.parse import quote, unquote
+from markupsafe import Markup, escape
 
 # Get the directory of this file
 module_dir = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +24,70 @@ product_detail_bp = Blueprint(
 )
 
 sql_server_config = Config.SQL_SERVER_CONFIG
+
+_CONTAINER_TOKEN_RE = re.compile(r"^[A-Za-z]{1,3}\d{3,}$")
+_HTTP_URL_RE = re.compile(r"^https?://", re.IGNORECASE)
+
+
+def fdcef_container_search_url(container_id: str) -> str:
+    """Container search URL, including the two trailing spaces the live site expects."""
+    c = (container_id or "").strip()
+    if not c:
+        return "/container_search"
+    return "/container_search?container_id=" + quote(c + "  ", safe="")
+
+
+def extract_container_id_from_description(text) -> str | None:
+    """Return a container PO when description is a container id or container_search URL."""
+    if text is None:
+        return None
+    t = str(text).strip()
+    if not t or t.upper() in {"N/A", "NONE", "NAN", "-"}:
+        return None
+    low = t.lower()
+    if "container_id=" in low or "container_search" in low:
+        match = re.search(r"[?&]container_id=([^&#\s]+)", t, re.IGNORECASE)
+        if match:
+            cid = unquote(match.group(1)).strip().upper()
+            return cid or None
+    if _HTTP_URL_RE.match(t):
+        return None
+    if _CONTAINER_TOKEN_RE.match(t):
+        return t.upper()
+    return None
+
+
+def description_is_container_link(text) -> bool:
+    if extract_container_id_from_description(text):
+        return True
+    t = str(text or "").strip()
+    return bool(t and _HTTP_URL_RE.match(t))
+
+
+@product_detail_bp.app_template_filter("is_container_desc")
+def is_container_desc_filter(value) -> bool:
+    return description_is_container_link(value)
+
+
+@product_detail_bp.app_template_filter("linkify_container_desc")
+def linkify_container_desc_filter(value) -> Markup:
+    """Turn container IDs / container_search URLs in OMS descriptions into links."""
+    if value is None:
+        return Markup("")
+    text = str(value).strip()
+    if not text:
+        return Markup("")
+    cid = extract_container_id_from_description(text)
+    if cid:
+        url = fdcef_container_search_url(cid)
+        return Markup(
+            f'<a class="container-desc-link" href="{escape(url)}" target="_blank" rel="noopener">{escape(cid)}</a>'
+        )
+    if _HTTP_URL_RE.match(text):
+        return Markup(
+            f'<a class="container-desc-link" href="{escape(text)}" target="_blank" rel="noopener">{escape(text)}</a>'
+        )
+    return Markup(str(escape(text)))
 
 
 def get_db_connections():
@@ -265,6 +332,7 @@ def search_product_data(search_input):
         search_input_parts = [search_input.split(",")[0].strip()]
         
         all_results = []
+        ocean_pos_by_style = {}
         
         # Query both databases
         for conn, db_name in [(conn_fdc, 'FDC'), (conn_oms_ef, 'E_FAS')]:
@@ -330,6 +398,15 @@ def search_product_data(search_input):
             cursor.execute(query, params)
             rows = cursor.fetchall()
             ocean_lookup = fetch_ocean_qty_by_style_prefix(conn, search_input_parts[0])
+            try:
+                pos_map = fetch_ocean_pos_by_style_prefix(conn, search_input_parts[0])
+                for style_key, pos in pos_map.items():
+                    bucket = ocean_pos_by_style.setdefault(style_key, [])
+                    for po in pos:
+                        if po not in bucket:
+                            bucket.append(po)
+            except Exception:
+                pass
             
             # Add database identifier to each row
             for row in rows:
@@ -371,14 +448,14 @@ def search_product_data(search_input):
         conn_fdc.close()
         conn_oms_ef.close()
         
-        return group_by_style(all_results) if all_results else None
+        return group_by_style(all_results, ocean_pos_by_style) if all_results else None
         
     except Exception as e:
         current_app.logger.error(f"Error searching product data: {e}")
         return None
 
 
-def group_by_style(results):
+def group_by_style(results, ocean_pos_by_style=None):
     """
     Groups results by style and organizes colors.
     Returns structure: {style: {colors: [...], parent_info: {...}}}
@@ -491,6 +568,11 @@ def group_by_style(results):
             style_entry['colors'].append(color_entry)
         
         style_entry['totals'] = style_totals
+        if style_totals['combined'].get('incoming'):
+            style_key = style.strip().upper()
+            style_entry['ocean_pos'] = list((ocean_pos_by_style or {}).get(style_key) or [])
+        else:
+            style_entry['ocean_pos'] = []
         result.append(style_entry)
     
     return result
@@ -568,6 +650,132 @@ def fetch_sku_history(sku, db_conn):
     finally:
         if 'cursor' in locals():
             cursor.close()
+
+
+_EMPTY_SKU_HISTORY = {'history_po': 0, 'history_sold': 0, 'history_fix': 0}
+
+
+def _history_sku_key(sku) -> str:
+    return normalize_oms_text(sku).upper()
+
+
+def fetch_sku_history_batch(skus, db_conn, *, chunk_size: int = 400):
+    """Batch plog / ord_log / wm_log totals for many SKUs (same math as fetch_sku_history)."""
+    unique = []
+    seen = set()
+    for sku in skus:
+        key = _history_sku_key(sku)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique.append(normalize_oms_text(sku))
+
+    result = {key: dict(_EMPTY_SKU_HISTORY) for key in seen}
+    if not unique or not db_conn:
+        return result
+
+    cursor = db_conn.cursor()
+    try:
+        for start in range(0, len(unique), chunk_size):
+            chunk = unique[start:start + chunk_size]
+            placeholders = ",".join("?" * len(chunk))
+
+            cursor.execute(
+                f"""
+                SELECT RTRIM(pl.prod_cd), ISNULL(SUM(pl.hdl_chg), 0)
+                FROM plog pl
+                WHERE pl.prod_cd IN ({placeholders}) AND pl.hdl_chg > 0
+                GROUP BY RTRIM(pl.prod_cd)
+                """,
+                chunk,
+            )
+            for sku, qty in cursor.fetchall():
+                key = _history_sku_key(sku)
+                if key in result:
+                    result[key]['history_po'] = int(qty or 0)
+
+            cursor.execute(
+                f"""
+                SELECT RTRIM(ol.prod_cd), ISNULL(SUM(ol.order_qty), 0)
+                FROM ord_log ol
+                WHERE ol.prod_cd IN ({placeholders})
+                GROUP BY RTRIM(ol.prod_cd)
+                """,
+                chunk,
+            )
+            for sku, qty in cursor.fetchall():
+                key = _history_sku_key(sku)
+                if key in result:
+                    result[key]['history_sold'] = int(qty or 0)
+
+            cursor.execute(
+                f"""
+                SELECT RTRIM(prod_cd),
+                    ISNULL(SUM(CASE WHEN RTRIM(type_cd) = 'INVSPICK' AND log_qty < 0 THEN ABS(log_qty) ELSE 0 END), 0),
+                    ISNULL(SUM(CASE WHEN type_cd = 'adj' THEN log_qty ELSE 0 END), 0)
+                FROM wm_log
+                WHERE prod_cd IN ({placeholders})
+                  AND (type_cd = 'adj' OR (RTRIM(type_cd) = 'INVSPICK' AND log_qty < 0))
+                GROUP BY RTRIM(prod_cd)
+                """,
+                chunk,
+            )
+            for sku, inv_pick, adj_qty in cursor.fetchall():
+                key = _history_sku_key(sku)
+                if key not in result:
+                    continue
+                result[key]['history_sold'] += int(inv_pick or 0)
+                result[key]['history_fix'] = int(adj_qty or 0)
+    except Exception as e:
+        current_app.logger.error(f"Error batch-fetching SKU history: {e}")
+    finally:
+        cursor.close()
+
+    return result
+
+
+def fetch_oms_descriptions_by_skus(skus, conn_fdc=None, conn_oms_ef=None, *, chunk_size: int = 400):
+    """Return {sku_key: [unique descriptions]} for many SKUs in a few queries."""
+    unique = []
+    seen = set()
+    for sku in skus:
+        key = _history_sku_key(sku)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique.append(key)
+
+    result = {key: [] for key in seen}
+    if not unique:
+        return result
+
+    for conn in (conn_fdc, conn_oms_ef):
+        if not conn:
+            continue
+        cursor = conn.cursor()
+        try:
+            for start in range(0, len(unique), chunk_size):
+                chunk = unique[start:start + chunk_size]
+                placeholders = ",".join("?" * len(chunk))
+                cursor.execute(
+                    f"""
+                    SELECT UPPER(LTRIM(RTRIM(i.PROD_CD))), i.DESCRIP
+                    FROM dbo.inv AS i
+                    WHERE UPPER(LTRIM(RTRIM(i.PROD_CD))) IN ({placeholders})
+                    """,
+                    chunk,
+                )
+                for sku, descrip in cursor.fetchall():
+                    key = _history_sku_key(sku)
+                    text = normalize_oms_text(descrip) if descrip else ""
+                    if key in result and text and text not in result[key]:
+                        result[key].append(text)
+        except Exception as e:
+            current_app.logger.error(f"Error batch-fetching OMS descriptions: {e}")
+        finally:
+            cursor.close()
+
+    return result
 
 
 def fetch_item_history(style_or_sku):
@@ -928,6 +1136,49 @@ def fetch_purchase_history(style_or_sku):
         return []
 
 
+def _sku_color_token(sku) -> str:
+    parts = str(sku or "").strip().split()
+    return parts[-1] if len(parts) > 1 else ""
+
+
+def _boat_hub_index() -> dict:
+    """Container id -> /boat hub row from the cached payload."""
+    try:
+        from py.Toolkits.boat import load_latest_cached_boat_payload, normalize_container_id
+        payload = load_latest_cached_boat_payload() or {}
+    except Exception:
+        return {}
+    index = {}
+    for row in payload.get("data") or []:
+        cid = normalize_container_id(row.get("container"))
+        if cid:
+            index[cid] = row
+    return index
+
+
+def _enrich_ocean_with_boat(ocean_data: list) -> None:
+    """Attach BOL / vessel / ETD / ETA / status from Container Hub."""
+    if not ocean_data:
+        return
+    try:
+        from py.Toolkits.boat import normalize_container_id
+    except Exception:
+        def normalize_container_id(container_val):
+            return str(container_val or "").strip().upper()
+
+    index = _boat_hub_index()
+    for item in ocean_data:
+        item["color"] = _sku_color_token(item.get("sku"))
+        cid = normalize_container_id(item.get("po_number"))
+        hub = index.get(cid) or {}
+        item["bol"] = str(hub.get("bol") or "").strip()
+        item["vessel_no"] = str(hub.get("vessel_no") or "").strip()
+        item["etd"] = str(hub.get("etd") or "").strip()
+        item["eta"] = str(hub.get("eta") or "").strip()
+        item["status"] = str(hub.get("status_label") or "").strip()
+        item["status_mode"] = str(hub.get("action_mode") or "").strip()
+
+
 def fetch_ocean_data(style_or_sku):
     """
     Fetches ocean/in-transit items for a style or SKU from both databases.
@@ -997,6 +1248,7 @@ def fetch_ocean_data(style_or_sku):
         # Sort by PO date descending
         if ocean_data:
             ocean_data.sort(key=lambda x: x['po_date'], reverse=True)
+            _enrich_ocean_with_boat(ocean_data)
         return ocean_data
         
     except Exception as e:
@@ -1014,21 +1266,25 @@ def search_product_data_with_history(search_input):
     Search for products by SKU or Style with history data.
     Returns style-grouped data with color variants and history.
     """
-    # First get the base product data
     product_data = search_product_data(search_input)
     
     if not product_data:
         return None
     
-    # Now fetch history data for each color
     conn_fdc, conn_oms_ef = get_db_connections()
+    all_skus = [
+        color.get('sku')
+        for style_group in product_data
+        for color in style_group.get('colors') or []
+        if color.get('sku')
+    ]
+    history_fdc_map = fetch_sku_history_batch(all_skus, conn_fdc) if conn_fdc else {}
+    history_efas_map = fetch_sku_history_batch(all_skus, conn_oms_ef) if conn_oms_ef else {}
     
     for style_group in product_data:
-        # Fetch location for first SKU of this style group
         first_sku = style_group['colors'][0]['sku'] if style_group['colors'] else None
         location_data = fetch_locations([first_sku]) if first_sku else {}
         
-        # Get location using lowercase SKU
         try:
             location_key = first_sku.replace('\u00A0', ' ').strip().lower() if first_sku else ''
         except Exception:
@@ -1036,22 +1292,26 @@ def search_product_data_with_history(search_input):
         
         style_group['location'] = location_data.get(location_key, 'N/A')
         
-        # Fetch description for style
         style = style_group['parent_info']['style']
         style_group['description'] = fetch_description(style) or 'N/A'
-        style_group['oms_description'] = fetch_oms_description(style, conn_fdc, conn_oms_ef) or 'N/A'
+        style_oms = fetch_oms_description(style, conn_fdc, conn_oms_ef) or 'N/A'
+        style_group['oms_description'] = style_oms
+        need_per_sku_desc = isinstance(style_oms, list) and len(style_oms) > 1
+        sku_desc_map = (
+            fetch_oms_descriptions_by_skus(
+                [c.get('sku') for c in style_group['colors'] if c.get('sku')],
+                conn_fdc,
+                conn_oms_ef,
+            )
+            if need_per_sku_desc
+            else {}
+        )
         
         for color in style_group['colors']:
-            sku = color['sku']
-            
-            # Fetch history from both databases
-            history_fdc = fetch_sku_history(sku, conn_fdc) if conn_fdc else {'history_po': 0, 'history_sold': 0, 'history_fix': 0}
-            history_efas = fetch_sku_history(sku, conn_oms_ef) if conn_oms_ef else {'history_po': 0, 'history_sold': 0, 'history_fix': 0}
-            
-            # Fetch SKU-specific OMS description
-            color['oms_description'] = fetch_oms_description_by_sku(sku, conn_fdc, conn_oms_ef) or 'N/A'
-            
-            # Store history data
+            sku_key = _history_sku_key(color.get('sku'))
+            history_fdc = history_fdc_map.get(sku_key) or dict(_EMPTY_SKU_HISTORY)
+            history_efas = history_efas_map.get(sku_key) or dict(_EMPTY_SKU_HISTORY)
+            color['oms_description'] = sku_desc_map.get(sku_key) or 'N/A'
             color['history_fdc'] = history_fdc
             color['history_efas'] = history_efas
             color['history_combined'] = {
@@ -1147,7 +1407,7 @@ def product_detail(search_input=None):
     
     # Search if input provided
     if search_input:
-        current_app.logger.info("***%s***__@@@search SKU@@@__ %s [newpage]", current_user, search_input.lower())
+        log_user_action(f"***{current_user}***__@@@search SKU@@@__ {search_input.lower()} [newpage]", current_user)
         # Fetch product data WITHOUT history (optimization: lazy load on demand)
         product_data = search_product_data_with_history(search_input)
         if not product_data:
@@ -1258,7 +1518,7 @@ def api_product_search():
         if not search_input:
             return jsonify({"success": False, "error": "Search input required"})
 
-        current_app.logger.info("***%s***__@@@search SKU@@@__ %s", current_user, search_input.lower())
+        log_user_action(f"***{current_user}***__@@@search SKU@@@__ {search_input.lower()}", current_user)
         
         product_data = search_product_data(search_input)
         
@@ -1424,26 +1684,39 @@ def get_locations_for_style(style):
 @product_detail_bp.route('/api/container/bol/<container_id>', methods=['GET'])
 @login_required
 def get_container_bol(container_id):
-    """Fetch BOL number from Google Sheets for a container"""
+    """Fetch container hub row from /boat data (BOL, vessel, ETD/ETA, status, etc.)."""
     try:
+        from py.Toolkits.boat import lookup_boat_hub_row
+
+        row = lookup_boat_hub_row(container_id)
+        if row:
+            return jsonify({
+                'success': True,
+                'bol_num': row.get('bol') or '',
+                'row': row,
+            })
+
         import pandas as pd
-        
-        # Google Sheets export URL - same as used in boat service
-        GOOGLE_SHEETS_URL = "https://docs.google.com/spreadsheets/d/14I8AvXbZM1_O7RXg8EdOSOpFxQ1aU6tGftjhRruKNhE/export?format=csv"
-        
-        # Fetch data from Google Sheets
-        df = pd.read_csv(GOOGLE_SHEETS_URL)
-        
-        # Find the container in the sheet
-        container_id = container_id.strip().upper()
-        match = df[df['FDC container'].astype(str).str.upper() == container_id]
-        
-        if not match.empty:
-            bol_num = match.iloc[0].get('BOL NUM', '')
-            return jsonify({'success': True, 'bol_num': str(bol_num) if bol_num and pd.notna(bol_num) else ''})
-        else:
-            return jsonify({'success': True, 'bol_num': ''})
-    
+        from py.utilities.boat_sheet_cache import GOOGLE_SHEETS_URL, load_sheet_dataframe
+
+        try:
+            df, _sheet_info = load_sheet_dataframe()
+        except Exception:
+            df = pd.read_csv(GOOGLE_SHEETS_URL)
+
+        container_id = (container_id or "").strip().upper()
+        if "FDC container" not in df.columns:
+            return jsonify({'success': True, 'bol_num': '', 'row': None})
+
+        match = df[df['FDC container'].astype(str).str.strip().str.upper() == container_id]
+        if match.empty:
+            return jsonify({'success': True, 'bol_num': '', 'row': None})
+
+        sheet_row = match.iloc[0]
+        bol_num = sheet_row.get('BOL NUM', '')
+        bol_num = str(bol_num).strip() if bol_num is not None and pd.notna(bol_num) else ''
+        return jsonify({'success': True, 'bol_num': bol_num, 'row': None})
+
     except Exception as e:
         current_app.logger.error(f"Error fetching BOL for {container_id}: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -1551,7 +1824,10 @@ def container_search():
     po_date = None
     total_msrp = 0
     latest_containers = []
+    ocean_containers = []
+    arrived_containers = []
     is_arrived = False
+    boat_row = None
 
     try:
         conn_fdc, conn_oms_ef = get_db_connections()
@@ -1567,6 +1843,18 @@ def container_search():
             """)
             latest_containers = [row[0] for row in cursor.fetchall()]
             cursor.close()
+
+        try:
+            from py.Toolkits.boat import sidebar_container_lists
+            ocean_containers, arrived_containers = sidebar_container_lists()
+        except Exception as list_err:
+            current_app.logger.warning(f"Could not load sidebar container lists: {list_err}")
+        if not arrived_containers:
+            arrived_containers = [
+                {"id": str(c or "").strip(), "eta": ""}
+                for c in latest_containers
+                if str(c or "").strip()
+            ]
 
         if container_id and conn_fdc:
             cursor = conn_fdc.cursor()
@@ -1628,6 +1916,13 @@ def container_search():
         if conn_oms_ef:
             conn_oms_ef.close()
 
+        if container_id:
+            try:
+                from py.Toolkits.boat import lookup_boat_hub_row
+                boat_row = lookup_boat_hub_row(container_id)
+            except Exception as boat_err:
+                current_app.logger.warning(f"Could not load boat hub row for {container_id}: {boat_err}")
+
         current_app.logger.info(
             f"Container search for {container_id} by {current_user}: "
             f"Found {len(container_data)} items in {len(style_groups)} styles, "
@@ -1649,6 +1944,9 @@ def container_search():
         po_date=po_date,
         total_msrp=total_msrp,
         latest_containers=latest_containers,
+        ocean_containers=ocean_containers,
+        arrived_containers=arrived_containers,
         is_arrived=is_arrived,
+        boat_row=boat_row or {},
         current_user=current_user
     )

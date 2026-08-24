@@ -1,3 +1,16 @@
+<style>
+/* Apply before Bootstrap so first paint already has a fixed bar + reserved offset. */
+body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
+.navbar.fixed-top {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1030;
+    min-height: 50px;
+}
+</style>
+<script>document.body.classList.add('has-navbar');</script>
 {% if fdc_is_lan_session %}
 <div class="alert alert-success mb-0 rounded-0 py-1 px-2 text-center small border-0" role="status" style="font-size:0.85rem; position: relative; z-index: 1031;">
     <strong>LAN</strong>
@@ -15,10 +28,15 @@
 <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top{% if request.path.startswith('/product_detail') or request.path.startswith('/productdetail') or '/product_detail' in request.path %} navbar-pd-has-search{% endif %}">
     <a class="navbar-brand" href="/">
-        <img src="/static/icons/home.gif" alt="{{ _('nav.home') }}">{{ _('nav.home') }}
+        <img src="/static/icons/home.gif" alt="{{ _('nav.home') }}" width="40" height="40">{{ _('nav.home') }}
     </a>
+    {% if request.path.startswith('/product_detail') or request.path.startswith('/productdetail') or '/product_detail' in request.path %}
+    <form class="navbar-pd-search" method="GET" action="{{ '/clientview/product_detail' if request.path.startswith('/clientview') else '/product_detail' }}" role="search">
+        <input id="navbarPdSearchInput" type="search" name="search" value="{{ search_input|default(request.args.get('search', ''), true) }}" placeholder="{{ te('e.g., M1141') }}" autocomplete="off" enterkeyhint="search" aria-label="{{ te('Search') }}">
+    </form>
+    {% endif %}
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="{{ _('nav.toggle') }}">
         <span class="navbar-toggler-icon"></span>
@@ -27,41 +45,55 @@
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav">
             {% if not hide_staff_nav_links() %}
+            {% if navbar_favorite_items %}
+            {% for item in navbar_favorite_items[:6] %}
+            <li class="nav-item">
+                <a class="nav-link navbar-fav-link{% if request.path == item.href or (item.href != '/' and request.path.startswith(item.href)) %} active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">★ {{ item.label }}</a>
+            </li>
+            {% endfor %}
+            {% if navbar_favorite_items|length > 6 %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarFavMore" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">★</a>
+                <div class="dropdown-menu" aria-labelledby="navbarFavMore">
+                    {% for item in navbar_favorite_items[6:] %}
+                    <a class="dropdown-item" href="{{ item.href }}">{{ item.label }}</a>
+                    {% endfor %}
+                </div>
+            </li>
+            {% endif %}
+            {% else %}
+            {% if module_loaded is not defined or module_loaded('item_lookup') %}
             <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('item_lookup.item_lookup') }}">
-                    <img src="/static/icons/magnifying-glass.svg" alt="{{ _('nav.sku') }}">{{ _('nav.sku') }}
+                    <img src="/static/icons/magnifying-glass.svg" alt="{{ _('nav.sku') }}" width="20" height="20">{{ _('nav.sku') }}
                 </a>
             </li>
+            {% endif %}
 
+            {% if module_loaded is not defined or module_loaded('pallet_detail') %}
             <li class="nav-item">
                 <a class="nav-link" href="/palletdetail/L1-A BOT">
                     📦 {{ _('nav.pallet') }}
                 </a>
             </li>
             {% endif %}
-
-            {% if current_user and (current_user|lower) == 'yeti' %}
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('auth.manage_users') }}">
-                    <img src="/static/icons/shipping.svg" alt="{{ _('nav.users') }}">{{ _('nav.users') }}
-                </a>
-            </li>
             {% endif %}
-
-            {% if current_user in ['yeti','xj'] %}
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('master_audit.audit') }}">📝 {{ _('nav.audit') }}</a>
-            </li>
             {% endif %}
         </ul>
 
-        {% if request.path.startswith('/4seller/sales') %}
+        {% if request.path.startswith('/4seller/sales') and (module_loaded is not defined or module_loaded('four_seller_sales')) %}
         <ul class="navbar-nav mx-auto">
             <li class="nav-item">
                 <a class="nav-link{% if request.path == '/4seller/sales' %} active font-weight-bold{% endif %}" href="{{ url_for('four_seller_sales.four_seller_sales_page') }}">{{ _('Orders View') }}</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link{% if request.path == '/4seller/sales/finance' %} active font-weight-bold{% endif %}" href="{{ url_for('four_seller_sales.four_seller_sales_finance_page') }}">{{ _('Finance View') }}</a>
+            </li>
+        </ul>
+        {% elif request.path.startswith('/container_search') %}
+        <ul class="navbar-nav mx-auto">
+            <li class="nav-item d-flex align-items-center">
+                <a class="container-hub-btn" href="/boat" target="_blank" rel="noopener">Container Hub 货柜中心</a>
             </li>
         </ul>
         {% endif %}
@@ -76,9 +108,22 @@
                     <i class="fas fa-qrcode fa-lg"></i>
                 </button>
             </li>
+            {% if current_user and not hide_staff_nav_links() %}
+            <li class="nav-item dropdown d-flex align-items-center" id="fdcOnlineNavItem">
+                <a class="nav-link dropdown-toggle py-2 pr-2 mr-1" href="#" id="fdcOnlineDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{ _('nav.online') }}">
+                    🟢 {{ _('nav.online') }} <span class="badge badge-success" id="fdcOnlineCount">0</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow fdc-online-menu" id="fdcOnlineMenu" aria-labelledby="fdcOnlineDropdown">
+                    <span class="dropdown-item-text text-muted small">{{ _('nav.online_loading') }}</span>
+                </div>
+            </li>
+            <li class="nav-item d-flex align-items-center">
+                <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('help.index') }}" title="{{ _('nav.help') }}">❓ {{ _('nav.help') }}</a>
+            </li>
+            {% endif %}
             {% if current_user and can_view_logs() %}
             <li class="nav-item d-flex align-items-center">
-                <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('display') }}" title="{{ _('nav.log') }}">📕 {{ _('nav.log') }}</a>
+                <a class="nav-link py-2 pr-2 mr-1" href="{{ url_for('log_center.display_user') }}" title="{{ _('nav.log') }}">📕 {{ _('nav.log') }}</a>
             </li>
             {% endif %}
             <li class="nav-item dropdown">
@@ -128,10 +173,9 @@
 </div>
 
 <style>
-body.has-navbar { padding-top: 50px; }
-
 .navbar {
     padding: 0 !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
 }
 
 .navbar-brand {
@@ -154,6 +198,13 @@ body.has-navbar { padding-top: 50px; }
     width: 20px;
     height: 20px;
     margin-right: 5px;
+}
+
+.navbar-fav-link {
+    white-space: nowrap;
+    max-width: 8.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .user-avatar {
@@ -204,6 +255,71 @@ body.has-navbar { padding-top: 50px; }
     color: rgba(255, 255, 255, 0.35);
     font-size: 0.75rem;
 }
+.container-hub-btn {
+    display: inline-block;
+    background-color: #fff;
+    color: #2c3e7a;
+    border-radius: 999px;
+    padding: 0.28rem 1.1rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.container-hub-btn:hover {
+    background-color: #f3f4f6;
+    color: #1a2547;
+    text-decoration: none;
+}
+
+.navbar-pd-search {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 420px;
+    margin: 0 10px;
+    display: flex;
+    align-items: center;
+}
+.navbar-pd-search input {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    padding: 0 10px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 16px;
+    line-height: 32px;
+}
+.navbar-pd-search input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+.navbar-pd-search input:focus {
+    outline: none;
+    background: #fff;
+    color: #111;
+    border-color: #fff;
+}
+@media (min-width: 992px) {
+    .navbar-pd-search {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(420px, 36vw);
+        margin: 0;
+    }
+}
+@media (max-width: 991px) {
+    .navbar.navbar-pd-has-search {
+        flex-wrap: wrap;
+    }
+    .navbar-pd-search {
+        max-width: none;
+        margin: 0 8px;
+    }
+}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -235,15 +351,21 @@ $(function() {
         $('#navbarQrModal').modal('show');
     });
 });
-// Ensure pages reserve space for the fixed-top navbar
- document.addEventListener('DOMContentLoaded', function() {
-    try {
-        if (document.body && !document.body.classList.contains('has-navbar')) {
-            document.body.classList.add('has-navbar');
-        }
-    } catch (e) {
-        // no-op
+document.addEventListener('DOMContentLoaded', function() {
+    var pdSearch = document.getElementById('navbarPdSearchInput');
+    if (pdSearch) {
+        pdSearch.addEventListener('focus', function() {
+            this.select();
+        });
     }
 });
 </script>
 {% include '_i18n_client.html' %}
+{% if current_user and not hide_staff_nav_links() %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-ai-assistant.css') }}">
+<script src="{{ url_for('static', filename='js/fdc-presence.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/fdc-ai-assistant.js') }}" defer></script>
+{% if help_context_url is defined and request.endpoint not in ['help.index', 'help.article'] %}
+<a href="{{ help_context_url }}" class="fdc-help-fab" title="{{ _('nav.page_help') }}" aria-label="{{ _('nav.page_help') }}">❓ <span class="fdc-help-fab-label">{{ _('nav.help') }}</span></a>
+{% endif %}
+{% endif %}

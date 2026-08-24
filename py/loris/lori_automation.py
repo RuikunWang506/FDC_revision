@@ -1518,11 +1518,9 @@ def loris_500_upc_save():
 
     data = request.get_json(silent=True) or {}
     updates = data.get('updates') or []
-    if not updates:
-        return jsonify({'error': 'No updates provided'}), 400
 
     try:
-        from py.loris.loris_500_upc import load_500_upc_rows, save_500_upc_skus
+        from py.loris.loris_500_upc import load_500_upc_rows, parse_aliases, save_500_upc_skus
 
         cleaned = []
         for item in updates:
@@ -1531,10 +1529,20 @@ def loris_500_upc_save():
                 continue
             cleaned.append({'row': int(row_num), 'sku': item.get('sku', '')})
 
-        if not cleaned:
+        alias_updates = []
+        for item in data.get('aliases') or []:
+            sku = (item.get('sku') or '').strip()
+            if not sku:
+                continue
+            alias_updates.append({
+                'sku': sku,
+                'aliases': parse_aliases(item.get('aliases'), sku=sku),
+            })
+
+        if not cleaned and not alias_updates:
             return jsonify({'error': 'No valid row updates'}), 400
 
-        path, backup_path = save_500_upc_skus(cleaned)
+        path, backup_path = save_500_upc_skus(cleaned, alias_updates=alias_updates)
         _, _, stats = load_500_upc_rows()
         cleared = sum(1 for u in cleaned if not (u.get('sku') or '').strip())
         assigned = len(cleaned) - cleared
@@ -1543,6 +1551,8 @@ def loris_500_upc_save():
             parts.append(f'{assigned} SKU(s) saved')
         if cleared:
             parts.append(f'{cleared} SKU(s) removed')
+        if alias_updates:
+            parts.append(f'{len(alias_updates)} alias row(s) saved')
         message = ' · '.join(parts) + ' in Excel.' if parts else 'No changes written.'
         return jsonify({
             'success': True,
@@ -1732,11 +1742,12 @@ def generate_stickers_api():
         if validation_error:
             return jsonify({'error': validation_error}), 400
 
+        sku_count = len([ln for ln in validated_input_data.splitlines() if ln.strip()])
         current_app.logger.info(
-            "%s generate_stickers_api variant=%s input_data=%s...",
+            "%s generate_stickers_api variant=%s skus=%s",
             session['username'],
             variant,
-            validated_input_data[:200],
+            sku_count,
         )
 
         from py.loris.loris_sticker import main
@@ -1835,6 +1846,37 @@ def print_dymo_stickers():
     except Exception as e:
         current_app.logger.error("Error printing Dymo stickers: %s", str(e), exc_info=True)
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/download_dymo_stickers", methods=["POST"])
+def download_dymo_stickers():
+    """Generate 2.25×1.25 Dymo labels as a downloadable PDF."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        input_data = request.form.get("input_data")
+        validated_input_data, validation_error = _validate_loris_sticker_input(input_data)
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+
+        from py.loris.loris_sticker import generate_dymo_labels_pdf
+
+        pdf_bytes, total_labels = generate_dymo_labels_pdf(validated_input_data)
+        current_app.logger.info(
+            "%s download_dymo_stickers labels=%s",
+            session['username'],
+            total_labels,
+        )
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            download_name="dymo_stickers.pdf",
+            as_attachment=True,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        current_app.logger.error("Error generating Dymo sticker PDF: %s", str(e), exc_info=True)
+        return jsonify({'error': str(e)}), 500
 
 @lori_automation_bp.route("/loris_shipping", methods=["GET"])
 def loris_shipping():

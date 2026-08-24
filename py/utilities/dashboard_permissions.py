@@ -20,6 +20,15 @@ ENDPOINT_TOOL: Dict[str, str] = {
     "auth.manage_users": "manage_users",
 }
 
+# Unauthenticated LAN probe / session handoff for Trade Show Tool (large local uploads).
+PUBLIC_ENDPOINTS = frozenset(
+    {
+        "tradeshowtool.lan_ping",
+        "tradeshowtool.lan_ping_png",
+        "tradeshowtool.lan_claim",
+    }
+)
+
 TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "item_lookup": "item_lookup",
     "invoice_lookup": "invoice_lookup",
@@ -44,6 +53,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "mobile_scanner": "mobile_scanner",
     "burlington_label_processor": "burlington_label_processor",
     "print_center": "print_center",
+    "tradeshowtool": "tradeshowtool",
     "boat_service": "boat",
     "whmap": "warehousemap",
     "master_audit": "audit",
@@ -76,6 +86,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Utilities"},
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Utilities"},
     {"id": "print_center", "title": "打印中心", "category": "Utilities"},
+    {"id": "tradeshowtool", "title": "Trade Show Tool", "category": "Utilities"},
     {"id": "boat", "title": "Shipping Intelligence", "category": "Logistics"},
     {"id": "fdcef_container_search", "title": "FDCEF container search", "category": "Logistics"},
     {"id": "warehousemap", "title": "Warehouse Map", "category": "Logistics"},
@@ -83,6 +94,42 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
     {"id": "vendor_app", "title": "Vendor App", "category": "Admin"},
 ]
+
+# Navbar shortcuts for starred home cards (hrefs match templates/index.html).
+DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
+    "item_lookup": {"href": "/item_lookup", "label": "SKU"},
+    "invoice_lookup": {"href": "/invoice_lookup", "label": "Invoice"},
+    "customer": {"href": "/customer", "label": "Customers"},
+    "fdc_mail": {"href": "/email", "label": "Mail"},
+    "order_lookup": {"href": "/order_lookup", "label": "Orders"},
+    "order_processor": {"href": "/order_processor", "label": "Processor"},
+    "external_stock_check": {"href": "/external_stock_check", "label": "Ext Stock"},
+    "internal_stock_check": {"href": "/internal_stock_check", "label": "Int Stock"},
+    "inventory_manual_adjuster": {"href": "/inventory_manual_adjuster", "label": "Inv Adjust"},
+    "four_seller": {"href": "/4seller", "label": "4Seller"},
+    "location_massive_update": {"href": "/location_massive_update", "label": "Locations"},
+    "oosc": {"href": "/oosc", "label": "OOS"},
+    "dam": {"href": "/dam", "label": "DAM"},
+    "image_upload": {"href": "/image_upload", "label": "Upload"},
+    "master_image_viewer": {"href": "/master_image_viewer", "label": "Images"},
+    "clientview": {"href": "/clientview/product_detail", "label": "Client PD"},
+    "client_product_detail": {"href": "/clientview/product_detail", "label": "Client PD"},
+    "bag_style_viewer": {"href": "/bag_style_viewer", "label": "Bag Style"},
+    "burlington_highlight": {"href": "/burlington_highlight", "label": "Burl Highlight"},
+    "v7_listcreator": {"href": "/v7_listcreator", "label": "V7 List"},
+    "v6_listcreator": {"href": "/v7_listcreator", "label": "V7 List"},
+    "loris_fedex": {"href": "/lori_automation/loris_fedex", "label": "Loris"},
+    "mobile_scanner": {"href": "/mobile_scanner", "label": "Scanner"},
+    "burlington_label_processor": {"href": "/burlington_label_processor", "label": "Burl Labels"},
+    "tradeshowtool": {"href": "/tradeshowtool", "label": "Trade Show"},
+    "print_center": {"href": "/print_center", "label": "Print"},
+    "boat": {"href": "/boat", "label": "Boat"},
+    "fdcef_container_search": {"href": "/container_search", "label": "Containers"},
+    "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
+    "audit": {"href": "/audit", "label": "Audit"},
+    "manage_users": {"href": "/manage_users", "label": "Users"},
+    "vendor_app": {"href": "/vendor_app", "label": "Vendor"},
+}
 
 
 def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_id: str) -> bool:
@@ -133,10 +180,12 @@ def enforce_dashboard_tool_access():
 
     if request.method == "OPTIONS":
         return None
+    ep = request.endpoint
+    if ep in PUBLIC_ENDPOINTS:
+        return None
     # Task Scheduler curl uses X-DAM-Cron-Secret on /dam/cron/* — no browser session.
     if (request.path or "").startswith("/dam/cron/"):
         return None
-    ep = request.endpoint
     if ep == "static" or (ep is not None and ep.endswith(".static")):
         return None
     bp = request.blueprint
@@ -203,3 +252,74 @@ def mail_accounts_allowed_ids(perms: Optional[Dict[str, Any]], username: str) ->
         except (TypeError, ValueError):
             continue
     return out
+
+
+def get_dashboard_favorites(username: str) -> List[str]:
+    """Starred dashboard tool ids for this user (request-cached)."""
+    import json
+
+    from flask import g, has_request_context
+
+    from py.utilities.database_utils import get_mysql_connection
+
+    uname = (username or "").strip()
+    if not uname:
+        return []
+    cache = None
+    if has_request_context():
+        cache = getattr(g, "_fdc_dashboard_favorites", None)
+        if cache is None:
+            cache = {}
+            g._fdc_dashboard_favorites = cache
+        if uname in cache:
+            return cache[uname]
+    out: List[str] = []
+    conn = None
+    cursor = None
+    try:
+        conn = get_mysql_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT favorites FROM users WHERE username = %s", (uname,))
+            row = cursor.fetchone()
+            raw = json.loads(row[0]) if row and row[0] else []
+            if isinstance(raw, list):
+                out = [str(x).strip() for x in raw if str(x).strip()]
+    except Exception:
+        out = []
+    finally:
+        try:
+            if cursor is not None:
+                cursor.close()
+        except Exception:
+            pass
+        try:
+            if conn is not None:
+                conn.close()
+        except Exception:
+            pass
+    if cache is not None:
+        cache[uname] = out
+    return out
+
+
+def navbar_items_from_favorites(favorite_ids: List[str], tool_allowed_fn) -> List[Dict[str, str]]:
+    """Resolve starred tool ids to navbar href/label, skipping tools the user cannot open."""
+    items: List[Dict[str, str]] = []
+    seen = set()
+    for tool_id in favorite_ids or []:
+        nav = DASHBOARD_TOOL_NAV.get(tool_id)
+        if not nav:
+            continue
+        acl_id = "clientview" if tool_id == "client_product_detail" else tool_id
+        try:
+            if tool_allowed_fn and not tool_allowed_fn(acl_id) and not tool_allowed_fn(tool_id):
+                continue
+        except Exception:
+            continue
+        href = nav.get("href") or ""
+        if not href or href in seen:
+            continue
+        seen.add(href)
+        items.append({"id": tool_id, "href": href, "label": nav.get("label") or tool_id})
+    return items

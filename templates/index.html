@@ -11,6 +11,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   {% endif %}
   <style>
+    /* Reserve navbar offset on first paint (class is on <body>, not added later). */
+    body.has-navbar {
+      padding-top: calc(50px + env(safe-area-inset-top, 0px));
+    }
+    .navbar.fixed-top {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 1030;
+      min-height: 50px;
+    }
     /* Scope all styles to dashboard only - avoid navbar conflicts */
     .dashboard-wrapper {
       background: url("{{ url_for('static', filename='josh-williams-bg.jpg') }}") no-repeat center center;
@@ -62,8 +74,7 @@
     
     /* Smart Navigation Panel */
     .dashboard-wrapper .nav-panel {
-      background: rgba(18, 25, 38, 0.9);
-      backdrop-filter: blur(20px);
+      background: rgba(18, 25, 38, 0.94);
       border: 1px solid rgba(0, 240, 255, 0.2);
       border-radius: 20px;
       padding: 1.5rem;
@@ -182,7 +193,7 @@
       margin: 0.5rem 0;
       border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background 0.15s ease, border-color 0.15s ease;
       background: rgba(26, 35, 50, 0.5);
       border: 1px solid transparent;
       position: relative;
@@ -276,33 +287,18 @@
       line-height: 1.25;
     }
     
-    /* Main Dashboard Grid */
     .dashboard-wrapper .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
-      opacity: 0;
-      animation: fadeInUp 0.4s ease-out 0.1s forwards;
     }
-    
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
+
     .dashboard-wrapper .tool-card {
-      background: rgba(12, 18, 30, 0.88);
-      backdrop-filter: blur(16px);
+      background: rgba(12, 18, 30, 0.92);
       border: 1px solid rgba(0, 240, 255, 0.22);
       border-radius: 18px;
       padding: 0.75rem 1.5rem 1.5rem 1.5rem;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       position: relative;
       overflow: hidden;
       text-decoration: none;
@@ -311,6 +307,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      contain: layout paint;
     }
     
     .dashboard-wrapper .tool-card::before {
@@ -330,9 +327,9 @@
     }
     
     .dashboard-wrapper .tool-card:hover {
-      transform: translateY(-8px) scale(1.02);
+      transform: translateY(-4px);
       border-color: rgba(0, 212, 255, 0.45);
-      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.18);
+      box-shadow: 0 12px 24px rgba(0, 212, 255, 0.14);
     }
     
     .dashboard-wrapper .tool-card .card-header {
@@ -347,11 +344,7 @@
     .dashboard-wrapper .tool-card i {
       font-size: 1.6rem;
       margin-right: 0.8rem;
-      background: linear-gradient(135deg, #ffffff, #e0f7ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      filter: drop-shadow(0 1px 2px rgb(0, 0, 0));
+      color: #e0f7ff;
     }
     
     .dashboard-wrapper .tool-card h3 {
@@ -514,8 +507,7 @@
       font-size: 0.68rem;
       line-height: 1.45;
       color: rgba(232, 244, 253, 0.9);
-      background: rgba(12, 18, 28, 0.78);
-      backdrop-filter: blur(10px);
+      background: rgba(12, 18, 28, 0.9);
       border-radius: 10px;
       border: 1px solid rgba(0, 240, 255, 0.18);
     }
@@ -550,8 +542,7 @@
       font-size: 0.92rem;
       color: #cbd5e1;
       border-bottom: 1px solid rgba(0, 240, 255, 0.2);
-      background: rgba(18, 25, 38, 0.88);
-      backdrop-filter: blur(12px);
+      background: rgba(18, 25, 38, 0.94);
     }
     body.portal-minimal .portal-top-bar .portal-brand {
       font-weight: 700;
@@ -604,9 +595,7 @@
       margin: 0;
       padding: 1.15rem 1.25rem 1.1rem;
       text-align: center;
-      background: rgba(12, 18, 28, 0.92);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(12, 18, 28, 0.94);
       border-radius: 14px;
       border: 1px solid rgba(0, 240, 255, 0.22);
       box-shadow: 0 14px 42px rgba(0, 0, 0, 0.45);
@@ -718,7 +707,7 @@
 
   </style>
 </head>
-<body class="{% if portal_minimal %}portal-minimal{% endif %}">
+<body class="{% if portal_minimal %}portal-minimal{% else %}has-navbar{% endif %}">
   {% if portal_minimal %}
   <div class="portal-top-bar">
     <span class="portal-brand">{% if portal_company_name %}{{ portal_company_name }}{% else %}{{ _('portal.client') }}{% endif %}</span>
@@ -734,6 +723,12 @@
 
   <!-- Dashboard Wrapper - Scoped styles to avoid navbar conflicts -->
   <div class="dashboard-wrapper">
+    {% if current_user and (current_user|lower) == 'yeti' and fdc_failed_modules %}
+    <div style="max-width:1100px;margin:0 auto 1rem;padding:0.75rem 1rem;background:#7f1d1d;color:#fecaca;border-radius:8px;font-size:0.9rem;">
+      Optional modules failed to load: <strong>{{ fdc_failed_modules|join(', ') }}</strong>
+      — other tools are still running. Check <code>/health</code> or the log.
+    </div>
+    {% endif %}
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
    
@@ -774,7 +769,7 @@
           <input type="search" id="dashboardToolSearch" placeholder="{{ _('dashboard.search_placeholder') }}" autocomplete="off" spellcheck="false">
         </div>
         
-        <div class="nav-item nav-item-compact" onclick="filterCategory(this, 'favorites')">
+        <div class="nav-item nav-item-compact{% if dashboard_favorites %} active{% endif %}" onclick="filterCategory(this, 'favorites')">
           <i class="fas fa-star"></i>
           <div class="nav-text">
             <h4>{{ _('dashboard.favorites') }}</h4>
@@ -783,7 +778,7 @@
           <span class="count" id="favoritesCount">0</span>
         </div>
         
-        <div class="nav-item nav-item-compact active" onclick="filterCategory(this, 'all')">
+        <div class="nav-item nav-item-compact{% if not dashboard_favorites %} active{% endif %}" onclick="filterCategory(this, 'all')">
           <i class="fas fa-th-large"></i>
           <div class="nav-text">
             <h4>{{ _('dashboard.all_tools') }}</h4>
@@ -1189,6 +1184,21 @@
         </a>
         {%- endif %}
 
+        {%- if tool_allowed('tradeshowtool') %}
+        <a href="{{ url_for('tradeshowtool.tradeshowtool_page') }}" class="tool-card" data-category="toolkit" data-tool="tradeshowtool">
+          <div class="card-header">
+            <i class="fas fa-store"></i>
+            <h3>{{ te('Trade Show Tool') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'tradeshowtool')"></i>
+          </div>
+          <p>{{ te('Upload catalog sheets: 4-in-1, 5-in-1, or 1-in-1 Letter, hide price/qty, export ZIP or PDF') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.utilities') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
+
         {%- if tool_allowed('print_center') %}
         <a href="{{ url_for('print_center.print_center_page') }}" class="tool-card" data-category="toolkit" data-tool="print_center">
           <div class="card-header">
@@ -1309,7 +1319,7 @@
   <script>
     const PORTAL_MINIMAL = {{ portal_minimal|default(false)|tojson }};
     const DASHBOARD_FAVORITES = {{ dashboard_favorites|default([])|tojson }};
-    let currentFilter = 'all';
+    let currentFilter = (Array.isArray(DASHBOARD_FAVORITES) && DASHBOARD_FAVORITES.length) ? 'favorites' : 'all';
     let userFavorites = Array.isArray(DASHBOARD_FAVORITES) ? DASHBOARD_FAVORITES.slice() : [];
     
     function loadFavorites() {
@@ -1364,6 +1374,11 @@
       }
       saveFavorites();
       updateFavorites();
+      if (currentFilter === 'favorites' && !userFavorites.length) {
+        const allNav = document.querySelector('.dashboard-wrapper .nav-item[onclick*="\'all\'"]');
+        filterCategory(allNav, 'all');
+        return;
+      }
       applyDashboardFilters({ animate: false });
     }
     
@@ -1457,7 +1472,7 @@
     function filterCategory(navEl, category) {
       currentFilter = category;
 
-      document.querySelectorAll('.nav-item').forEach(item => {
+      document.querySelectorAll('.dashboard-wrapper .nav-item').forEach(item => {
         item.classList.remove('active');
       });
       if (navEl && navEl.classList) {
@@ -1539,9 +1554,7 @@
         return;
       }
       loadFavorites().then(() => {
-        setTimeout(() => {
-          applyDashboardFilters({ animate: true });
-        }, 50);
+        applyDashboardFilters({ animate: false });
       });
 
       const searchEl = document.getElementById('dashboardToolSearch');

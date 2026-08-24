@@ -81,6 +81,7 @@ COL_DESC = 4           # D - Description
 COL_COST = 5           # E - Cost
 COL_PROJ_STORE = 12    # L - Proj Store Count → template Order Multiple
 COL_COLOR = 13         # M - Color (yellow highlight = selected for export)
+COL_MONTH_QTY = 21     # U - month buy qty (e.g. SEPT) when Color (M) isn't highlighted
 
 SKU_COLOR_ALIASES = {
     "LEOPARD": "LEO",
@@ -159,6 +160,14 @@ def _is_yellow_highlight(cell) -> bool:
     return False
 
 
+def _has_yellow_color_rows(ws) -> bool:
+    """True when any data-row Color cell (col M) is yellow-highlighted."""
+    for row_num in range(4, ws.max_row + 1):
+        if _is_yellow_highlight(ws.cell(row_num, COL_COLOR)):
+            return True
+    return False
+
+
 def _parse_cost(value):
     if value is None:
         return None
@@ -192,8 +201,11 @@ def parse_confirmed_otb(otb_file) -> list[dict]:
     """
     Parse Lori OTB confirmed sheet.
 
-    Only rows with yellow-highlighted Color (column M) are exported.
-    Order Multiple comes from Proj Store Count (column L) on that row.
+    Preferred: yellow-highlighted Color (column M); Order Multiple from
+    Proj Store Count (column L).
+
+    Fallback: if no Color cells are highlighted, rows with a numeric qty in
+    column U (month buy, e.g. SEPT) are exported; Order Multiple from U.
     """
     if hasattr(otb_file, "seek"):
         otb_file.seek(0)
@@ -204,6 +216,9 @@ def parse_confirmed_otb(otb_file) -> list[dict]:
         raise ValueError('Confirmed file must contain an "OTB" sheet.')
 
     ws = wb["OTB"]
+    use_month_qty = not _has_yellow_color_rows(ws)
+    qty_col = COL_MONTH_QTY if use_month_qty else COL_PROJ_STORE
+
     items = []
     current_style = None
     current_desc = None
@@ -222,7 +237,10 @@ def parse_confirmed_otb(otb_file) -> list[dict]:
             current_cost = row_cost
 
         color_cell = ws.cell(row_num, COL_COLOR)
-        if not _is_yellow_highlight(color_cell):
+        if use_month_qty:
+            if _parse_order_multiple(ws.cell(row_num, COL_MONTH_QTY).value) is None:
+                continue
+        elif not _is_yellow_highlight(color_cell):
             continue
 
         color = color_cell.value
@@ -242,7 +260,7 @@ def parse_confirmed_otb(otb_file) -> list[dict]:
             "color_code": color_code,
             "cost": cost,
             "confirm_desc": current_desc or "",
-            "order_multiple": _parse_order_multiple(ws.cell(row_num, COL_PROJ_STORE).value),
+            "order_multiple": _parse_order_multiple(ws.cell(row_num, qty_col).value),
             "source_row": row_num,
         })
 
@@ -457,7 +475,7 @@ def convert_otb_to_setup_sheet(otb_file) -> tuple[io.BytesIO, dict]:
     items = parse_confirmed_otb(otb_file)
     if not items:
         raise ValueError(
-            "No highlighted color rows found. Yellow-highlight column M (Color) on the OTB sheet."
+            "No confirmed rows found. Yellow-highlight column M (Color), or fill buy qty in column U."
         )
 
     _enrich_otb_items(items)

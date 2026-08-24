@@ -1259,7 +1259,7 @@
                         <td>
                             <select name="description_{{ loop.index }}" class="form-control" required>
                                 <option value="">{{ te('Select a description') }}</option>
-                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
+                                {% for option in ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "SHOULDER BAG", "sling", "straw bag", "Tote", "Wallet"] %}
                                 <option value="{{ option }}">{{ option }}</option>
                                 {% endfor %}
                             </select>
@@ -1371,7 +1371,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% set lc_preset_opts = ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "sling", "straw bag", "Tote", "Wallet"] %}
+                            {% set lc_preset_opts = ["2-IN-1 SET", "3-IN-1 SET", "BACKPACK", "Backpack(Nylon)", "BELT BAG", "BUCKET BAG", "CHEST BAG", "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", "CROSSBODY 2-IN-1", "CROSSBODY SET", "Crossbody(Nylon)", "Crossbody(oversize)", "crossbody(straw)", "Flap Bag", "FRAME BAG", "Gift Set", "Hobo", "Hobo(Nylon)", "Jelly Bag", "MINI BACKPACK", "MINI BAG", "MINI BELT BAG", "MINI BUCKET", "MINI FRAME", "MINI HOBO", "MINI SATCHEL", "MINI STRAW BAG", "Mini Tote (Embossed)", "Patent bag", "Patent Bag (Large)", "Patent bag (mini Satchel)", "phone bag", "Round bag", "Satchel", "Satchel(oversize)", "Sets", "SHOULDER BAG", "sling", "straw bag", "Tote", "Wallet"] %}
                             {% for style_group in pivot_data or [] %}
                             {% set st = style_group[0].style %}
                             <tr data-style="{{ st }}">
@@ -1385,6 +1385,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'CROSSBODY')">{{ te('CROSSBODY') }}</button>
                                         <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'TOTE')">{{ te('TOTE') }}</button>
                                         <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'Wallet')">{{ te('WALLET') }}</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 m-1" onclick="lcApplyDescPreset(this, 'SHOULDER BAG')">{{ te('SHOULDER BAG') }}</button>
                                     </div>
                                     <select class="form-control form-control-sm lc-edit-desc-select mb-1" aria-label="Preset {{ st }}">
                                         <option value="">{{ te('Choose preset…') }}</option>
@@ -1496,6 +1497,37 @@ function lcApplyDescPreset(btn, text) {
         }
     }
 }
+
+function lcEnsureDescriptionPreset(value) {
+    var val = String(value || '').trim();
+    if (!val) return;
+    document.querySelectorAll('.lc-edit-desc-select, select[name^="description_"]').forEach(function (sel) {
+        var has = false;
+        for (var i = 0; i < sel.options.length; i++) {
+            if (String(sel.options[i].value || '').toUpperCase() === val.toUpperCase()) {
+                has = true;
+                break;
+            }
+        }
+        if (has) return;
+        var opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        var sling = null;
+        for (var j = 0; j < sel.options.length; j++) {
+            if (sel.options[j].value === 'sling') {
+                sling = sel.options[j];
+                break;
+            }
+        }
+        if (sling) sel.insertBefore(opt, sling);
+        else sel.appendChild(opt);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    lcEnsureDescriptionPreset('SHOULDER BAG');
+});
 
 /** Turn a pasted full Windows path into dropbox\relative using the server’s LOCAL_DROPBOX_DIR (see V7listcreator). */
 function v7DecodeMaybeFileUrl(s) {
@@ -3465,7 +3497,7 @@ function exportWithSelectedSize() {
         "Hobo", "Hobo(Nylon)", "MINI HOBO", 
         "BELT BAG", "MINI BELT BAG", 
         "BUCKET BAG", "MINI BUCKET", 
-        "Flap Bag", "Jelly Bag", "MINI BAG", "CHEST BAG", 
+        "Flap Bag", "Jelly Bag", "MINI BAG", "CHEST BAG", "SHOULDER BAG", 
         "Mini Tote (Embossed)", "phone bag", "Round bag", "sling", 
         "straw bag", "MINI STRAW BAG", 
         "CROSSBODY", "Crossbody (Large)", "Crossbody (Nylon)", 

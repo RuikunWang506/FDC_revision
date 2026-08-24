@@ -2,8 +2,8 @@
 <html lang="{{ locale }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Container Detail - {{ container_id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Container Detail 货柜详情{% if container_id %} - {{ container_id }}{% endif %}</title>
     
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -19,6 +19,8 @@
             font-family: 'Roboto', sans-serif;
             background-color: #f8f9fa;
             color: #333;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
         
         .sidebar {
@@ -26,25 +28,108 @@
             top: 70px;
             left: 0;
             height: calc(100vh - 70px);
-            width: 260px;
+            width: 300px;
             background-color: #ffffff;
-            padding-top: 20px;
+            padding-top: 16px;
             overflow-y: auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
             z-index: 1020;
         }
         
         .sidebar.closed {
-            transform: translateX(-260px);
+            transform: translateX(-300px);
         }
         
-        .sidebar-header {
-            padding: 15px 20px;
-            font-size: 18px;
-            font-weight: bold;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+        .sidebar-section {
+            padding: 12px 14px 14px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        .sidebar-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #667eea;
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
             text-align: center;
+            letter-spacing: 0.03em;
+            line-height: 1.35;
+        }
+        .sidebar-section-title .zh {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: none;
+            color: #889;
+        }
+        .sidebar-section-title .count {
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: none;
+        }
+        .sidebar-list-box {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 6px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .sidebar-list-box.ocean-scroll {
+            max-height: calc((5 * 46px) + (4 * 5px) + 12px);
+            overflow-y: auto;
+        }
+        .sidebar-list-box.ocean-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .sidebar-list-box.ocean-scroll::-webkit-scrollbar-thumb {
+            background: #b8c7d9;
+            border-radius: 8px;
+        }
+        .sidebar-container-link {
+            display: block;
+            padding: 8px 8px;
+            min-height: 46px;
+            box-sizing: border-box;
+            background: #f0f0f0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        .sidebar-container-link .eta {
+            font-weight: 500;
+            opacity: 0.85;
+        }
+        .sidebar-container-link:hover {
+            background: #667eea;
+            color: #fff;
+        }
+        .sidebar-container-link.active {
+            background: #667eea;
+            color: #fff;
+        }
+        .sidebar-list-box.ocean-scroll .sidebar-container-link {
+            background: #e8f1ff;
+            color: #004085;
+        }
+        .sidebar-list-box.ocean-scroll .sidebar-container-link:hover,
+        .sidebar-list-box.ocean-scroll .sidebar-container-link.active {
+            background: #0d6efd;
+            color: #fff;
+        }
+        .sidebar-list-box.arrived-box .sidebar-container-link {
+            background: #e8f5e9;
+            color: #155724;
+        }
+        .sidebar-list-box.arrived-box .sidebar-container-link:hover,
+        .sidebar-list-box.arrived-box .sidebar-container-link.active {
+            background: #2e7d32;
+            color: #fff;
         }
         
         .nav-list {
@@ -55,11 +140,13 @@
         
         .nav-list a {
             display: block;
-            padding: 10px 20px;
+            padding: 8px 12px;
             color: rgba(0, 0, 0, 0.8);
             text-decoration: none;
             transition: background-color 0.2s;
             text-align: center;
+            font-size: 16px;
+            line-height: 1.3;
         }
         
         .nav-list a:hover {
@@ -67,7 +154,7 @@
         }
         
         .main-content {
-            margin-left: 260px;
+            margin-left: 300px;
             transition: margin-left 0.3s ease;
             padding: 20px;
         }
@@ -76,42 +163,63 @@
             margin-left: 0;
         }
         
+        .sidebar-header {
+            padding: 10px 16px 8px 16px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.25;
+            position: relative;
+        }
+
+        .sidebar-close-btn {
+            display: none;
+        }
+
         #sidebarToggleBtn {
             position: fixed;
             top: 80px;
-            left: 10px;
+            left: 308px;
             z-index: 1050;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+
+        #sidebarToggleBtn .toggle-label {
+            display: none;
+        }
         
         #sidebarToggleBtn:hover {
             background-color: #388e3c;
+        }
+
+        body.sidebar-closed #sidebarToggleBtn {
+            left: 10px;
         }
         
         .container-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
             text-align: center;
         }
         
         .container-header h1 {
             margin: 0;
-            font-size: 2.5em;
+            font-size: 1.45em;
             font-weight: 700;
         }
         
@@ -123,49 +231,155 @@
         
         .info-section {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 12px 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
         
         .info-section h3 {
             color: #667eea;
             border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            padding-bottom: 6px;
+            margin: 0 0 10px 0;
             text-align: center;
+            font-size: 1.05rem;
         }
         
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 0;
         }
         
         .info-item {
             background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #4CAF50;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border-left: 3px solid #4CAF50;
             text-align: center;
         }
         
         .info-label {
             font-weight: 600;
             color: #666;
-            font-size: 0.9em;
+            font-size: 0.72em;
             text-transform: uppercase;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+        }
+
+        .info-label .zh-label {
+            display: block;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-transform: none;
+            color: #889;
+            margin-top: 1px;
+        }
+
+        .header-row-zh th {
+            font-size: 12px;
+            font-weight: 600;
+            color: #667eea;
+            background: #f3f0ff;
+            padding: 3px 4px !important;
         }
         
         .info-value {
-            font-size: 1.3em;
+            font-size: 1em;
             color: #333;
             font-weight: 700;
         }
-        
+
+        .info-value .info-sub {
+            display: block;
+            font-size: 0.78em;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 2px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: .2rem .65rem;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        .status-new { background: #fff3cd; color: #856404; }
+        .status-ocean { background: #cce5ff; color: #004085; }
+        .status-landed { background: #d4edda; color: #155724; }
+        .status-waiting { background: #e9ecef; color: #495057; }
+
+        .hub-link {
+            display: none;
+            margin-left: 8px;
+            font-size: 0.55em;
+            font-weight: 600;
+            color: #fff;
+            background: rgba(255,255,255,0.18);
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-decoration: none;
+            vertical-align: middle;
+        }
+        .hub-link:hover { background: rgba(255,255,255,0.3); color: #fff; }
+
+        .container-header h1 {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .header-title {
+            display: inline-block;
+        }
+        #containerStatusBadge {
+            display: inline-flex;
+            align-items: center;
+        }
+        .status-badge {
+            margin-left: 0 !important;
+        }
+
+        .sidebar-search {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .sidebar-search input,
+        .sidebar-search button {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        .sidebar-search input {
+            border: 1px solid #ddd;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .sidebar-search button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 1015;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         .collapsible-section {
             margin-top: 20px;
         }
@@ -219,7 +433,7 @@
         .container-items-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: auto;
+            table-layout: fixed;
         }
 
         .container-items-table thead {
@@ -229,21 +443,66 @@
 
         .container-items-table th,
         .container-items-table td {
-            padding: 8px 10px;
+            padding: 4px 8px;
             font-size: 13px;
             text-align: center;
             vertical-align: middle;
+            line-height: 1.1;
             border-bottom: 1px solid #eee;
         }
 
         .container-items-table th {
-            font-weight: 600;
+            font-weight: 700;
             color: #333;
             white-space: nowrap;
         }
 
+        .container-items-table thead th:not(.style-image-cell) {
+            white-space: normal;
+            font-size: 12px;
+            line-height: 1.15;
+        }
+
+        .container-items-table tbody td:not(.style-image-cell) {
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
         .container-items-table tbody tr:hover {
             background-color: #f9f9f9;
+        }
+
+        tbody.style-block .style-image-cell {
+            border-left: 2px solid #2c3e7a;
+            border-top: 2px solid #2c3e7a;
+            border-bottom: 2px solid #2c3e7a;
+        }
+
+        tbody.style-block .col-style {
+            border-top: 2px solid #2c3e7a;
+            border-bottom: 2px solid #2c3e7a;
+        }
+
+        tbody.style-block tr.style-block-start td {
+            border-top: 2px solid #2c3e7a;
+        }
+
+        tbody.style-block td:last-child {
+            border-right: 2px solid #2c3e7a;
+        }
+
+        tbody.style-block tr.style-subtotal td {
+            border-bottom: 2px solid #2c3e7a;
+        }
+
+        tbody.style-block-spacer td {
+            height: 14px;
+            padding: 0;
+            border: none;
+            background: transparent;
         }
 
         table tbody tr.style-subtotal {
@@ -267,16 +526,27 @@
         }
 
         .style-image-cell {
-            width: 130px;
-            padding: 8px;
+            width: 33%;
+            padding: 4px;
+            height: 1px;
+            vertical-align: middle;
+        }
+
+        .style-image-fill {
+            height: 100%;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .style-image-cell img {
             display: block;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
+            object-position: center;
+            margin: 0 auto;
             border-radius: 4px;
             border: 1px solid #ddd;
             background: #fff;
@@ -302,6 +572,10 @@
             color: #c62828;
         }
         
+        .mobile-style-groups {
+            display: none;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -315,20 +589,317 @@
         }
         
         @media (max-width: 991px) {
+            html, body {
+                overflow-x: hidden;
+            }
+
+            .navbar.fixed-top {
+                padding-top: env(safe-area-inset-top, 0px);
+            }
+
+            body.has-navbar {
+                padding-top: calc(50px + env(safe-area-inset-top, 0px));
+            }
+
             .sidebar {
-                transform: translateX(-260px);
+                top: calc(50px + env(safe-area-inset-top, 0px));
+                height: calc(100vh - 50px - env(safe-area-inset-top, 0px));
+                height: calc(100dvh - 50px - env(safe-area-inset-top, 0px));
+                width: min(360px, 88vw);
+                transform: translateX(-110%);
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: env(safe-area-inset-bottom, 0px);
             }
             
             .sidebar.open {
                 transform: translateX(0);
             }
+
+            body.sidebar-open {
+                overflow: hidden;
+            }
+
+            body.sidebar-open .sidebar-backdrop {
+                display: block;
+            }
             
             .main-content {
                 margin-left: 0;
+                padding: 10px 12px 24px;
             }
             
             .container-header h1 {
-                font-size: 1.8em;
+                font-size: 1.2em;
+            }
+
+            .hub-link {
+                display: inline-block;
+                margin: 8px 0 0;
+                font-size: 0.72em;
+            }
+
+            #sidebarToggleBtn {
+                position: static;
+                width: 100%;
+                height: 44px;
+                border-radius: 8px;
+                margin: 0 0 10px;
+                left: auto;
+                top: auto;
+                font-size: 16px;
+                font-weight: 700;
+                gap: 8px;
+            }
+
+            #sidebarToggleBtn .toggle-label {
+                display: inline;
+            }
+
+            body.sidebar-open #sidebarToggleBtn {
+                left: auto;
+            }
+
+            .sidebar-close-btn {
+                display: flex;
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 44px;
+                height: 44px;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                background: #eef2ff;
+                color: #1e293b;
+                border-radius: 8px;
+                font-size: 28px;
+                line-height: 1;
+                cursor: pointer;
+            }
+
+            .sidebar-header {
+                padding-right: 56px;
+            }
+
+            .sidebar-search input,
+            .sidebar-search button {
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            .style-image-cell {
+                width: 33%;
+            }
+        }
+
+        /* iPhone 15 Pro (393px) and similar phones — keep the table, compact + swipe */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+
+            .main-content {
+                padding: 8px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .container-header {
+                padding: 12px 12px 14px;
+                margin-bottom: 10px;
+            }
+
+            .container-header h1 {
+                flex-direction: column;
+                font-size: 1.12rem;
+                line-height: 1.3;
+                gap: 6px;
+            }
+
+            .info-section {
+                padding: 10px 8px 12px;
+                margin-bottom: 10px;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .info-item {
+                padding: 8px 8px 9px;
+                min-width: 0;
+            }
+
+            .info-value {
+                font-size: 0.92rem;
+                word-break: break-word;
+            }
+
+            .sidebar-search input,
+            .sidebar-search button,
+            .nav-list a {
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            .sidebar-container-link {
+                min-height: 48px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                white-space: normal;
+            }
+
+            #products-section {
+                padding-left: 0;
+                padding-right: 0;
+                overflow: visible;
+            }
+
+            #products-section h3 {
+                margin-left: 8px;
+                margin-right: 8px;
+            }
+
+            .desktop-items-wrap {
+                display: none;
+            }
+
+            .mobile-style-groups {
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+                margin-top: 8px;
+            }
+
+            .mobile-style-group {
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .mobile-style-image {
+                display: block;
+                width: 100%;
+                background: #fff;
+                text-align: center;
+                text-decoration: none;
+            }
+
+            .mobile-style-image img {
+                display: block;
+                width: 100%;
+                height: auto;
+                max-height: 52vh;
+                object-fit: contain;
+                object-position: center;
+                background: #fff;
+            }
+
+            .mobile-style-image .no-image {
+                display: block;
+                padding: 28px 12px;
+                color: #94a3b8;
+                font-size: 13px;
+            }
+
+            .mobile-style-caption {
+                display: block;
+                padding: 8px 10px 6px;
+                font-size: 13px;
+                font-weight: 700;
+                color: #667eea;
+                text-align: center;
+            }
+
+            .mobile-style-group .items-table-wrap {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-x: contain;
+                margin-top: 0;
+                padding-bottom: 4px;
+            }
+
+            .mobile-style-group .container-items-table,
+            .mobile-grand-wrap .container-items-table {
+                table-layout: auto;
+                width: max-content !important;
+                min-width: 100%;
+                border-collapse: collapse;
+            }
+
+            .mobile-style-group .container-items-table th,
+            .mobile-style-group .container-items-table td,
+            .mobile-grand-wrap .container-items-table th,
+            .mobile-grand-wrap .container-items-table td {
+                padding: 6px 5px;
+                font-size: 11px;
+            }
+
+            .mobile-style-groups thead th,
+            .mobile-grand-wrap thead th {
+                white-space: normal !important;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+                line-height: 1.1;
+                font-size: 10px;
+                padding-left: 3px;
+                padding-right: 3px;
+            }
+
+            .mobile-style-groups .header-row-zh {
+                display: none !important;
+            }
+
+            .mobile-style-groups .col-sku {
+                position: sticky;
+                left: 0;
+                z-index: 3;
+                width: 86px;
+                min-width: 86px;
+                max-width: 96px;
+                box-sizing: border-box;
+                background: #fff;
+                white-space: normal !important;
+                overflow: visible;
+                word-break: break-word;
+                font-size: 11px;
+                box-shadow: 6px 0 8px rgba(0, 0, 0, 0.12);
+            }
+
+            .mobile-style-groups thead .col-sku {
+                z-index: 5;
+                background: #f0f0f0;
+            }
+
+            .mobile-style-groups tr.style-subtotal .col-sku,
+            .mobile-grand-wrap tr.grand-total .col-sku {
+                background: #2c3e7a;
+                color: #fff;
+            }
+
+            .mobile-grand-wrap tr.grand-total .col-sku {
+                background: #1a2547;
+            }
+
+            .mobile-grand-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 8px;
+            }
+
+            .col-color { min-width: 48px; }
+            .num-col { min-width: 32px; }
+            .col-available { min-width: 32px; }
+        }
+
+        @media (max-width: 430px) {
+            .info-label {
+                font-size: 0.66em;
             }
         }
     </style>
@@ -336,117 +907,202 @@
 <body>
     {% include 'navbar.html' %}
     
-    <button id="sidebarToggleBtn" aria-label="{{ te('Toggle sidebar') }}">☰</button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
     
     <aside class="sidebar" id="Sidebar">
         <div class="sidebar-header">
-            Container Menu
+            Container Menu<br><span style="font-size:15px; font-weight:600; color:#667eea;">货柜菜单</span>
+            <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="{{ te('Close') }}">×</button>
         </div>
-        <form method="GET" action="/container_search" style="padding: 15px 20px; border-bottom: 1px solid rgba(0,0,0,0.1);" onsubmit="this.action = '/container_search?container_id=' + this.container_id.value.toLowerCase() + '#container-info';">
-            <input type="text" name="container_id" placeholder="{{ te('Search container...') }}" required style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; font-size: 13px;">
-            <button type="submit" style="width: 100%; padding: 8px 10px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">{{ te('Search') }}</button>
+        <form class="sidebar-search" method="GET" action="/container_search" onsubmit="this.action = '/container_search?container_id=' + this.container_id.value.toLowerCase() + '#container-info';">
+            <input type="search" name="container_id" placeholder="{{ te('Search container...') }}" required enterkeyhint="search" autocomplete="off">
+            <button type="submit">{{ te('Search') }}</button>
         </form>
         <ul class="nav-list">
-            <li><a href="/product_detail">{{ te('Back to Product Detail') }}</a></li>
+            <li><a href="/product_detail">Back to Product Detail<br><span style="font-size:14px; color:#667eea;">返回产品详情</span></a></li>
         </ul>
         
-        {% if latest_containers %}
-        <div style="padding: 15px 20px; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 15px;">
-            <h4 style="font-size: 13px; font-weight: bold; color: #667eea; margin-bottom: 10px; text-transform: uppercase; text-align: center;">{{ te('Latest Containers') }}</h4>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                {% for container in latest_containers %}
-                <a href="/container_search?container_id={{ container }}" 
-                   style="padding: 8px 12px; background: {% if container == container_id %}#667eea{% else %}#f0f0f0{% endif %}; color: {% if container == container_id %}white{% else %}#333{% endif %}; text-decoration: none; border-radius: 4px; font-size: 13px; transition: background 0.2s; text-align: center;"
-                   onmouseover="this.style.background='#667eea'; this.style.color='white';"
-                   onmouseout="this.style.background='{% if container == container_id %}#667eea{% else %}#f0f0f0{% endif %}'; this.style.color='{% if container == container_id %}white{% else %}#333{% endif %}';">
-                    {{ container }}
-                </a>
+        {% if ocean_containers or arrived_containers %}
+        {% if ocean_containers %}
+        <div class="sidebar-section">
+            <h4 class="sidebar-section-title">
+                Ocean, ETA <span class="count">({{ ocean_containers|length }})</span>
+                <span class="zh">海运, 到港</span>
+            </h4>
+            <div class="sidebar-list-box ocean-scroll">
+                {% for container in ocean_containers %}
+                <a class="sidebar-container-link{% if container.id == container_id %} active{% endif %}"
+                   href="/container_search?container_id={{ container.id }}">{{ container.id }}{% if container.eta %} <span class="eta">({{ container.eta }})</span>{% endif %}</a>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
+        {% if arrived_containers %}
+        <div class="sidebar-section">
+            <h4 class="sidebar-section-title">
+                Arrived, Received <span class="count">({{ arrived_containers|length }})</span>
+                <span class="zh">已到货, 收货</span>
+            </h4>
+            <div class="sidebar-list-box arrived-box">
+                {% for container in arrived_containers %}
+                <a class="sidebar-container-link{% if container.id == container_id %} active{% endif %}"
+                   href="/container_search?container_id={{ container.id }}">{{ container.id }}{% if container.rcd %} <span class="eta">({{ container.rcd }})</span>{% endif %}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
     </aside>
     
     <div class="main-content">
+        <button id="sidebarToggleBtn" type="button" aria-label="{{ te('Toggle sidebar') }}" aria-expanded="false">☰ <span class="toggle-label">Containers 货柜</span></button>
         <div class="container-header">
-            <h1><i class="fas fa-box"></i> Container: {{ container_id }} 
+            <h1>
+                <span class="header-title"><i class="fas fa-box"></i> Container 货柜: {{ container_id }}</span>
                 {% if container_id %}
-                    {% if is_arrived %}
-                        <span style="background: #4CAF50; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">{{ te('[arrived]') }}</span>
+                    <span id="containerStatusBadge">
+                    {% if boat_row and boat_row.get('status_label') %}
+                        <span class="status-badge status-{{ boat_row.get('action_mode') or 'waiting' }}">{{ boat_row.get('status_label') }}</span>
+                    {% elif is_arrived %}
+                        <span class="status-badge status-landed">{{ te('[arrived]') }}</span>
                     {% else %}
-                        <span style="background: #FF9800; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.6em; margin-left: 10px; vertical-align: middle;">{{ te('[ocean]') }}</span>
+                        <span class="status-badge status-ocean">{{ te('[ocean]') }}</span>
                     {% endif %}
+                    </span>
                 {% endif %}
             </h1>
+            <a class="hub-link" href="/boat" target="_blank" rel="noopener">Container Hub 货柜中心</a>
         </div>
         
-        <div class="info-section" style="background: #f0f8ff; border-left: 4px solid #667eea; padding: 20px; margin-bottom: 30px;">
-            <h3 style="color: #667eea; border: none; margin: 0 0 15px 0; padding: 0; text-align: center;">{{ te('Container Info') }}</h3>
+        <div class="info-section" style="background: #f0f8ff; border-left: 4px solid #667eea;">
+            <h3 style="color: #667eea; border: none; margin: 0 0 8px 0; padding: 0; text-align: center; font-size: 1.05rem;">Container Info 货柜信息</h3>
             <div class="info-grid">
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">{{ te('PO Number') }}</div>
+                    <div class="info-label">PO Number<span class="zh-label">采购单号</span></div>
                     <div class="info-value">{{ container_id }}</div>
                 </div>
                 {% if po_date %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">{{ te('PO Date') }}</div>
+                    <div class="info-label">PO Date<span class="zh-label">采购日期</span></div>
                     <div class="info-value">{{ po_date }}</div>
                 </div>
                 {% endif %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">{{ te('BOL Number') }}</div>
+                    <div class="info-label">BOL Number<span class="zh-label">提单号</span></div>
                     <div class="info-value" id="bolNumDisplay">
-                        <span style="color: #999; font-size: 0.9em;">{{ te('Loading...') }}</span>
+                        {% if boat_row and boat_row.get('bol') %}
+                            {{ boat_row.get('bol') }}
+                            {% if boat_row.get('vessel_no') %}
+                            <span class="info-sub" id="vesselDisplay"><a href="https://www.google.com/search?q={{ boat_row.get('vessel_no')|urlencode }}" target="_blank" rel="noopener">{{ boat_row.get('vessel_no') }}</a></span>
+                            {% else %}
+                            <span class="info-sub" id="vesselDisplay"></span>
+                            {% endif %}
+                        {% else %}
+                            <span style="color: #999; font-size: 0.9em;">{{ te('Loading...') }}</span>
+                            <span class="info-sub" id="vesselDisplay"></span>
+                        {% endif %}
                     </div>
                 </div>
-                {% if total_msrp > 0 %}
                 <div class="info-item" style="border-left-color: #667eea;">
-                    <div class="info-label">{{ te('Total MSRP') }}</div>
-                    <div class="info-value">${{ "%.2f"|format(total_msrp) }}</div>
+                    <div class="info-label">ETD / ETA<span class="zh-label">离港 / 到港</span></div>
+                    <div class="info-value" id="etdEtaDisplay">
+                        {% if boat_row and (boat_row.get('etd') or boat_row.get('eta')) %}
+                            {{ boat_row.get('etd') or '—' }}
+                            <span class="info-sub">{{ boat_row.get('eta') or '' }}</span>
+                        {% else %}
+                            <span style="color: #999; font-size: 0.9em;">{{ te('Loading...') }}</span>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
+                <div class="info-item" style="border-left-color: #667eea;">
+                    <div class="info-label">Written Time / Written By<span class="zh-label">写入时间 / 写入人</span></div>
+                    <div class="info-value" id="writtenDisplay">
+                        {% if boat_row and (boat_row.get('written_date') or boat_row.get('written_by')) %}
+                            {{ boat_row.get('written_date') or '—' }}
+                            {% if boat_row.get('written_time') %}<span class="info-sub">{{ boat_row.get('written_time') }}</span>{% endif %}
+                            {% if boat_row.get('written_by') %}<span class="info-sub">{{ boat_row.get('written_by') }}</span>{% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item" style="border-left-color: #667eea;">
+                    <div class="info-label">PO Created<span class="zh-label">建 PO 时间</span></div>
+                    <div class="info-value" id="poCreatedDisplay">
+                        {% if boat_row and boat_row.get('processed_date') %}
+                            {{ boat_row.get('processed_date') }}
+                            {% if boat_row.get('processed_time') %}<span class="info-sub">{{ boat_row.get('processed_time') }}</span>{% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item" style="border-left-color: #667eea;">
+                    <div class="info-label">MSRP<span class="zh-label">零售价状态</span></div>
+                    <div class="info-value" id="msrpHubDisplay">
+                        {% if boat_row and boat_row.get('msrp_label') %}
+                            {{ boat_row.get('msrp_label') }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
         
         
         <div id="products-section" class="info-section">
             {% if style_groups %}
-            <h3>{{ te('Items') }}</h3>
-            <div class="items-table-wrap">
+            <h3>Items 货品</h3>
+            <div class="items-table-wrap desktop-items-wrap">
             <table class="container-items-table">
                     <thead>
                         <tr>
                             <th class="style-image-cell"></th>
-                            <th>{{ te('Style') }}</th>
-                            <th>{{ te('Catalog') }}</th>
-                            <th>{{ te('SKU') }}</th>
-                            <th>{{ te('Color') }}</th>
-                            <th>{{ te('Container Qty') }}</th>
-                            <th class="col-available">{{ te('Available') }}</th>
-                            <th>{{ te('In Warehouse') }}</th>
-                            <th>{{ te('Sold/Reserved') }}</th>
-                            <th>{{ te('Price') }}</th>
+                            <th class="col-style">{{ te('Style') }}</th>
+                            <th class="col-catalog">{{ te('Catalog') }}</th>
+                            <th class="col-sku">{{ te('SKU') }}</th>
+                            <th class="col-color">{{ te('Color') }}</th>
+                            <th class="num-col">{{ te('Container Qty') }}</th>
+                            <th class="num-col col-available">{{ te('Available') }}</th>
+                            <th class="num-col">{{ te('In Warehouse') }}</th>
+                            <th class="num-col">{{ te('Sold/Reserved') }}</th>
+                            <th class="num-col">{{ te('Price') }}</th>
+                        </tr>
+                        <tr class="header-row-zh">
+                            <th class="style-image-cell"></th>
+                            <th class="col-style">款式</th>
+                            <th class="col-catalog">目录</th>
+                            <th class="col-sku">货号</th>
+                            <th class="col-color">颜色</th>
+                            <th class="num-col">柜量</th>
+                            <th class="num-col col-available">库存</th>
+                            <th class="num-col">可卖</th>
+                            <th class="num-col">已预定</th>
+                            <th class="num-col">价格</th>
                         </tr>
                     </thead>
-                    <tbody>
                         {% for group in style_groups %}
+                        <tbody class="style-block">
                         {% for item in group.rows %}
-                        <tr>
+                        <tr{% if loop.first %} class="style-block-start"{% endif %}>
                             {% if loop.first %}
                             <td class="style-image-cell" rowspan="{{ group.row_span }}">
+                                <div class="style-image-fill">
                                 {% if group.image_url %}
                                 <img src="{{ group.image_url }}" alt="{{ group.style }}">
                                 {% else %}
-                                <span style="color:#999; font-size:11px;">{{ te('No image') }}</span>
+                                <span style="color:#999; font-size:12px;">{{ te('No image') }}</span>
                                 {% endif %}
+                                </div>
                             </td>
-                            <td rowspan="{{ group.row_span }}" style="vertical-align: middle;">
+                            <td class="col-style" rowspan="{{ group.row_span }}" style="vertical-align: middle;">
                                 <strong><a href="https://www.fdcef.com/product_detail?search={{ group.style|trim|lower|urlencode }}" target="_blank" style="color:#667eea; text-decoration:none;">{{ group.style|trim|upper }}</a></strong>
                             </td>
                             {% endif %}
-                            <td>{{ item.get('catalog', 'N/A')|trim }}</td>
-                            <td><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('sku', '')|trim|lower|urlencode }}" target="_blank" style="color:#667eea; text-decoration:none;">{{ item.get('sku', 'N/A')|trim|upper }}</a></strong></td>
-                            <td>{{ item.get('color', '-')|trim }}</td>
+                            <td class="col-catalog">{{ item.get('catalog', 'N/A')|trim }}</td>
+                            <td class="col-sku"><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('sku', '')|trim|lower|urlencode }}" target="_blank" style="color:#667eea; text-decoration:none;">{{ item.get('sku', 'N/A')|trim|upper }}</a></strong></td>
+                            <td class="col-color">{{ item.get('color', '-')|trim }}</td>
                             <td class="num-col">{{ item.get('container_qty', 0)|int }}</td>
                             <td class="num-col col-available">{{ item.get('available', 0)|int }}</td>
                             <td class="num-col {% if item.get('in_warehouse', 0) > 0 %}num-positive{% elif item.get('in_warehouse', 0) < 0 %}num-negative{% endif %}">{{ item.get('in_warehouse', 0)|int }}</td>
@@ -455,26 +1111,110 @@
                         </tr>
                         {% endfor %}
                         <tr class="style-subtotal">
-                            <td colspan="3"><strong>{{ te('TOTAL') }}</strong></td>
+                            <td class="col-catalog"></td>
+                            <td class="col-sku"><strong>{{ te('TOTAL') }}</strong></td>
+                            <td class="col-color"></td>
                             <td class="num-col">{{ group.totals.container_qty }}</td>
                             <td class="num-col">{{ group.totals.available }}</td>
                             <td class="num-col">{{ group.totals.in_warehouse }}</td>
                             <td class="num-col">{{ group.totals.sold_reserved }}</td>
                             <td></td>
                         </tr>
+                        </tbody>
+                        {% if not loop.last %}
+                        <tbody class="style-block-spacer">
+                            <tr><td colspan="10"></td></tr>
+                        </tbody>
+                        {% endif %}
                         {% endfor %}
                         {% if grand_totals %}
+                        <tbody class="style-block-spacer">
+                            <tr><td colspan="10"></td></tr>
+                        </tbody>
+                        <tbody>
                         <tr class="grand-total">
-                            <td colspan="5"><strong>{{ te('GRAND TOTAL') }}</strong></td>
+                            <td class="style-image-cell"></td>
+                            <td class="col-style"></td>
+                            <td class="col-catalog"></td>
+                            <td class="col-sku"><strong>{{ te('GRAND TOTAL') }}</strong></td>
+                            <td class="col-color"></td>
                             <td class="num-col">{{ grand_totals.container_qty }}</td>
                             <td class="num-col">{{ grand_totals.available }}</td>
                             <td class="num-col">{{ grand_totals.in_warehouse }}</td>
                             <td class="num-col">{{ grand_totals.sold_reserved }}</td>
                             <td></td>
                         </tr>
+                        </tbody>
                         {% endif %}
-                    </tbody>
                 </table>
+            </div>
+            <div class="mobile-style-groups">
+                {% for group in style_groups %}
+                <section class="mobile-style-group">
+                    <a class="mobile-style-image" href="https://www.fdcef.com/product_detail?search={{ group.style|trim|lower|urlencode }}" target="_blank" rel="noopener">
+                        {% if group.image_url %}
+                        <img src="{{ group.image_url }}" alt="{{ group.style }}">
+                        {% else %}
+                        <span class="no-image">{{ te('No image') }}</span>
+                        {% endif %}
+                        <span class="mobile-style-caption">{{ group.style|trim|upper }}</span>
+                    </a>
+                    <div class="items-table-wrap">
+                        <table class="container-items-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-sku">{{ te('SKU') }}</th>
+                                    <th class="col-color">{{ te('Color') }}</th>
+                                    <th class="num-col">{{ te('Cont') }}<br>{{ te('Qty') }}</th>
+                                    <th class="num-col col-available">{{ te('Avail') }}</th>
+                                    <th class="num-col">{{ te('Stock') }}</th>
+                                    <th class="num-col">{{ te('Sold') }}</th>
+                                    <th class="num-col">{{ te('Price') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in group.rows %}
+                                <tr>
+                                    <td class="col-sku"><strong><a href="https://www.fdcef.com/product_detail?search={{ item.get('sku', '')|trim|lower|urlencode }}" target="_blank" rel="noopener" style="color:#667eea; text-decoration:none;">{{ item.get('sku', 'N/A')|trim|upper }}</a></strong></td>
+                                    <td class="col-color">{{ item.get('color', '-')|trim }}</td>
+                                    <td class="num-col">{{ item.get('container_qty', 0)|int }}</td>
+                                    <td class="num-col col-available">{{ item.get('available', 0)|int }}</td>
+                                    <td class="num-col {% if item.get('in_warehouse', 0) > 0 %}num-positive{% elif item.get('in_warehouse', 0) < 0 %}num-negative{% endif %}">{{ item.get('in_warehouse', 0)|int }}</td>
+                                    <td class="num-col">{{ item.get('sold_reserved', 0)|int }}</td>
+                                    <td class="num-col">${{ "%.2f"|format(item.get('price', 0)) }}</td>
+                                </tr>
+                                {% endfor %}
+                                <tr class="style-subtotal">
+                                    <td class="col-sku"><strong>{{ te('TOTAL') }}</strong></td>
+                                    <td class="col-color"></td>
+                                    <td class="num-col">{{ group.totals.container_qty }}</td>
+                                    <td class="num-col">{{ group.totals.available }}</td>
+                                    <td class="num-col">{{ group.totals.in_warehouse }}</td>
+                                    <td class="num-col">{{ group.totals.sold_reserved }}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                {% endfor %}
+                {% if grand_totals %}
+                <div class="mobile-grand-wrap">
+                    <table class="container-items-table">
+                        <tbody>
+                            <tr class="grand-total">
+                                <td class="col-sku"><strong>{{ te('GRAND TOTAL') }}</strong></td>
+                                <td class="col-color"></td>
+                                <td class="num-col">{{ grand_totals.container_qty }}</td>
+                                <td class="num-col">{{ grand_totals.available }}</td>
+                                <td class="num-col">{{ grand_totals.in_warehouse }}</td>
+                                <td class="num-col">{{ grand_totals.sold_reserved }}</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
             </div>
                 {% else %}
                 <div class="empty-state">
@@ -491,69 +1231,266 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Sidebar toggle
             const sidebar = document.getElementById('Sidebar');
             const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+            const backdrop = document.getElementById('sidebarBackdrop');
             const body = document.body;
-            
+
+            function isMobileNav() {
+                return window.innerWidth <= 991;
+            }
+
+            function setMobileToggleLabel(open) {
+                if (!toggleBtn) return;
+                if (isMobileNav()) {
+                    toggleBtn.innerHTML = open
+                        ? '× <span class="toggle-label">Close 关闭</span>'
+                        : '☰ <span class="toggle-label">Containers 货柜</span>';
+                } else {
+                    toggleBtn.innerHTML = '☰';
+                }
+            }
+
+            function setSidebarOpen(open) {
+                if (!sidebar || !toggleBtn) return;
+                body.classList.toggle('sidebar-open', open);
+                sidebar.classList.toggle('open', open);
+                toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                setMobileToggleLabel(open);
+                if (backdrop) backdrop.hidden = !open;
+            }
+
+            function closeMobileSidebar() {
+                if (isMobileNav() && body.classList.contains('sidebar-open')) {
+                    setSidebarOpen(false);
+                }
+            }
+
             toggleBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                if (window.innerWidth <= 991) {
-                    body.classList.toggle('sidebar-open');
-                    sidebar.classList.toggle('open');
-                    toggleBtn.innerHTML = body.classList.contains('sidebar-open') ? '×' : '☰';
+                if (isMobileNav()) {
+                    setSidebarOpen(!body.classList.contains('sidebar-open'));
                 } else {
                     body.classList.toggle('sidebar-closed');
                     sidebar.classList.toggle('closed');
+                    setTimeout(fitItemsTableFonts, 350);
                 }
             });
-            
-            // Sidebar link navigation
-            document.querySelectorAll('.nav-list a').forEach(link => {
-                if (!link.href.includes('http')) {
-                    link.addEventListener('click', function(e) {
-                        if (this.href.startsWith('#')) {
-                            const target = document.querySelector(this.getAttribute('href'));
-                            if (target) {
-                                e.preventDefault();
-                                target.scrollIntoView({ behavior: 'smooth' });
-                            }
-                        }
-                        if (window.innerWidth <= 991 && body.classList.contains('sidebar-open')) {
-                            body.classList.remove('sidebar-open');
-                            sidebar.classList.remove('open');
-                            toggleBtn.innerHTML = '☰';
-                        }
-                    });
+
+            if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
+            if (backdrop) backdrop.addEventListener('click', closeMobileSidebar);
+
+            sidebar.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', closeMobileSidebar);
+            });
+
+            window.addEventListener('resize', function() {
+                if (!isMobileNav()) {
+                    body.classList.remove('sidebar-open');
+                    sidebar.classList.remove('open');
+                    if (backdrop) backdrop.hidden = true;
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.innerHTML = '☰';
+                } else if (!body.classList.contains('sidebar-open')) {
+                    setMobileToggleLabel(false);
                 }
             });
         });
+
+        function fitItemsTableFonts() {
+            if (window.innerWidth <= 768) return;
+            var table = document.querySelector('.container-items-table');
+            if (!table) return;
+
+            var groups = {
+                style: [],
+                catalog: [],
+                sku: [],
+                color: [],
+                num: [],
+                other: []
+            };
+
+            table.querySelectorAll('tbody td:not(.style-image-cell)').forEach(function(cell) {
+                if (cell.closest('.style-block-spacer')) return;
+                if (!String(cell.textContent || '').trim()) return;
+                if (cell.classList.contains('col-style')) groups.style.push(cell);
+                else if (cell.classList.contains('col-catalog')) groups.catalog.push(cell);
+                else if (cell.classList.contains('col-sku')) groups.sku.push(cell);
+                else if (cell.classList.contains('col-color')) groups.color.push(cell);
+                else if (cell.classList.contains('num-col')) groups.num.push(cell);
+                else groups.other.push(cell);
+            });
+
+            function fits(cell) {
+                return cell.scrollWidth <= cell.clientWidth + 1;
+            }
+
+            function fitGroup(cells, minPx, maxPx) {
+                if (!cells.length) return;
+                var best = minPx;
+                var size, i, ok;
+                for (size = maxPx; size >= minPx; size--) {
+                    for (i = 0; i < cells.length; i++) {
+                        cells[i].style.fontSize = size + 'px';
+                    }
+                    ok = true;
+                    for (i = 0; i < cells.length; i++) {
+                        if (!fits(cells[i])) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok) {
+                        best = size;
+                        break;
+                    }
+                }
+                for (i = 0; i < cells.length; i++) {
+                    cells[i].style.fontSize = best + 'px';
+                }
+            }
+
+            fitGroup(groups.style, 13, 18);
+            fitGroup(groups.catalog, 13, 18);
+            fitGroup(groups.sku, 13, 18);
+            fitGroup(groups.color, 13, 18);
+            fitGroup(groups.num, 13, 18);
+            groups.other.forEach(function(cell) {
+                fitGroup([cell], 13, 16);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fitItemsTableFonts();
+            window.addEventListener('resize', function() {
+                clearTimeout(window._fitItemsFontsTimer);
+                window._fitItemsFontsTimer = setTimeout(fitItemsTableFonts, 120);
+            });
+        });
         
-        // Lazy-load BOL NUM from Google Sheets
+        // Load remaining hub-row fields from /boat/data (BOL, vessel, ETD/ETA, status, dates, MSRP)
         document.addEventListener('DOMContentLoaded', function() {
             const containerId = '{{ container_id }}';
-            if (containerId) {
-                fetch(`/api/container/bol/${encodeURIComponent(containerId)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const bolDisplay = document.getElementById('bolNumDisplay');
-                        if (data.success) {
-                            if (data.bol_num) {
-                                bolDisplay.textContent = data.bol_num;
+            if (!containerId) return;
+
+            function escapeHtml(v) {
+                return String(v == null ? '' : v)
+                    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            function normalizeContainerId(v) {
+                var s = String(v || '').trim().toUpperCase();
+                var m = s.match(/^FT(\d+)$/);
+                return m ? ('F' + m[1]) : s;
+            }
+
+            function stackedHtml(primary, secondary, tertiary) {
+                if (!primary && !secondary && !tertiary) return '—';
+                var html = escapeHtml(primary || '—');
+                if (secondary) {
+                    html += '<span class="info-sub">' + escapeHtml(secondary) + '</span>';
+                }
+                if (tertiary) {
+                    html += '<span class="info-sub">' + escapeHtml(tertiary) + '</span>';
+                }
+                return html;
+            }
+
+            function statusBadgeHtml(row) {
+                var cls = 'status-waiting';
+                if (row.action_mode === 'new') cls = 'status-new';
+                else if (row.action_mode === 'ocean') cls = 'status-ocean';
+                else if (row.action_mode === 'landed') cls = 'status-landed';
+                var label = row.status_label || row.action_mode || '';
+                return '<span class="status-badge ' + cls + '">' +
+                    escapeHtml(label) + '</span>';
+            }
+
+            function fillBoatRow(row) {
+                if (!row) return;
+
+                var bolEl = document.getElementById('bolNumDisplay');
+                if (bolEl) {
+                    var html = row.bol ? escapeHtml(row.bol) : 'N/A';
+                    if (row.vessel_no) {
+                        var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(row.vessel_no);
+                        html += '<span class="info-sub"><a href="' + searchUrl +
+                            '" target="_blank" rel="noopener">' + escapeHtml(row.vessel_no) + '</a></span>';
+                    }
+                    bolEl.innerHTML = html;
+                }
+
+                var etdEl = document.getElementById('etdEtaDisplay');
+                if (etdEl) etdEl.innerHTML = stackedHtml(row.etd, row.eta);
+
+                var writtenEl = document.getElementById('writtenDisplay');
+                if (writtenEl) writtenEl.innerHTML = stackedHtml(row.written_date, row.written_time, row.written_by);
+
+                var poEl = document.getElementById('poCreatedDisplay');
+                if (poEl) poEl.innerHTML = stackedHtml(row.processed_date, row.processed_time);
+
+                var msrpEl = document.getElementById('msrpHubDisplay');
+                if (msrpEl) msrpEl.textContent = row.msrp_label || '—';
+
+                var statusWrap = document.getElementById('containerStatusBadge');
+                if (statusWrap && (row.status_label || row.action_mode)) {
+                    statusWrap.innerHTML = statusBadgeHtml(row);
+                }
+            }
+
+            function fillFromBolApi() {
+                fetch('/api/container/bol/' + encodeURIComponent(containerId))
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        if (data.success && data.row) {
+                            fillBoatRow(data.row);
+                            return;
+                        }
+                        var bolDisplay = document.getElementById('bolNumDisplay');
+                        if (bolDisplay) {
+                            if (data.success) {
+                                bolDisplay.innerHTML = data.bol_num ? escapeHtml(data.bol_num) : 'N/A';
                             } else {
-                                bolDisplay.textContent = 'N/A';
+                                bolDisplay.textContent = 'Error loading BOL';
                             }
-                        } else {
-                            bolDisplay.textContent = 'Error loading BOL';
+                        }
+                        var etdEl = document.getElementById('etdEtaDisplay');
+                        if (etdEl && /Loading/.test(etdEl.textContent || '')) {
+                            etdEl.textContent = '—';
                         }
                     })
-                    .catch(error => {
+                    .catch(function(error) {
                         console.error('Error fetching BOL:', error);
-                        document.getElementById('bolNumDisplay').textContent = 'Error loading BOL';
+                        var bolDisplay = document.getElementById('bolNumDisplay');
+                        if (bolDisplay) bolDisplay.textContent = 'Error loading BOL';
+                        var etdEl = document.getElementById('etdEtaDisplay');
+                        if (etdEl && /Loading/.test(etdEl.textContent || '')) {
+                            etdEl.textContent = '—';
+                        }
                     });
             }
+
+            var wanted = normalizeContainerId(containerId);
+            fetch('/boat/data')
+                .then(function(response) {
+                    if (!response.ok) throw new Error('boat data ' + response.status);
+                    return response.json();
+                })
+                .then(function(res) {
+                    if (!res.success) throw new Error(res.error || 'boat data failed');
+                    var row = (res.data || []).find(function(r) {
+                        return normalizeContainerId(r.container) === wanted;
+                    });
+                    if (row) fillBoatRow(row);
+                    else fillFromBolApi();
+                })
+                .catch(function() {
+                    fillFromBolApi();
+                });
         });
     </script>
 </body>

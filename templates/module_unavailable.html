@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ locale|default('en') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tool unavailable</title>
+  <style>
+    body { font-family: Segoe UI, sans-serif; background: #111827; color: #e5e7eb; margin: 0; }
+    .wrap { max-width: 640px; margin: 12vh auto; padding: 2rem; background: #1f2937; border-radius: 12px; }
+    h1 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+    p { line-height: 1.5; color: #d1d5db; }
+    code { background: #111827; padding: 0.15rem 0.4rem; border-radius: 4px; }
+    pre { background: #111827; padding: 0.75rem 1rem; overflow: auto; border-radius: 8px; font-size: 0.85rem; }
+    a { color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>This tool failed to load</h1>
+    <p>The rest of the site is still running. Module <code>{{ module_name }}</code> did not import at startup.</p>
+    {% if module_error %}
+    <pre>{{ module_error }}</pre>
+    {% endif %}
+    <p><a href="/">Back to home</a></p>
+  </div>
+</body>
+</html>

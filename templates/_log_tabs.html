@@ -1,0 +1,7 @@
+<div class="log-nav-buttons" role="navigation" aria-label="{{ _('log.center_nav') }}">
+    <a href="{{ url_for('log_center.display_system') }}" class="log-nav-btn log-nav-system{% if active_log == 'system' %} is-active{% endif %}">⚙️ {{ _('log.tab.system') }}</a>
+    <a href="{{ url_for('log_center.display_error') }}" class="log-nav-btn log-nav-error{% if active_log == 'error' %} is-active{% endif %}">🚨 {{ _('log.tab.error') }}</a>
+    <a href="{{ url_for('log_center.display_user') }}" class="log-nav-btn log-nav-user{% if active_log == 'user' %} is-active{% endif %}">👤 {{ _('log.tab.user') }}</a>
+    <a href="{{ url_for('log_center.display_online') }}" class="log-nav-btn log-nav-online{% if active_log == 'online' %} is-active{% endif %}">🟢 {{ _('log.tab.online') }}</a>
+    <a href="{{ url_for('log_center.display_visitor') }}" class="log-nav-btn log-nav-visitor{% if active_log == 'visitor' %} is-active{% endif %}">👁 {{ _('log.tab.visitor') }}</a>
+</div>

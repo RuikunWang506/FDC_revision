@@ -118,38 +118,51 @@ from py.utilities.auth import log_event
 
 
 class CustomRequestHandler(WSGIRequestHandler):
-    def log_request(self, code='-', size='-'):
-        # Skip everything from the local host
-        if self.client_address[0] in ("127.0.0.1", "::1", "173.198.50.202"):
-            return True
+    def _public_ip(self):
+        try:
+            xf = (self.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+            if xf:
+                return xf
+            real = (self.headers.get("X-Real-IP") or "").strip()
+            if real:
+                return real
+        except Exception:
+            pass
+        return (self.client_address[0] if self.client_address else "") or ""
 
-        # Skip static files (adjust prefix if needed)
+    def log_request(self, code="-", size="-"):
+        ip = self._public_ip()
+        if ip in ("127.0.0.1", "::1", "173.198.50.202") or ip.startswith("127."):
+            return True
         if self.path.startswith("/static"):
             return
-
-        entry = (
-            f'{self.client_address[0]} - - '
-            f'[{self.log_date_time_string()}] '
-            f'"{self.command} {self.path} {self.request_version}" '
-            f'{code} {size}'
-        )
-        log_event("INFO", entry)
+        try:
+            code_i = int(code)
+        except (TypeError, ValueError):
+            code_i = 0
+        # 2xx/3xx/4xx are recorded in Flask after_request (user.log / visitor.log).
+        # Keep handler logging for 5xx only so we don't duplicate visitor lines.
+        if 500 <= code_i:
+            entry = (
+                f"{ip} - - "
+                f"[{self.log_date_time_string()}] "
+                f'"{self.command} {self.path} {self.request_version}" '
+                f"{code} {size}"
+            )
+            log_event("ERROR", entry)
 
     def log_error(self, format, *args):
-        """
-        You might still want to see bad‐request errors even from localhost,
-        so we don't filter those here by default.
-        """
+        ip = self._public_ip()
         entry = (
-            f'{self.client_address[0]} - - '
-            f'[{self.log_date_time_string()}] '
-            f'{format % args}'
+            f"{ip} - - "
+            f"[{self.log_date_time_string()}] "
+            f"{format % args}"
         )
         log_event("ERROR", entry)
 
 
 app = Flask(__name__)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 app.secret_key = 'FDCkey2026-may-27'
 app.config.from_object(Config)
 
@@ -164,6 +177,10 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 if app.config.get('ENV') == 'production':
     app.config['PREFERRED_URL_SCHEME'] = 'https'
     app.config['SESSION_COOKIE_SECURE'] = True
+
+# Keep template auto-reload even when the NSSM service runs with debug off.
+app.jinja_env.auto_reload = True
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 configure_logging(app)
 register_routes(app)

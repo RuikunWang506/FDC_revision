@@ -7,7 +7,7 @@ import pandas as pd
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.SQL_connector import generate_excel
 from py.utilities.models import SessionLocal, ImageAsset
-from py.utilities.logging_setup import log_event
+from py.utilities.logging_setup import log_event, log_user_action
 from py.utilities.setting import Config
 from py.utilities.dam_utils import search_assets_by_sku_pattern, get_canonical_assets_for_skus, get_asset_url
 import py.utilities.models
@@ -358,7 +358,7 @@ def item_lookup(user_input=None):
         # Sort file names using existing function
         sorted_file_names = sort_filenames(file_names)
 
-    current_app.logger.info("***%s***__@@@search SKU@@@__ %s",current_user, user_input)
+    log_user_action(f"***{current_user}***__@@@search SKU@@@__ {user_input}", current_user)
     return render_template(
         "Item_lookup.html",
         excel_html=excel_html,

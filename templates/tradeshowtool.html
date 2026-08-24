@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ te('Trade Show Tool') }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4f8; padding-top: 72px; }
+    .ts-wrap { max-width: 880px; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }
+    .hero-card {
+      background: linear-gradient(135deg, #1a3a52 0%, #2c5282 55%, #2b6cb0 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 12px 28px rgba(15, 39, 68, 0.22);
+    }
+    .hero-card h1 { font-size: 1.45rem; font-weight: 700; margin: 0 0 0.35rem; }
+    .hero-card p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
+    .panel {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+      padding: 1.35rem 1.4rem;
+      margin-bottom: 1.1rem;
+    }
+    .panel h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a365d;
+      margin: 0 0 0.85rem;
+    }
+    .upload-zone {
+      border: 2px dashed #cbd5e0;
+      border-radius: 12px;
+      padding: 2rem 1.25rem;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+    }
+    .upload-zone .hint { color: #718096; font-size: 0.88rem; margin: 0.35rem 0 0; }
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .choice-card {
+      position: relative;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.95rem 1rem 0.95rem 2.4rem;
+      cursor: pointer;
+      background: #fff;
+      text-align: left;
+      width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .choice-card.selected {
+      border-color: #2b6cb0;
+      background: #ebf8ff;
+      box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.15);
+    }
+    .choice-card input { position: absolute; left: 0.85rem; top: 1.1rem; }
+    .choice-card .title { font-weight: 700; color: #1a365d; }
+    .choice-card .meta { font-size: 0.82rem; color: #718096; margin-top: 0.2rem; }
+    .choice-card.is-disabled { opacity: 0.5; cursor: not-allowed; }
+    .dropbox-picked {
+      display: none;
+      margin-top: 0.85rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      text-align: left;
+      font-size: 0.88rem;
+      color: #2c5282;
+    }
+    .dropbox-picked.show { display: block; }
+    .dropbox-picked code { font-size: 0.82rem; word-break: break-all; }
+    .opt-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem 1.5rem;
+    }
+    .opt-row label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-weight: 600;
+      color: #2d3748;
+      cursor: pointer;
+      margin: 0;
+    }
+    .file-list {
+      margin: 0.75rem 0 0;
+      max-height: 160px;
+      overflow: auto;
+      font-size: 0.82rem;
+      color: #4a5568;
+      padding-left: 1.1rem;
+    }
+    .btn-go {
+      background: linear-gradient(135deg, #1a4a6e, #2b6cb0);
+      border: none;
+      font-weight: 700;
+      padding: 0.7rem 1.2rem;
+    }
+    .btn-go:disabled { opacity: 0.55; }
+    .lan-banner {
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.1rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+    .lan-banner.lan-ok { background: #e6fffa; color: #234e52; border: 1px solid #81e6d9; }
+    .lan-banner.lan-check { background: #ebf8ff; color: #2c5282; border: 1px solid #90cdf4; }
+    .lan-banner.lan-cloud { background: #fffaf0; color: #7b341e; border: 1px solid #fbd38d; }
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 0.85rem;
+    }
+    .report-stat {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.7rem 0.8rem;
+    }
+    .report-stat .k { font-size: 0.75rem; color: #718096; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .report-stat .v { font-size: 1.15rem; font-weight: 700; color: #1a365d; margin-top: 0.15rem; }
+    .report-miss { font-size: 0.82rem; color: #4a5568; max-height: 140px; overflow: auto; margin: 0.35rem 0 0; padding-left: 1.1rem; }
+  </style>
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="ts-wrap">
+    <div class="hero-card">
+      <h1><i class="fas fa-store me-2"></i>{{ te('Trade Show Tool') }}</h1>
+      <p>{{ te('Upload a folder of catalog sheets, or pick a synced Dropbox folder on the server. Optionally hide price and color quantities, then impose 4-up, 5-up, or 1-up on US Letter — download ZIP/PDF, or replace the pictures in that Dropbox folder.') }}</p>
+    </div>
+    <div id="lanBanner" class="lan-banner {% if on_lan %}lan-ok{% else %}lan-cloud{% endif %}">
+      {% if on_lan %}
+        {{ te('You are on the office LAN.') }}
+      {% else %}
+        {{ te('Not on the office LAN — large folders upload over the internet. Prefer Browse server Dropbox, or open this tool on the office network.') }}
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-folder-open text-primary me-2"></i>{{ te('1. Pictures') }}</h2>
+      <div class="upload-zone" id="dropZone" tabindex="0" role="button">
+        <i class="fas fa-images fa-2x text-primary mb-2"></i>
+        <p class="mb-1"><strong>{{ te('Drop a folder here') }}</strong> {{ te('or click to choose') }}</p>
+        <p class="hint">{{ te('JPG · PNG · WEBP · TIFF · folder or multiple files · up to 2000 pictures / 2 GB') }}</p>
+        <input type="file" id="folderInput" class="d-none" webkitdirectory directory multiple>
+        <input type="file" id="filesInput" class="d-none" multiple accept="image/*">
+        <div class="mt-3 d-flex justify-content-center gap-2 flex-wrap">
+          <button type="button" class="btn btn-sm btn-outline-primary" id="pickFolderBtn">
+            <i class="fas fa-folder me-1"></i>{{ te('Choose folder') }}
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="pickFilesBtn">
+            <i class="fas fa-file-image me-1"></i>{{ te('Choose files') }}
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-info" id="pickDropboxBtn" title="{{ te('Open folders on the server’s synced Dropbox (names and image counts only)') }}">
+            <i class="fab fa-dropbox me-1"></i>{{ te('Browse server Dropbox') }}
+          </button>
+        </div>
+        <div class="mt-2"><span class="badge bg-secondary" id="fileCount">{{ te('No pictures chosen') }}</span></div>
+      </div>
+      <div class="dropbox-picked" id="dropboxPicked">
+        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+          <div>
+            <strong>{{ te('Server Dropbox folder') }}</strong>
+            <div><code id="dropboxPathLabel"></code></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="clearDropboxBtn">{{ te('Clear') }}</button>
+        </div>
+      </div>
+      <ul class="file-list d-none" id="fileList"></ul>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-th-large text-primary me-2"></i>{{ te('2. Page layout') }} <span class="text-muted fw-normal" style="font-size:0.85rem;">{{ te('(pick one)') }}</span></h2>
+      <div class="choice-grid">
+        <label class="choice-card selected" data-kind="layout">
+          <input type="radio" name="layout" value="4in1" checked>
+          <div class="title">{{ te('4-in-1') }}</div>
+          <div class="meta">{{ te('Each picture 5.3 × 3.8 in, four in the upper-left of landscape Letter (11 × 8.5). Crop the right and bottom white after printing.') }}</div>
+        </label>
+        <label class="choice-card" data-kind="layout">
+          <input type="radio" name="layout" value="5in1">
+          <div class="title">{{ te('5-in-1') }}</div>
+          <div class="meta">{{ te('Each picture 3.3 × 4.8 in: two portrait stacked on the left, three landscape stacked on the right, packed to the upper-left of portrait Letter (8.5 × 11). Crop the right and bottom white after printing.') }}</div>
+        </label>
+        <label class="choice-card" data-kind="layout">
+          <input type="radio" name="layout" value="1in1">
+          <div class="title">{{ te('1-in-1') }}</div>
+          <div class="meta">{{ te('One picture per portrait US Letter (8.5 × 11 in), fitted on the page.') }}</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-eraser text-primary me-2"></i>{{ te('3. Clean the sheet') }} <span class="text-muted fw-normal" style="font-size:0.85rem;">{{ te('(optional)') }}</span></h2>
+      <div class="opt-row">
+        <label>
+          <input type="checkbox" id="removePrice">
+          {{ te('Remove price') }}
+          <span class="text-muted fw-normal">{{ te('($15.00 and other $ amounts)') }}</span>
+        </label>
+        <label>
+          <input type="checkbox" id="removeQty">
+          {{ te('Remove quantity') }}
+          <span class="text-muted fw-normal">{{ te('(right-column numbers such as 60 / 150 / 148; keeps BK, style, phone)') }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2><i class="fas fa-file-export text-primary me-2"></i>{{ te('4. Export') }} <span class="text-muted fw-normal" style="font-size:0.85rem;">{{ te('(pick one)') }}</span></h2>
+      <div class="choice-grid">
+        <label class="choice-card selected" data-kind="export">
+          <input type="radio" name="export" value="pdf" checked>
+          <div class="title">{{ te('PDF') }}</div>
+          <div class="meta">{{ te('One multi-page Letter PDF, ready to print.') }}</div>
+        </label>
+        <label class="choice-card" data-kind="export">
+          <input type="radio" name="export" value="zip">
+          <div class="title">{{ te('ZIP') }}</div>
+          <div class="meta">{{ te('A zip of 300-DPI PNG pages (same Letter layout).') }}</div>
+        </label>
+        <label class="choice-card is-disabled" data-kind="export" id="exportReplaceCard">
+          <input type="radio" name="export" value="replace" disabled>
+          <div class="title">{{ te('Replace in Dropbox folder') }}</div>
+          <div class="meta">{{ te('Overwrite pictures in the selected Dropbox folder only when price or quantity was found and removed (same file names).') }}</div>
+        </label>
+      </div>
+      <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn btn-primary btn-go" id="runBtn" disabled>
+          <i class="fas fa-magic me-1"></i><span id="runBtnLabel">{{ te('Process and download') }}</span>
+        </button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">{{ te('Back Home') }}</a>
+      </div>
+      <div id="statusBox" class="alert d-none" role="status"></div>
+    </div>
+
+    <div class="panel d-none" id="reportBox">
+      <h2><i class="fas fa-clipboard-check text-primary me-2"></i>{{ te('Report') }}</h2>
+      <div id="reportBody"></div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="tsBrowseDropboxModal" tabindex="-1" role="dialog" aria-labelledby="tsBrowseDropboxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tsBrowseDropboxModalLabel">{{ te('Browse server Dropbox') }}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex flex-wrap align-items-start justify-content-between mb-2">
+            <p class="small text-muted mb-1 mb-md-0 flex-grow-1" id="tsBrowseDropboxServerLine"></p>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="tsBrowseDropboxRefreshBtn" title="{{ te('Check Dropbox sync app, restart if needed, then reload folders') }}">
+              ↻ Refresh sync &amp; folders
+            </button>
+          </div>
+          <div id="tsBrowseDropboxSyncStatus" class="small mb-2 d-none"></div>
+          <nav aria-label="{{ te('breadcrumb') }}"><ol class="breadcrumb mb-2 py-2 px-3 bg-light rounded" id="tsBrowseDropboxCrumbs" style="flex-wrap: wrap;"></ol></nav>
+          <p class="mb-2" id="tsBrowseDropboxCountLine"></p>
+          <div id="tsBrowseDropboxLoading" class="text-muted small py-3 d-none">{{ te('Loading…') }}</div>
+          <div id="tsBrowseDropboxError" class="alert alert-danger small d-none" role="alert"></div>
+          <div class="table-responsive border rounded" style="max-height: 380px; overflow-y: auto;">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="thead-light"><tr><th>{{ te('Folder') }}</th><th>{{ te('Last updated') }}</th><th class="text-end">{{ te('Images') }}</th></tr></thead>
+              <tbody id="tsBrowseDropboxRows"></tbody>
+            </table>
+          </div>
+          <p class="small text-muted mb-0 mt-2">{{ te('Folders are sorted by most recently updated on the server. Counts are for that folder only (not subfolders).') }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
+          <button type="button" class="btn btn-primary" id="tsBrowseDropboxUseBtn" disabled title="{{ te('Pick a subfolder (not the Dropbox root)') }}">{{ te('Use this folder') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const folderInput = document.getElementById('folderInput');
+    const filesInput = document.getElementById('filesInput');
+    const pickFolderBtn = document.getElementById('pickFolderBtn');
+    const pickFilesBtn = document.getElementById('pickFilesBtn');
+    const fileCount = document.getElementById('fileCount');
+    const fileList = document.getElementById('fileList');
+    const runBtn = document.getElementById('runBtn');
+    const statusBox = document.getElementById('statusBox');
+    const lanBanner = document.getElementById('lanBanner');
+
+    const LAN_ORIGIN = {{ (lan_origin or 'http://192.168.254.30:5555')|tojson }};
+    const ON_LAN = {{ 'true' if on_lan else 'false' }};
+    const MAX_FILES = {{ max_files|default(2000) }};
+    const HANDOFF_URL = {{ url_for('tradeshowtool.lan_handoff')|tojson }};
+    const JOB_START_URL = {{ url_for('tradeshowtool.job_start')|tojson }};
+    const TS_DROPBOX_FOLDER_URL = {{ url_for('tradeshowtool.dropbox_folder')|tojson }};
+    window.V7_LOCAL_DROPBOX_ABS = {{ v7_local_dropbox_dir|default('')|tojson }};
+    window.V7_BROWSE_DROPBOX_URL = {{ url_for('v7_listcreator.browse_dropbox')|tojson }};
+    window.V7_DROPBOX_DESKTOP_REFRESH_URL = {{ url_for('v7_listcreator.dropbox_desktop_refresh')|tojson }};
+    const IMAGE_RE = /\.(jpe?g|png|webp|bmp|tiff?)$/i;
+    const BATCH = 12;
+    let selectedFiles = [];
+    let dropboxPath = '';
+    let dropboxCount = 0;
+    let tsBrowsePickValue = '';
+    let tsBrowseCanUse = false;
+    let tsBrowseCurrentRel = '';
+
+    function setLanBanner(kind, message) {
+      lanBanner.className = 'lan-banner ' + kind;
+      lanBanner.textContent = message;
+    }
+
+    function setStatus(kind, message) {
+      statusBox.className = 'alert alert-' + (kind === 'ok' ? 'success' : kind === 'busy' ? 'info' : 'danger');
+      statusBox.textContent = message;
+      statusBox.classList.remove('d-none');
+    }
+
+    function hideReport() {
+      const box = document.getElementById('reportBox');
+      const body = document.getElementById('reportBody');
+      if (box) box.classList.add('d-none');
+      if (body) body.innerHTML = '';
+    }
+
+    function reportStat(label, value) {
+      return '<div class="report-stat"><div class="k">' + escapeHtml(label) + '</div><div class="v">' +
+        escapeHtml(value == null ? '—' : String(value)) + '</div></div>';
+    }
+
+    function reportMissList(title, names, more) {
+      if (!names || !names.length) return '';
+      const extra = more ? ('<li>… +' + more + ' more</li>') : '';
+      return '<p class="mb-1 mt-2"><strong>' + escapeHtml(title) + '</strong></p>' +
+        '<ul class="report-miss">' + names.map(function (n) {
+          return '<li>' + escapeHtml(n) + '</li>';
+        }).join('') + extra + '</ul>';
+    }
+
+    function showReport(rep) {
+      const box = document.getElementById('reportBox');
+      const body = document.getElementById('reportBody');
+      if (!box || !body || !rep) return;
+      const layoutLabel = rep.layout === '1in1' ? '1-in-1' : (rep.layout === '5in1' ? '5-in-1' : '4-in-1');
+      const exportLabel = rep.export === 'replace' ? 'Replace in Dropbox folder'
+        : (rep.export === 'zip' ? 'ZIP' : 'PDF');
+      let html = '<div class="report-grid">';
+      html += reportStat('Pictures', rep.images);
+      if (rep.export === 'replace') {
+        html += reportStat('Replaced', rep.images_replaced != null ? rep.images_replaced : rep.pages);
+        if (rep.images_skipped) {
+          html += reportStat('Skipped', rep.images_skipped);
+        }
+      } else {
+        html += reportStat('Letter pages', rep.pages);
+      }
+      html += reportStat('Time', rep.elapsed || '—');
+      html += reportStat('Cores', rep.cores);
+      html += reportStat('Layout', layoutLabel);
+      html += reportStat('Export', exportLabel);
+      if (rep.remove_price) {
+        html += reportStat('Prices removed', (rep.price_boxes || 0) + ' on ' + (rep.images_price_cleared || 0) + ' sheets');
+      }
+      if (rep.remove_quantity) {
+        html += reportStat('Quantities removed', (rep.qty_boxes || 0) + ' on ' + (rep.images_qty_cleared || 0) + ' sheets');
+      }
+      html += '</div>';
+      if (rep.dropbox_path) {
+        html += '<p class="small mb-2">Dropbox folder: <code>' + escapeHtml(rep.dropbox_path) + '</code></p>';
+      }
+      if (rep.filename) {
+        html += '<p class="small mb-2">Download: <code>' + escapeHtml(rep.filename) + '</code></p>';
+      }
+      if (rep.export === 'replace') {
+        html += reportMissList(
+          'Skipped (left unchanged — nothing to clean)',
+          rep.images_skipped_list,
+          rep.images_skipped_more
+        );
+      } else {
+        html += reportMissList(
+          'No price found (check these sheets)',
+          rep.images_no_price,
+          rep.images_no_price_more
+        );
+        html += reportMissList(
+          'No quantity found (check these sheets)',
+          rep.images_no_qty,
+          rep.images_no_qty_more
+        );
+      }
+      body.innerHTML = html;
+      box.classList.remove('d-none');
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function probeLan(timeoutMs) {
+      return new Promise(function (resolve) {
+        const img = new Image();
+        let settled = false;
+        const timer = setTimeout(function () {
+          if (settled) return;
+          settled = true;
+          img.src = '';
+          resolve(false);
+        }, timeoutMs || 1800);
+        img.onload = function () {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(true);
+        };
+        img.onerror = function () {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          resolve(false);
+        };
+        img.src = LAN_ORIGIN + '/tradeshowtool/lan-ping.png?t=' + Date.now();
+      });
+    }
+
+    async function switchToLan() {
+      setLanBanner('lan-check', 'Office LAN found — switching to ' + LAN_ORIGIN + ' so large uploads skip the cloud…');
+      const resp = await fetch(HANDOFF_URL, { method: 'POST', credentials: 'same-origin' });
+      const data = await resp.json();
+      if (!resp.ok || !data.ok || !data.lan_claim_url) {
+        throw new Error(data.error || 'Could not switch to the office LAN.');
+      }
+      window.location.replace(data.lan_claim_url);
+    }
+
+    async function initLan() {
+      if (ON_LAN) {
+        setLanBanner('lan-ok', 'Office LAN connected (' + window.location.host + '). Uploads stay on the local server.');
+        return;
+      }
+      const reachable = await probeLan(1800);
+      if (reachable) {
+        try {
+          await switchToLan();
+        } catch (err) {
+          setLanBanner('lan-cloud', (err && err.message) || 'LAN is up but sign-in handoff failed. Open ' + LAN_ORIGIN + '/tradeshowtool');
+        }
+        return;
+      }
+      setLanBanner(
+        'lan-cloud',
+        'Cloud connection. For ~700 pictures / ~1 GB, open ' + LAN_ORIGIN + '/tradeshowtool on the office network (192.168.254.30).'
+      );
+    }
+    initLan();
+
+    function selectedExport() {
+      return (document.querySelector('input[name="export"]:checked') || {}).value || 'pdf';
+    }
+
+    function pictureCount() {
+      return dropboxPath ? dropboxCount : selectedFiles.length;
+    }
+
+    function syncRunButton() {
+      const n = pictureCount();
+      const exp = selectedExport();
+      const replaceOk = !!(dropboxPath && dropboxCount);
+      runBtn.disabled = n === 0 || (exp === 'replace' && !replaceOk);
+      const label = document.getElementById('runBtnLabel');
+      if (label) {
+        label.textContent = exp === 'replace' ? 'Process and replace in folder' : 'Process and download';
+      }
+    }
+
+    function setReplaceEnabled(on) {
+      const card = document.getElementById('exportReplaceCard');
+      const input = card && card.querySelector('input');
+      if (!card || !input) return;
+      input.disabled = !on;
+      card.classList.toggle('is-disabled', !on);
+      if (!on && input.checked) {
+        const pdf = document.querySelector('input[name="export"][value="pdf"]');
+        if (pdf) pdf.checked = true;
+      }
+      syncChoiceCards();
+      syncRunButton();
+    }
+
+    function clearDropboxSelection() {
+      dropboxPath = '';
+      dropboxCount = 0;
+      const box = document.getElementById('dropboxPicked');
+      if (box) box.classList.remove('show');
+      setReplaceEnabled(false);
+      syncRunButton();
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    function syncChoiceCards() {
+      document.querySelectorAll('.choice-card').forEach(function (card) {
+        const input = card.querySelector('input');
+        card.classList.toggle('selected', !!(input && input.checked));
+      });
+    }
+
+    document.querySelectorAll('.choice-card').forEach(function (card) {
+      card.addEventListener('click', function () {
+        const input = card.querySelector('input');
+        if (!input || input.disabled) return;
+        input.checked = true;
+        syncChoiceCards();
+        syncRunButton();
+      });
+    });
+
+    function isImageFile(file) {
+      if (!file) return false;
+      if (IMAGE_RE.test(file.name || '')) return true;
+      return (file.type || '').indexOf('image/') === 0;
+    }
+
+    function fmtBytes(n) {
+      if (n < 1024 * 1024) return (n / 1024).toFixed(0) + ' KB';
+      if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+      return (n / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    function useFiles(fileListLike) {
+      const incoming = Array.from(fileListLike || []).filter(isImageFile);
+      incoming.sort(function (a, b) {
+        const pa = (a.webkitRelativePath || a.name || '').toLowerCase();
+        const pb = (b.webkitRelativePath || b.name || '').toLowerCase();
+        return pa < pb ? -1 : pa > pb ? 1 : 0;
+      });
+      selectedFiles = incoming.slice(0, MAX_FILES);
+      clearDropboxSelection();
+      const n = selectedFiles.length;
+      const bytes = selectedFiles.reduce(function (s, f) { return s + (f.size || 0); }, 0);
+      fileCount.textContent = n
+        ? (n + ' picture' + (n === 1 ? '' : 's') + ' · ' + fmtBytes(bytes))
+        : 'No pictures chosen';
+      fileCount.className = 'badge ' + (n ? 'bg-primary' : 'bg-secondary');
+      syncRunButton();
+      if (n === 0) {
+        fileList.classList.add('d-none');
+        fileList.innerHTML = '';
+        return;
+      }
+      const preview = selectedFiles.slice(0, 12).map(function (f) {
+        return '<li>' + (f.webkitRelativePath || f.name) + '</li>';
+      }).join('');
+      fileList.innerHTML = preview + (n > 12 ? ('<li>… +' + (n - 12) + ' more</li>') : '');
+      fileList.classList.remove('d-none');
+    }
+
+    pickFolderBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      folderInput.click();
+    });
+    pickFilesBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      filesInput.click();
+    });
+    folderInput.addEventListener('change', function () { useFiles(folderInput.files); });
+    filesInput.addEventListener('change', function () { useFiles(filesInput.files); });
+
+    dropZone.addEventListener('click', function (e) {
+      if (e.target.closest('button')) return;
+      folderInput.click();
+    });
+    dropZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('dragover'); });
+    dropZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        useFiles(e.dataTransfer.files);
+      }
+    });
+
+    function tsBrowseDropboxSyncStatusHtml(st, msg) {
+      if (!st) return '';
+      var parts = [];
+      if (st.service_configured) {
+        var svcState = (st.service_state || 'UNKNOWN').toUpperCase();
+        var svcBadge = (svcState === 'RUNNING') ? 'badge-success bg-success'
+          : (svcState === 'STOP_PENDING' || svcState === 'START_PENDING') ? 'badge-warning bg-warning text-dark'
+          : 'badge-warning bg-warning text-dark';
+        parts.push('<span class="badge ' + svcBadge + '">Service ' + escapeHtml(svcState) + '</span>');
+      }
+      if (st.sync_client_running) {
+        parts.push('<span class="badge badge-success bg-success">Sync client running</span>');
+      } else if (st.system_session_count) {
+        parts.push('<span class="badge badge-warning bg-warning text-dark">SYSTEM only — tray sync not running</span>');
+      } else if (st.exe_found || st.service_configured) {
+        parts.push('<span class="badge badge-danger bg-danger">Dropbox sync not running</span>');
+      } else {
+        parts.push('<span class="badge badge-danger bg-danger">Dropbox.exe not found</span>');
+      }
+      if (st.folder_readable) {
+        parts.push('<span class="badge badge-light bg-light text-dark border">Folder readable</span>');
+      } else if (st.folder_exists) {
+        parts.push('<span class="badge badge-danger bg-danger">Folder not readable — check Windows permissions</span>');
+      } else if (st.folder_path) {
+        parts.push('<span class="badge badge-secondary bg-secondary">Sync folder missing</span>');
+      }
+      var html = parts.join(' ');
+      if (msg) html += ' <span class="text-muted">' + escapeHtml(msg) + '</span>';
+      return html;
+    }
+
+    function tsBrowseDropboxShowSyncStatus(st, msg) {
+      var el = document.getElementById('tsBrowseDropboxSyncStatus');
+      if (!el) return;
+      var html = tsBrowseDropboxSyncStatusHtml(st, msg);
+      if (!html) {
+        el.classList.add('d-none');
+        el.innerHTML = '';
+        return;
+      }
+      el.classList.remove('d-none');
+      el.innerHTML = html;
+    }
+
+    function tsBrowseFormatFolderMtime(iso) {
+      if (!iso) return '—';
+      var d = new Date(String(iso).trim());
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    async function tsBrowseDropboxFetch(rel) {
+      tsBrowseCurrentRel = rel || '';
+      var loadEl = document.getElementById('tsBrowseDropboxLoading');
+      var errEl = document.getElementById('tsBrowseDropboxError');
+      var rowsEl = document.getElementById('tsBrowseDropboxRows');
+      var crumbsEl = document.getElementById('tsBrowseDropboxCrumbs');
+      var countLine = document.getElementById('tsBrowseDropboxCountLine');
+      var serverLine = document.getElementById('tsBrowseDropboxServerLine');
+      var useBtn = document.getElementById('tsBrowseDropboxUseBtn');
+      if (!window.V7_BROWSE_DROPBOX_URL) return;
+      if (loadEl) loadEl.classList.remove('d-none');
+      if (errEl) {
+        errEl.classList.add('d-none');
+        errEl.textContent = '';
+      }
+      if (rowsEl) rowsEl.innerHTML = '';
+      if (useBtn) useBtn.disabled = true;
+      tsBrowsePickValue = '';
+      tsBrowseCanUse = false;
+      var u = window.V7_BROWSE_DROPBOX_URL + '?path=' + encodeURIComponent(rel || '');
+      try {
+        var r = await fetch(u, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (ct.indexOf('application/json') < 0) {
+          if (errEl) {
+            errEl.textContent = 'Could not load folders (try signing in again).';
+            errEl.classList.remove('d-none');
+          }
+          return;
+        }
+        var data = await r.json();
+        if (!data.ok) {
+          if (errEl) {
+            errEl.textContent = data.error || 'Request failed.';
+            errEl.classList.remove('d-none');
+          }
+          return;
+        }
+        tsBrowsePickValue = data.dropbox_input_value || '';
+        tsBrowseCanUse = !!data.can_use_folder;
+        tsBrowseDropboxShowSyncStatus(data.dropbox_sync_status || null, '');
+        if (serverLine) {
+          serverLine.innerHTML = 'Server Dropbox root: <code class="small user-select-all">' +
+            escapeHtml(data.server_root_path || '') + '</code>';
+        }
+        if (crumbsEl) {
+          crumbsEl.innerHTML = '';
+          var crumbs = data.breadcrumbs || [];
+          crumbs.forEach(function (c, i) {
+            var li = document.createElement('li');
+            li.className = 'breadcrumb-item' + (i === crumbs.length - 1 ? ' active' : '');
+            if (i === crumbs.length - 1) {
+              li.setAttribute('aria-current', 'page');
+              li.textContent = c.name;
+            } else {
+              var a = document.createElement('a');
+              a.href = '#';
+              a.textContent = c.name;
+              (function (relPart) {
+                a.addEventListener('click', function (ev) {
+                  ev.preventDefault();
+                  tsBrowseDropboxFetch(relPart || '');
+                });
+              })(c.rel);
+              li.appendChild(a);
+            }
+            crumbsEl.appendChild(li);
+          });
+        }
+        if (countLine) {
+          var nHere = data.image_count_here != null ? data.image_count_here : 0;
+          countLine.innerHTML = '<strong>Images in this folder:</strong> ' + nHere +
+            ' <span class="text-muted">(not including subfolders)</span>';
+        }
+        if (rowsEl) {
+          var dirs = data.directories || [];
+          dirs.forEach(function (d) {
+            var tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.innerHTML = '<td>' + escapeHtml(d.name) + '</td>' +
+              '<td class="text-nowrap small">' + escapeHtml(tsBrowseFormatFolderMtime(d.last_updated_iso)) + '</td>' +
+              '<td class="text-end fw-bold">' + (d.image_count != null ? d.image_count : 0) + '</td>';
+            tr.addEventListener('click', function () {
+              tsBrowseDropboxFetch(d.rel || '');
+            });
+            rowsEl.appendChild(tr);
+          });
+          if (!dirs.length) {
+            var trE = document.createElement('tr');
+            trE.innerHTML = '<td colspan="3" class="text-muted small">No subfolders in this directory.</td>';
+            rowsEl.appendChild(trE);
+          }
+        }
+        if (useBtn) useBtn.disabled = !tsBrowseCanUse;
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = 'Network error loading folders.';
+          errEl.classList.remove('d-none');
+        }
+      } finally {
+        if (loadEl) loadEl.classList.add('d-none');
+      }
+    }
+
+    async function tsBrowseDropboxRefreshSync() {
+      var btn = document.getElementById('tsBrowseDropboxRefreshBtn');
+      var errEl = document.getElementById('tsBrowseDropboxError');
+      if (!window.V7_DROPBOX_DESKTOP_REFRESH_URL) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Refreshing…';
+      }
+      try {
+        var r = await fetch(window.V7_DROPBOX_DESKTOP_REFRESH_URL, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ restart: true }),
+        });
+        var data = await r.json();
+        if (!r.ok || !data.ok) {
+          tsBrowseDropboxShowSyncStatus(data.status || null, data.error || 'Refresh failed.');
+          if (errEl) {
+            errEl.textContent = data.error || 'Could not refresh Dropbox sync app.';
+            errEl.classList.remove('d-none');
+          }
+          return;
+        }
+        tsBrowseDropboxShowSyncStatus(data.status || null, data.message || '');
+        await tsBrowseDropboxFetch(tsBrowseCurrentRel);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = 'Network error refreshing Dropbox sync.';
+          errEl.classList.remove('d-none');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '↻ Refresh sync & folders';
+        }
+      }
+    }
+
+    function tsOpenDropboxBrowserModal() {
+      if (window.jQuery && jQuery('#tsBrowseDropboxModal').modal) {
+        jQuery('#tsBrowseDropboxModal').modal('show');
+        tsBrowseDropboxFetch(tsBrowseCurrentRel || '');
+      }
+    }
+
+    async function applyDropboxFolder(pathValue) {
+      if (!pathValue) return;
+      const r = await fetch(TS_DROPBOX_FOLDER_URL + '?path=' + encodeURIComponent(pathValue), {
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      const data = await readJson(r);
+      if (!r.ok || !data.ok) throw new Error(data.error || 'Could not read that Dropbox folder.');
+      selectedFiles = [];
+      if (folderInput) folderInput.value = '';
+      if (filesInput) filesInput.value = '';
+      dropboxPath = data.dropbox_path || pathValue;
+      dropboxCount = data.count || 0;
+      const box = document.getElementById('dropboxPicked');
+      const label = document.getElementById('dropboxPathLabel');
+      if (label) label.textContent = dropboxPath;
+      if (box) box.classList.add('show');
+      fileCount.textContent = dropboxCount
+        ? (dropboxCount + ' picture' + (dropboxCount === 1 ? '' : 's') + ' in server Dropbox')
+        : 'No pictures in this Dropbox folder';
+      fileCount.className = 'badge ' + (dropboxCount ? 'bg-info text-dark' : 'bg-secondary');
+      if (!dropboxCount) {
+        fileList.classList.add('d-none');
+        fileList.innerHTML = '';
+      } else {
+        const extra = data.more || 0;
+        fileList.innerHTML = (data.files || []).map(function (n) {
+          return '<li>' + escapeHtml(n) + '</li>';
+        }).join('') + (extra ? ('<li>… +' + extra + ' more</li>') : '');
+        fileList.classList.remove('d-none');
+      }
+      setReplaceEnabled(dropboxCount > 0);
+      syncRunButton();
+    }
+
+    async function tsBrowseDropboxUseFolder() {
+      if (!tsBrowsePickValue) return;
+      try {
+        await applyDropboxFolder(tsBrowsePickValue);
+        if (window.jQuery && jQuery('#tsBrowseDropboxModal').modal) {
+          jQuery('#tsBrowseDropboxModal').modal('hide');
+        }
+      } catch (err) {
+        var errEl = document.getElementById('tsBrowseDropboxError');
+        if (errEl) {
+          errEl.textContent = err.message || String(err);
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    const pickDropboxBtn = document.getElementById('pickDropboxBtn');
+    if (pickDropboxBtn) {
+      pickDropboxBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        tsOpenDropboxBrowserModal();
+      });
+    }
+    const tsUseBtn = document.getElementById('tsBrowseDropboxUseBtn');
+    if (tsUseBtn) tsUseBtn.addEventListener('click', function () { tsBrowseDropboxUseFolder(); });
+    const tsRefreshBtn = document.getElementById('tsBrowseDropboxRefreshBtn');
+    if (tsRefreshBtn) tsRefreshBtn.addEventListener('click', function () { tsBrowseDropboxRefreshSync(); });
+    const clearDropboxBtn = document.getElementById('clearDropboxBtn');
+    if (clearDropboxBtn) {
+      clearDropboxBtn.addEventListener('click', function () {
+        clearDropboxSelection();
+        fileCount.textContent = 'No pictures chosen';
+        fileCount.className = 'badge bg-secondary';
+        fileList.classList.add('d-none');
+        fileList.innerHTML = '';
+        syncRunButton();
+      });
+    }
+
+    async function readJson(resp) {
+      const ct = resp.headers.get('content-type') || '';
+      if (ct.indexOf('application/json') >= 0) return resp.json();
+      return {};
+    }
+
+    async function sleep(ms) {
+      return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    runBtn.addEventListener('click', async function () {
+      const usingDropbox = !!dropboxPath;
+      const n = pictureCount();
+      if (!n) return;
+      const layout = (document.querySelector('input[name="layout"]:checked') || {}).value || '4in1';
+      const exp = selectedExport();
+      if (exp === 'replace' && !dropboxPath) {
+        setStatus('err', 'Select a Dropbox folder to replace pictures in it.');
+        return;
+      }
+      if (exp === 'replace') {
+        const ok = window.confirm(
+          'Overwrite ' + n + ' picture' + (n === 1 ? '' : 's') +
+          ' in\n' + dropboxPath +
+          '\nwith the cleaned sheets (same file names)? This cannot be undone.'
+        );
+        if (!ok) return;
+      }
+      if (!usingDropbox && !ON_LAN) {
+        const reachable = await probeLan(1200);
+        if (reachable) {
+          setStatus('busy', 'Office LAN is available. Switching so this upload stays local…');
+          try {
+            await switchToLan();
+            return;
+          } catch (err) {
+            setStatus('err', 'LAN is up but this page is still on the cloud. Open ' + LAN_ORIGIN + '/tradeshowtool and upload there.');
+            return;
+          }
+        }
+      }
+      runBtn.disabled = true;
+      hideReport();
+      const via = usingDropbox ? 'server Dropbox' : (ON_LAN ? 'office LAN' : 'cloud');
+      try {
+        const startFd = new FormData();
+        startFd.append('layout', layout);
+        startFd.append('export', exp);
+        startFd.append('expected', String(n));
+        if (document.getElementById('removePrice').checked) startFd.append('remove_price', '1');
+        if (document.getElementById('removeQty').checked) startFd.append('remove_quantity', '1');
+        if (usingDropbox) startFd.append('dropbox_path', dropboxPath);
+        const startResp = await fetch(JOB_START_URL, { method: 'POST', body: startFd, credentials: 'same-origin' });
+        const startData = await readJson(startResp);
+        if (!startResp.ok || !startData.ok) throw new Error(startData.error || 'Could not start job.');
+        const jobId = startData.job_id;
+        if (!usingDropbox) {
+          for (let i = 0; i < n; i += BATCH) {
+            const chunk = selectedFiles.slice(i, i + BATCH);
+            const fd = new FormData();
+            chunk.forEach(function (f) { fd.append('files', f, f.webkitRelativePath || f.name); });
+            setStatus('busy', 'Uploading ' + Math.min(i + chunk.length, n) + '/' + n + ' via ' + via + '…');
+            const up = await fetch('/tradeshowtool/job/' + jobId + '/upload', {
+              method: 'POST',
+              body: fd,
+              credentials: 'same-origin',
+            });
+            const upData = await readJson(up);
+            if (!up.ok || !upData.ok) throw new Error(upData.error || 'Upload failed.');
+          }
+        }
+        setStatus('busy', usingDropbox
+          ? ('Processing ' + n + ' picture' + (n === 1 ? '' : 's') + ' from ' + dropboxPath + '…')
+          : ('Processing on the ' + via + ' server…'));
+        const run = await fetch('/tradeshowtool/job/' + jobId + '/run', {
+          method: 'POST',
+          credentials: 'same-origin',
+        });
+        const runData = await readJson(run);
+        if (!run.ok || !runData.ok) throw new Error(runData.error || 'Could not start processing.');
+        while (true) {
+          await sleep(900);
+          const st = await fetch('/tradeshowtool/job/' + jobId + '/status', { credentials: 'same-origin' });
+          const data = await readJson(st);
+          if (!st.ok || !data.ok) throw new Error(data.error || 'Status check failed.');
+          if (data.state === 'error') throw new Error(data.error || data.message || 'Processing failed.');
+          setStatus('busy', data.message || 'Working…');
+          if (data.state === 'done') {
+            if (exp === 'replace') {
+              setStatus('ok', data.message || ('Replaced ' + n + ' picture(s) in the Dropbox folder.'));
+            } else {
+              const a = document.createElement('a');
+              a.href = '/tradeshowtool/job/' + jobId + '/download';
+              a.download = exp === 'zip' ? 'tradeshow_pages.zip' : 'tradeshow_pages.pdf';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setStatus('ok', data.message || 'Done. Download started.');
+            }
+            if (data.report) showReport(data.report);
+            break;
+          }
+        }
+      } catch (err) {
+        setStatus('err', err.message || String(err));
+      } finally {
+        syncRunButton();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -3,299 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('page.log_viewer.title') }}</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; 
-            margin: 20px; 
-        }
-        
-        /* Override navbar's automatic padding for better log viewer spacing */
-        body.has-navbar {
-            padding-top: 80px !important;
-        }
-        .log-entry { margin-bottom: 10px; }
-        .info { color: green; }
-        .error { color: red; }
-        .success { color: green; font-weight: bold; }
-        .warning { color: orange; }
-        .timestamp { font-weight: bold; }
-        /* Sticky bar below navbar — fixed-bottom was easy to lose behind nav / viewport chrome */
-        .log-pagination-bar {
-            position: sticky;
-            top: 76px;
-            z-index: 1040;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            background-color: rgba(255, 255, 255, 0.97);
-            padding: 10px 12px;
-            margin-bottom: 14px;
-            border-radius: 8px;
-            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 0, 0, 0.06);
-        }
-        .log-pagination-bar a {
-            margin: 0;
-            text-decoration: none;
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .log-pagination-bar a:hover {
-            background-color: #0056b3;
-        }
-        .log-pagination-bar a.disabled {
-            pointer-events: none;
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .log-pagination-bar .page-indicator {
-            padding: 0 10px;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-        }
-
-        /* New styles for highlighted text */
-        .highlight-blue {
-            color: blue;
-            font-weight: bold;
-        }
-
-        .highlight-purple {
-            color: rgb(255, 0, 255);
-            font-weight: bold;
-        }
-        .highlight-red {
-            color: red;
-            font-weight: bold;
-        }
-
-        /* Optional: Styles for capitalized text */
-        .capitalized {
-            text-transform: uppercase;
-        }
-        .log-legend {
-            display: flex; /* Arrange elements horizontally */
-            justify-content: center; /* Center horizontally */
-            gap: 20px; /* Space between elements */
-            align-items: center; /* Center vertically */
-            text-align: center; /* Ensure text is centered */
-            padding-bottom: 10px;
-        }
-
-        h3 {
-            margin: 0; /* Remove default margins */
-            font-size: 1.2em; /* Adjust font size */
-        }
-        
-        /* Search box styles */
-        .search-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        
-        #search-input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 300px;
-            font-size: 16px;
-        }
-        
-        #search-button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        #search-button:hover {
-            background-color: #0056b3;
-        }
-        
-        #clear-search {
-            padding: 8px 16px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        #clear-search:hover {
-            background-color: #5a6268;
-        }
-        
-        .live-toggle-btn {
-            padding: 8px 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-left: 10px;
-        }
-        
-        .live-toggle-btn:hover {
-            background-color: #218838;
-        }
-        
-        .live-toggle-btn.active {
-            background-color: #dc3545;
-        }
-        
-        .live-toggle-btn.active:hover {
-            background-color: #c82333;
-        }
-        
-        .highlight-search {
-            background-color: yellow;
-            color: black;
-        }
-        
-        .search-info {
-            text-align: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #007bff;
-        }
-
-        .live-panel {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-
-        #live-status {
-            font-size: 0.95rem;
-            color: #555;
-            min-height: 1.2rem;
-        }
-
-        #live-status.connected { color: #198754; font-weight: 600; }
-
-        #live-status.disconnected { color: #6c757d; }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        #live-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #28a745;
-            animation: pulse-dot 1.25s ease-in-out infinite;
-        }
-
-        #live-indicator.off {
-            background: #adb5bd;
-            animation: none;
-        }
-    </style>
+    <title>{{ log_title or _('page.log_viewer.title') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
 </head>
-<body>
+<body class="fdc-staff-page has-navbar">
     {% include 'navbar.html' %}
-    <h1 style="color: black; font-size: 2em; text-align: center; display: block;">{{ te('Log Viewer') }}</h1>
+    <div class="fdc-page fdc-page-wide log-viewer-page">
+        <div class="log-page-header">
+            <h1>{{ log_title or te('Log Viewer') }}</h1>
+            {% include '_log_tabs.html' %}
+        </div>
 
-    <div class="log-legend">
-        <h3 class="highlight-blue">{{ te('User is Blue') }}</h3>
-        <h3 class="highlight-purple">{{ te('Action is Purple') }}</h3>
-        <h3 class="highlight-red">{{ te('Order and SKU are Red') }}</h3>
-    </div>
-    
-    <!-- Search Box -->
-    <form action="{{ url_for('search_logs') }}" method="post" class="search-container">
-        <input type="text" id="search-input" name="search_term" placeholder="{{ te('Search logs...') }}" value="{{ search_term }}">
-        <button type="submit" id="search-button">{{ te('Search') }}</button>
-        <a href="{{ url_for('display') }}" id="clear-search">{{ te('Clear') }}</a>
-        <button type="button" id="delete-system-restarted-server" style="background-color:#d32f2f; color:white; border:none; border-radius:4px; padding:8px 16px; cursor:pointer; font-size:16px;">{{ te('Delete from Log File') }}</button>
-    </form>
-    
-    <!-- Search Results Info -->
-    {% if search_term %}
-    <div class="search-info">
-        Showing results for: "{{ search_term }}"
-    </div>
-    {% endif %}
-
-    {% set stream_url = url_for('stream_log') %}
-    <div class="live-panel">
-        <span id="live-indicator"{% if search_term %} class="off"{% endif %} title="{{ te('Live stream heartbeat') }}"></span>
-        <button type="button"
-                id="live-toggle"
-                class="live-toggle-btn{% if not search_term %} active{% endif %}"
-                data-live-on="{% if search_term %}0{% else %}1{% endif %}"
-                {% if search_term %}disabled title="{{ te('Clear search — live tail is disabled while filtering') }}"{% endif %}>
-            {% if search_term %}Live off{% else %}Live on{% endif %}
-        </button>
-        <span id="live-status"
-              class="{% if search_term %}disconnected{% endif %}">{{ 'Search mode — live tail disabled.' if search_term else '' }}</span>
-    </div>
-
-    <!-- Pagination (sticky — stays visible while scrolling logs) -->
-    <div class="log-pagination-bar" aria-label="{{ te('Log page navigation') }}">
-        {% if page > 1 %}
-            <a href="{{ url_for('display', page=1, search=search_term) }}">{{ te('First') }}</a>
-            <a href="{{ url_for('display', page=page-1, search=search_term) }}">{{ te('Previous') }}</a>
-        {% else %}
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('First') }}</a>
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Previous') }}</a>
-        {% endif %}
-
-        <span class="page-indicator">Page {{ page }} of {{ total_pages }}</span>
-
-        {% if page < total_pages %}
-            <a href="{{ url_for('display', page=page+1, search=search_term) }}">{{ te('Next') }}</a>
-            <a href="{{ url_for('display', page=total_pages, search=search_term) }}">{{ te('Last') }}</a>
-        {% else %}
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Next') }}</a>
-            <a class="disabled" href="#" tabindex="-1" aria-disabled="true">{{ te('Last') }}</a>
-        {% endif %}
-    </div>
-
-    <div id="log-container">
-        {% for log_class, line in log_lines %}
-            <div class="log-entry {{ log_class }}">
-                {% if search_term %}
-                    {{ line | replace(search_term, '<mark class="highlight-search">' ~ search_term ~ '</mark>') | safe }}
-                {% else %}
-                    {{ line | safe }}
-                {% endif %}
+        <div class="log-legend">
+            <h3 class="highlight-blue">👤 {{ _('log.legend.users') }}</h3>
+            <h3 class="highlight-purple">🔄 {{ _('log.legend.actions') }}</h3>
+            <h3 class="highlight-red">📦 {{ _('log.legend.skus') }}</h3>
+            <h3 class="highlight-green">📊 {{ _('log.legend.excel') }}</h3>
+            <h3 class="highlight-orange">🌐 {{ _('log.legend.ip') }}</h3>
+            {% if stream_url %}
+            <div class="live-panel">
+                <span id="live-indicator"{% if not live_enabled %} class="off"{% endif %}></span>
+                <button type="button" id="live-toggle" class="live-toggle-btn{% if live_enabled %} active{% endif %}"
+                        data-live-on="{% if live_enabled %}1{% else %}0{% endif %}"
+                        {% if search_term %}disabled{% endif %}>
+                    {% if live_enabled %}Live on{% else %}Live off{% endif %}
+                </button>
+                <span id="live-status" class="{% if not live_enabled %}disconnected{% endif %}">
+                    {% if search_term %}{{ te('Search mode — live tail disabled.') }}{% endif %}
+                </span>
             </div>
-        {% endfor %}
+            {% endif %}
+            {% if group_records %}
+            <span class="log-chunk-hint">{{ _('log.error.chunk_hint') }}</span>
+            {% endif %}
+        </div>
+
+        <div class="search-section">
+            <form action="{{ url_for(search_endpoint) }}" method="post" class="search-container">
+                <input type="text" id="search-input" name="search_term" placeholder="{{ te('Search logs...') }}" value="{{ search_term }}">
+                <button type="submit" id="search-button">🔍 {{ te('Search') }}</button>
+                <a href="{{ url_for(log_endpoint) }}" id="clear-search">{{ te('Clear') }}</a>
+                {% if active_log == 'system' %}
+                <button type="button" id="delete-system-restarted-server" class="fdc-btn fdc-btn-danger">{{ te('Delete from Log File') }}</button>
+                {% endif %}
+            </form>
+        </div>
+
+        {% if search_term %}
+        <div class="search-info">{{ te('Showing results for:') }} "{{ search_term }}" ({{ total_count or 0 }})</div>
+        {% endif %}
+
+        <div id="log-container">
+            {% if not log_lines %}
+                <div class="empty-log">{{ empty_message or te('No log lines') }}</div>
+            {% endif %}
+            {% for log_class, line in log_lines %}
+                <div class="log-entry {{ log_class }}">
+                    {% if search_term %}
+                        {{ line | replace(search_term, '<mark class="highlight-search">' ~ search_term ~ '</mark>') | safe }}
+                    {% else %}
+                        {{ line | safe }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="log-pagination-bar">
+            {% if page > 1 %}
+                <a href="{{ url_for(log_endpoint, page=1, search=search_term) }}">{{ te('First') }}</a>
+                <a href="{{ url_for(log_endpoint, page=page-1, search=search_term) }}">{{ te('Previous') }}</a>
+            {% else %}
+                <a class="disabled" href="#">{{ te('First') }}</a>
+                <a class="disabled" href="#">{{ te('Previous') }}</a>
+            {% endif %}
+            <span>Page {{ page }} / {{ total_pages }}</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for(log_endpoint, page=page+1, search=search_term) }}">{{ te('Next') }}</a>
+                <a href="{{ url_for(log_endpoint, page=total_pages, search=search_term) }}">{{ te('Last') }}</a>
+            {% else %}
+                <a class="disabled" href="#">{{ te('Next') }}</a>
+                <a class="disabled" href="#">{{ te('Last') }}</a>
+            {% endif %}
+        </div>
     </div>
 
     <script>
-        const STREAM_URL = {{ stream_url | tojson }};
-        const SEARCH_TERM_RAW = {{ search_term | tojson }};
+        const STREAM_URL = {{ (stream_url or '') | tojson }};
+        const SEARCH_TERM_RAW = {{ (search_term or '') | tojson }};
         const logContainer = document.getElementById("log-container");
         const searchInput = document.getElementById("search-input");
         const liveToggle = document.getElementById("live-toggle");
         const liveStatus = document.getElementById("live-status");
         const liveIndicator = document.getElementById("live-indicator");
         const MAX_LIVE_ROWS = 300;
-
         let evtSource = null;
-        let liveEnabled = {% if search_term %}false{% else %}true{% endif %};
+        let liveEnabled = {% if live_enabled %}true{% else %}false{% endif %};
 
         function setLiveUi(connected, label) {
             if (liveStatus) {
@@ -303,11 +105,8 @@
                 liveStatus.classList.toggle('connected', !!connected);
                 liveStatus.classList.toggle('disconnected', !connected);
             }
-            if (liveIndicator) {
-                liveIndicator.classList.toggle('off', !(connected && liveEnabled));
-            }
+            if (liveIndicator) liveIndicator.classList.toggle('off', !(connected && liveEnabled));
         }
-
         function trimLiveRows() {
             for (;;) {
                 const rows = logContainer.querySelectorAll(':scope > .live-stream-line');
@@ -315,85 +114,46 @@
                 rows[rows.length - 1].remove();
             }
         }
-
-        function applyLogClasses(el, logClass) {
-            el.className = 'log-entry live-stream-line';
-            ['error', 'info', 'success', 'warning'].forEach(c => el.classList.remove(c));
-            if (logClass) el.classList.add(logClass);
-        }
-
         function connectEventSource() {
-            if (!liveEnabled || SEARCH_TERM_RAW) return;
+            if (!liveEnabled || SEARCH_TERM_RAW || !STREAM_URL) return;
             if (evtSource) evtSource.close();
             setLiveUi(false, 'Connecting…');
-
             evtSource = new EventSource(STREAM_URL);
-
             evtSource.onopen = () => setLiveUi(true, 'Connected — streaming new lines');
-
             evtSource.onmessage = function (event) {
                 try {
                     if (!event.data) return;
                     const data = JSON.parse(event.data);
-                    const { log_class: logClass, formatted_line: formattedLine } = data;
-
-                    if (!formattedLine) return;
-
+                    if (!data.formatted_line) return;
                     const logEntry = document.createElement('div');
-                    applyLogClasses(logEntry, logClass);
-
-                    const st = SEARCH_TERM_RAW;
-                    if (st && formattedLine.toLowerCase().includes(st.toLowerCase())) {
-                        const regex = new RegExp(st.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-                        logEntry.innerHTML = formattedLine.replace(regex, m => `<mark class="highlight-search">${m}</mark>`);
-                    } else {
-                        logEntry.innerHTML = formattedLine;
-                    }
-
+                    logEntry.className = 'log-entry live-stream-line' + (data.log_class ? ' ' + data.log_class : '');
+                    logEntry.innerHTML = data.formatted_line;
+                    const empty = logContainer.querySelector('.empty-log');
+                    if (empty) empty.remove();
                     logContainer.insertBefore(logEntry, logContainer.firstChild);
                     trimLiveRows();
-                } catch (e) {
-                    console.error('SSE parse error:', e);
-                }
+                } catch (e) {}
             };
-
             evtSource.onerror = () => {
-                evtSource.close();
+                if (evtSource) evtSource.close();
                 evtSource = null;
-                if (!liveEnabled) {
-                    setLiveUi(false, 'Live off');
-                    return;
-                }
+                if (!liveEnabled) { setLiveUi(false, 'Live off'); return; }
                 setLiveUi(false, 'Disconnected — reconnecting…');
                 setTimeout(() => liveEnabled && !SEARCH_TERM_RAW && connectEventSource(), 3000);
             };
         }
-
         function stopLiveStream() {
             liveEnabled = false;
-            if (evtSource) {
-                evtSource.close();
-                evtSource = null;
-            }
-            if (liveToggle) {
-                liveToggle.classList.remove('active');
-                liveToggle.dataset.liveOn = '0';
-                liveToggle.textContent = 'Live off';
-            }
+            if (evtSource) { evtSource.close(); evtSource = null; }
+            if (liveToggle) { liveToggle.classList.remove('active'); liveToggle.dataset.liveOn = '0'; liveToggle.textContent = 'Live off'; }
             setLiveUi(false, 'Live off');
         }
-
         function startLiveStream() {
-            if (SEARCH_TERM_RAW) return;
+            if (SEARCH_TERM_RAW || !STREAM_URL) return;
             liveEnabled = true;
-            if (liveToggle) {
-                liveToggle.classList.add('active');
-                liveToggle.dataset.liveOn = '1';
-                liveToggle.textContent = 'Live on';
-            }
+            if (liveToggle) { liveToggle.classList.add('active'); liveToggle.dataset.liveOn = '1'; liveToggle.textContent = 'Live on'; }
             connectEventSource();
         }
-
         if (liveToggle) {
             liveToggle.addEventListener('click', () => {
                 if (liveToggle.disabled) return;
@@ -401,13 +161,18 @@
                 else startLiveStream();
             });
         }
-
-        if (!SEARCH_TERM_RAW) startLiveStream();
-        else stopLiveStream();
-
-        window.addEventListener('load', () => {
-            searchInput.focus();
-            searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
+        if (liveEnabled) startLiveStream();
+        const delBtn = document.getElementById('delete-system-restarted-server');
+        if (delBtn) {
+            delBtn.addEventListener('click', function () {
+                fetch('/delete_system_restarted', { method: 'POST' }).then(() => location.reload());
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.selectionStart = searchInput.selectionEnd = searchInput.value.length;
+            }
         });
     </script>
 </body>

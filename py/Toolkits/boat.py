@@ -24,6 +24,7 @@ from py.utilities.boat_sheet_cache import (
     build_boat_data_cache_key,
     invalidate_boat_data_response_cache,
     load_cached_boat_data,
+    load_latest_cached_boat_payload,
     load_sheet_dataframe,
     save_cached_boat_data,
 )
@@ -172,6 +173,20 @@ def _written_time_column(df: pd.DataFrame) -> str | None:
             return candidate
     if len(df.columns) >= 15:
         return str(df.columns[14])
+    return None
+
+
+def _written_by_column(df: pd.DataFrame, written_col: str | None) -> str | None:
+    named = _find_sheet_column(df, ("written by", "written_by", "wrote by"))
+    if named:
+        return named
+    if written_col and written_col in df.columns:
+        cols = list(df.columns)
+        idx = cols.index(written_col)
+        if idx > 0:
+            return str(cols[idx - 1])
+    if len(df.columns) >= 14:
+        return str(df.columns[13])
     return None
 
 
@@ -638,9 +653,11 @@ def _build_container_hub_rows(
     sheet["_fdc_sort_num"] = sheet["container"].map(_fdc_container_sort_number)
     sheet = sheet.sort_values(by="_fdc_sort_num", ascending=False).drop(columns=["_fdc_sort_num"])
     written_col = _written_time_column(sheet)
+    written_by_col = _written_by_column(sheet, written_col)
     voyage_col = _find_sheet_column(sheet, ("voyage", "vessel no", "vesso"))
     etd_col = _find_sheet_column(sheet, ("eta1", "etd"))
     eta_col = _find_sheet_eta_column(sheet)
+    rcd_col = _find_sheet_column(sheet, ("rcd",))
 
     container_list = sheet["container"].tolist()
     rcvd_lookup: dict[str, float] = {}
@@ -691,6 +708,7 @@ def _build_container_hub_rows(
         po_file = os.path.join(OUTPUT_DIR, f"{container_num}-PO.csv")
         written_raw = record.get(written_col) if written_col else ""
         written_date, written_clock = _split_datetime_display(written_raw)
+        written_by = _clean_hub_text(record.get(written_by_col)) if written_by_col else ""
         processed_date, processed_clock = po_created_lookup.get(container_num, ("", ""))
         msrp_info = msrp_lookup.get(container_num, {})
         raw_msrp_status = str(msrp_info.get("status") or "unknown")
@@ -719,14 +737,20 @@ def _build_container_hub_rows(
         if not eta:
             eta = _clean_hub_text(tracking.get("eta"))
 
+        rcd = _tracking_date_display(record.get(rcd_col)) if rcd_col else ""
+        if not rcd:
+            rcd = _clean_hub_text(tracking.get("deliver_date"))
+
         row = {
             "container": container_num,
             "bol": bol,
             "vessel_no": vessel_no,
             "etd": etd,
             "eta": eta,
+            "rcd": rcd,
             "written_date": written_date,
             "written_time": written_clock,
+            "written_by": written_by,
             "processed_date": processed_date,
             "processed_time": processed_clock,
             "msrp_status": msrp_status,
@@ -751,6 +775,89 @@ def _build_container_hub_rows(
 
     rows.sort(key=_hub_row_sort_key)
     return rows
+
+
+def lookup_boat_hub_row(container_id: str) -> dict | None:
+    """Find one container row from the cached /boat/data payload."""
+    normalized = normalize_container_id(container_id)
+    if not normalized:
+        return None
+    payload = load_latest_cached_boat_payload() or {}
+    for row in payload.get("data") or []:
+        if normalize_container_id(row.get("container")) == normalized:
+            if not str(row.get("rcd") or "").strip():
+                row["rcd"] = _sheet_rcd_map().get(normalized, "")
+            return row
+    return None
+
+
+def _sheet_rcd_map() -> dict[str, str]:
+    """FDC container -> RCD date from the local Google-sheet cache."""
+    path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "output", "boat_cache", "container_import_sheet.csv")
+    )
+    if not os.path.isfile(path):
+        return {}
+    try:
+        df = pd.read_csv(path)
+    except Exception:
+        return {}
+    if "FDC container" not in df.columns:
+        return {}
+    rcd_col = _find_sheet_column(df, ("rcd",))
+    if not rcd_col:
+        return {}
+    out: dict[str, str] = {}
+    for _, rec in df.iterrows():
+        cid = normalize_container_id(rec.get("FDC container"))
+        if not cid:
+            continue
+        rcd = _tracking_date_display(rec.get(rcd_col))
+        if rcd:
+            out[cid] = rcd
+    return out
+
+
+def _fill_missing_rcd(rows: list[dict]) -> None:
+    missing = [row for row in (rows or []) if row and not str(row.get("rcd") or "").strip()]
+    if not missing:
+        return
+    rcd_map = _sheet_rcd_map()
+    if not rcd_map:
+        return
+    for row in missing:
+        cid = normalize_container_id(row.get("container"))
+        if cid and rcd_map.get(cid):
+            row["rcd"] = rcd_map[cid]
+
+
+def sidebar_container_lists(*, arrived_limit: int = 5) -> tuple[list[dict], list[dict]]:
+    """Ocean (all, newest first) and latest arrived containers for the search sidebar."""
+    payload = load_latest_cached_boat_payload() or {}
+    rcd_map = _sheet_rcd_map()
+    ocean: list[dict] = []
+    arrived: list[dict] = []
+    seen_ocean: set[str] = set()
+    seen_arrived: set[str] = set()
+    for row in payload.get("data") or []:
+        cid = normalize_container_id(row.get("container"))
+        if not cid or cid.startswith("L"):
+            continue
+        mode = str(row.get("action_mode") or "").strip().lower()
+        item = {
+            "id": cid,
+            "eta": str(row.get("eta") or "").strip(),
+            "rcd": str(row.get("rcd") or "").strip() or rcd_map.get(cid, ""),
+        }
+        if mode in {"ocean", "port"}:
+            if cid not in seen_ocean:
+                seen_ocean.add(cid)
+                ocean.append(item)
+        elif mode == "landed":
+            if cid not in seen_arrived:
+                seen_arrived.add(cid)
+                arrived.append(item)
+    return ocean, arrived[:arrived_limit]
 
 
 def get_filtered_order_summary_by_skus(full_sku_list):
@@ -1302,8 +1409,9 @@ def add_multiple_containers_to_sheets(container_list):
                     current_app.logger.error(f"Error reading Invoice for {container_num}: {e}")
                     actual_container_number = None
             
-            # Set timestamp in column O
+            # Set timestamp in column O and current user in column N (written by)
             new_row[14] = datetime.now().strftime('%m/%d/%Y %H:%M:%S')  # Column O (index 14)
+            new_row[13] = str(session.get("username") or "").strip()
             
             new_rows.append(new_row)
         
@@ -1984,6 +2092,7 @@ def boat_data():
         if not force_refresh:
             cached_payload = load_cached_boat_data(cache_key)
             if cached_payload:
+                _fill_missing_rcd(cached_payload.get("data") or [])
                 return jsonify(cached_payload)
 
         try:

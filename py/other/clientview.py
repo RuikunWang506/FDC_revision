@@ -2,7 +2,6 @@
 
 from flask import (
     Blueprint,
-    current_app,
     flash,
     redirect,
     render_template,
@@ -30,6 +29,7 @@ from py.utilities.customer_purchase_access import (
     filter_product_data_for_customer,
 )
 from py.utilities.dashboard_permissions import CLIENT_PORTAL_TOOL_IDS, tool_visible_for_user
+from py.utilities.logging_setup import log_user_action
 
 clientview_bp = Blueprint("clientview", __name__, url_prefix="/clientview")
 
@@ -223,10 +223,9 @@ def clientview_product_detail(search_input=None):
     )
 
     if search_input:
-        current_app.logger.info(
-            "***%s***__@@@search SKU@@@__ %s [clientview]",
+        log_user_action(
+            f"***{current_user}***__@@@search SKU@@@__ {search_input.lower()} [clientview]",
             current_user,
-            search_input.lower(),
         )
         limits_on = customer_purchase_limit_enabled(
             current_user, FEATURE_CLIENT_PRODUCT_DETAIL

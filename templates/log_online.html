@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('log.tab.online') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page fdc-page-wide log-viewer-page">
+    <div class="page-header">
+        <h1>🟢 {{ _('log.tab.online') }}</h1>
+        {% include '_log_tabs.html' %}
+    </div>
+
+    <div class="online-dashboard">
+        <div class="fdc-panel">
+            <h3 class="panel-title">🟢 {{ _('log.online.live') }} <span id="liveOnlineCount" class="badge badge-success">…</span></h3>
+            <div id="liveOnlineGrid" class="live-grid">
+                <span class="live-empty">{{ _('nav.online_loading') }}</span>
+            </div>
+        </div>
+
+        <div class="fdc-panel">
+            <form method="get" action="{{ url_for('log_center.display_online') }}" class="toolbar">
+                <div class="toolbar-group">
+                    <label for="filter-date-from">{{ _('log.online.date_from') }}</label>
+                    <input type="date" id="filter-date-from" name="date_from" value="{{ date_from }}">
+                </div>
+                <div class="toolbar-group">
+                    <label for="filter-date-to">{{ _('log.online.date_to') }}</label>
+                    <input type="date" id="filter-date-to" name="date_to" value="{{ date_to }}">
+                </div>
+                <div class="toolbar-group">
+                    <label for="filter-user">{{ _('log.online.user') }}</label>
+                    <select id="filter-user" name="user">
+                        <option value="">{{ _('log.online.all_users') }}</option>
+                        {% for u in usernames %}
+                        <option value="{{ u }}"{% if selected_user == u %} selected{% endif %}>{{ u }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="toolbar-group">
+                    <label for="filter-search">{{ te('Search') }}</label>
+                    <input type="search" id="filter-search" name="search" value="{{ search_term }}" placeholder="{{ te('Search logs...') }}">
+                </div>
+                <div class="toolbar-actions">
+                    <button type="submit" class="btn-tool btn-primary-tool">{{ te('Search') }}</button>
+                    <a href="{{ url_for('log_center.display_online') }}" class="btn-tool btn-secondary-tool">{{ te('Clear') }}</a>
+                </div>
+            </form>
+            <div class="date-presets" data-today-pst="{{ today_pst }}">
+                <button type="button" class="date-preset" data-preset="today">{{ _('log.online.today') }}</button>
+                <button type="button" class="date-preset" data-preset="yesterday">{{ _('log.online.yesterday') }}</button>
+                <button type="button" class="date-preset" data-preset="7d">{{ _('log.online.last7') }}</button>
+                <button type="button" class="date-preset" data-preset="30d">{{ _('log.online.last30') }}</button>
+            </div>
+            <div class="hint-box">{{ _('log.online.hint') }}</div>
+        </div>
+
+        <p class="stats-line">
+            {% if date_from or date_to %}{{ date_from or '…' }} – {{ date_to or '…' }} · {% endif %}
+            {{ _('log.online.sessions') }}: {{ total_count }}
+            {% if selected_user %} · {{ selected_user }}{% endif %}
+        </p>
+
+        {% if user_summary %}
+        <div class="fdc-panel">
+            <h3 class="panel-title">📈 {{ _('log.online.summary') }}</h3>
+            <div class="summary-grid">
+                {% for row in user_summary %}
+                <div class="summary-card" style="--user-color: {{ row.color }}">
+                    <div class="uname">{{ row.username }}</div>
+                    <div class="total">{{ row.total_display }}</div>
+                    <div class="detail">{{ row.session_count }} {{ _('log.online.segments') }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="fdc-panel">
+            <h3 class="panel-title">📋 {{ _('log.online.detail') }}</h3>
+            {% if sessions %}
+            <div class="session-table-wrap">
+                <table class="session-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('log.online.user') }}</th>
+                            <th>{{ _('log.online.duration') }}</th>
+                            <th>{{ _('log.online.from') }}</th>
+                            <th>{{ _('log.online.to') }}</th>
+                            <th>{{ _('log.online.logged_at') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                        <tr>
+                            <td><span style="color:{{ s.color }};font-weight:600">{{ s.username }}</span></td>
+                            <td><strong>{{ s.duration }}</strong></td>
+                            <td>{{ s.start }}</td>
+                            <td>{{ s.end }}</td>
+                            <td>{{ s.stamp }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-log">{{ _('log.online.empty') }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="log-pagination-bar">
+        {% if page > 1 %}
+            <a href="{{ url_for('log_center.display_online', page=1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('First') }}</a>
+            <a href="{{ url_for('log_center.display_online', page=page-1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Previous') }}</a>
+        {% else %}
+            <a class="disabled" href="#">{{ te('First') }}</a>
+            <a class="disabled" href="#">{{ te('Previous') }}</a>
+        {% endif %}
+        <span>Page {{ page }} / {{ total_pages }} ({{ total_count }})</span>
+        {% if page < total_pages %}
+            <a href="{{ url_for('log_center.display_online', page=page+1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Next') }}</a>
+            <a href="{{ url_for('log_center.display_online', page=total_pages, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Last') }}</a>
+        {% else %}
+            <a class="disabled" href="#">{{ te('Next') }}</a>
+            <a class="disabled" href="#">{{ te('Last') }}</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function () {
+    var form = document.querySelector('.online-dashboard form.toolbar');
+    if (!form) return;
+    var fromInput = document.getElementById('filter-date-from');
+    var toInput = document.getElementById('filter-date-to');
+    var presetWrap = document.querySelector('.date-presets');
+    var todayPst = presetWrap ? presetWrap.getAttribute('data-today-pst') : '';
+
+    function fmtDate(d) {
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+    }
+    function addDays(isoDate, delta) {
+        var parts = isoDate.split('-').map(Number);
+        var d = new Date(parts[0], parts[1] - 1, parts[2]);
+        d.setDate(d.getDate() + delta);
+        return fmtDate(d);
+    }
+    function setRange(from, to) {
+        if (!fromInput || !toInput) return;
+        fromInput.value = from;
+        toInput.value = to;
+        form.submit();
+    }
+    document.querySelectorAll('.date-preset').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!todayPst) return;
+            var kind = btn.getAttribute('data-preset');
+            if (kind === 'today') setRange(todayPst, todayPst);
+            else if (kind === 'yesterday') { var y = addDays(todayPst, -1); setRange(y, y); }
+            else if (kind === '7d') setRange(addDays(todayPst, -6), todayPst);
+            else if (kind === '30d') setRange(addDays(todayPst, -29), todayPst);
+        });
+    });
+})();
+
+(function () {
+    var grid = document.getElementById('liveOnlineGrid');
+    var countEl = document.getElementById('liveOnlineCount');
+    if (!grid) return;
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function renderLive(users) {
+        users = Array.isArray(users) ? users : [];
+        if (countEl) countEl.textContent = String(users.length);
+        if (!users.length) {
+            grid.innerHTML = '<span class="live-empty">{{ _("log.online.nobody") }}</span>';
+            return;
+        }
+        grid.innerHTML = users.map(function (u) {
+            return '<div class="live-card"><div class="name">' + esc(u.username) + '</div>' +
+                '<div class="meta">{{ _("log.online.since") }} ' + esc(u.since) + '</div>' +
+                '<div class="meta">{{ _("log.online.elapsed") }} ' + esc(u.elapsed_display) + '</div></div>';
+        }).join('');
+    }
+    function refreshLive() {
+        fetch('/api/presence/online')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) { if (data && data.users) renderLive(data.users); })
+            .catch(function () { if (countEl) countEl.textContent = '?'; });
+    }
+    refreshLive();
+    setInterval(refreshLive, 30000);
+})();
+</script>
+</body>
+</html>

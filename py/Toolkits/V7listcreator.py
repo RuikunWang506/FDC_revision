@@ -2722,6 +2722,7 @@ def _build_listcreator_inventory_context(
         'total_duplicates': total_duplicates,
         'final_count': final_count,
         'list_input_is_dropbox_folder': _list_input_is_dropbox_subpath_folder(list_input),
+        'bag_description_options': fetch_description_options(),
     }
 
 

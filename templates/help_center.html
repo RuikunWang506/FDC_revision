@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('page.help.title') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page help-center-page">
+    <div class="help-hero">
+        <h1>{{ _('page.help.hero') }}</h1>
+        <p>{{ _('page.help.lead') }}</p>
+        <form class="help-search-form" method="get" action="{{ url_for('help.index') }}">
+            {% if active_category %}
+            <input type="hidden" name="category" value="{{ active_category }}">
+            {% endif %}
+            <input type="search" name="q" value="{{ search }}" placeholder="{{ _('page.help.search') }}" autocomplete="off">
+            <button type="submit">{{ te('Search') }}</button>
+        </form>
+    </div>
+
+    <div class="help-categories">
+        <a href="{{ url_for('help.index') }}" class="help-cat-card {% if not active_category %}active{% endif %}">
+            <span class="icon">📚</span>
+            <strong>{{ _('page.help.all') }}</strong>
+        </a>
+        {% for cat in categories %}
+        <a href="{{ url_for('help.index', category=cat) }}" class="help-cat-card {% if active_category == cat %}active{% endif %}">
+            <span class="icon">{{ category_icons.get(cat, '📄') if category_icons is defined else '📄' }}</span>
+            <strong>{{ category_label(cat) }}</strong>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="help-layout">
+        <div>
+            <h2 class="help-section-title">
+                {% if search %}
+                    {{ _('page.help.results') }} 「{{ search }}」
+                {% elif active_category %}
+                    {{ category_label(active_category) }}
+                {% else %}
+                    {{ _('page.help.all_docs') }}
+                {% endif %}
+            </h2>
+
+            {% if not_found %}
+            <div class="fdc-empty">{{ _('page.help.not_found') }}</div>
+            {% elif articles %}
+                {% for a in articles %}
+                <a href="{{ url_for('help.article', slug=a.slug) }}" class="help-article-card">
+                    <h3>{{ a.title }}</h3>
+                    <p>{{ a.summary or _('page.help.click_detail') }}</p>
+                    <span class="badge-cat">{{ category_label(a.category) }}</span>
+                </a>
+                {% endfor %}
+            {% else %}
+            <div class="fdc-empty">{{ _('page.help.empty') }}</div>
+            {% endif %}
+        </div>
+
+        <aside>
+            <div class="help-sidebar-panel">
+                <h4>{{ _('page.help.popular') }}</h4>
+                {% for art in popular %}
+                <a href="{{ url_for('help.article', slug=art.slug) }}" class="help-sidebar-link">{{ art.title }}</a>
+                {% else %}
+                <div class="muted">{{ _('page.help.empty') }}</div>
+                {% endfor %}
+            </div>
+            <div class="help-sidebar-panel">
+                <h4>{{ _('page.help.shortcuts') }}</h4>
+                <a href="{{ url_for('help.article', slug='getting-started') }}" class="help-sidebar-link">{{ _('page.help.getting_started') }}</a>
+                <a href="{{ url_for('help.index', category='page_guide') }}" class="help-sidebar-link">{{ _('page.help.page_guides') }}</a>
+                <a href="{{ url_for('help.index', category='terminology') }}" class="help-sidebar-link">{{ _('page.help.terms') }}</a>
+                <a href="{{ url_for('help.index', category='faq') }}" class="help-sidebar-link">{{ category_label('faq') }}</a>
+            </div>
+            <div class="help-contact">
+                <strong>{{ _('page.help.more') }}</strong>
+                <p class="small mb-0 mt-2">{{ _('page.help.more_hint') }}</p>
+            </div>
+        </aside>
+    </div>
+</div>
+</body>
+</html>

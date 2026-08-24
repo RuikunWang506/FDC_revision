@@ -22,6 +22,9 @@ bag_style_viewer_bp = Blueprint('bag_style_viewer', __name__, template_folder='t
 
 sql_server_config = Config.SQL_SERVER_CONFIG
 
+# Always offered in Bag Style Viewer even before any style is tagged.
+DESCRIPTION_PRESETS = ('SHOULDER BAG',)
+
 # ----- Helpers -----
 
 def get_stock_data_for_styles(styles):
@@ -158,6 +161,12 @@ def fetch_all_descriptions():
     finally:
         cur.close()
         conn.close()
+    existing = {d.strip().upper() for d in descriptions}
+    for preset in DESCRIPTION_PRESETS:
+        if preset.upper() not in existing:
+            descriptions.append(preset)
+            existing.add(preset.upper())
+    descriptions.sort(key=lambda d: d.upper())
     return descriptions
 
 def _style_meets_stock_color_filters(style, stock_filter=None, color_filter=None):

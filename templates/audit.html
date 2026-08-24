@@ -4,350 +4,1492 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('page.audit.title') }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .upload-section {
-    background-color: #e8f4fd;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border: 2px solid #0d6efd;
-}
-
-.file-upload-info {
-    font-size: 0.9em;
-    color: #6c757d;
-    margin-top: 10px;
-}
-
-.upload-button {
-    margin-top: 15px;
-}
+        body {
+            background: linear-gradient(160deg, #eef3fb 0%, #f7f9fd 42%, #eef6f4 100%);
+            color: #1f2a44;
+            min-height: 100vh;
+        }
+        .page-wrap { max-width: 1680px; margin: 0 auto; padding: 24px 20px 48px; }
+        .title-row {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
+        }
+        .title-row h1 { margin: 0 0 6px; font-size: 28px; font-weight: 700; letter-spacing: 0.2px; }
+        .title-sub { color: #5d6a85; font-size: 14px; margin: 0; }
+        .title-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .cache-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #fff; border: 1px solid #d9e6ff; border-radius: 999px;
+            padding: 7px 12px; font-size: 12px; color: #3d4d6f;
+            box-shadow: 0 4px 12px rgba(29, 71, 171, 0.06);
+        }
+        .cache-dot { width: 8px; height: 8px; border-radius: 50%; background: #1cc88a; }
+        .cache-dot.busy { background: #f6c23e; animation: pulse 1.2s infinite; }
+        .cache-dot.err { background: #e74a3b; }
+        @keyframes pulse { 50% { opacity: 0.4; } }
+        .card-box {
+            background: #fff; border: 1px solid #dde6ff; border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(29, 71, 171, 0.07); padding: 16px 18px; margin-bottom: 16px;
+        }
+        .card-box h3 { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: #15306b; }
+        .card-hint { color: #6b7893; font-size: 12px; margin-bottom: 12px; }
+        .card-head {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+        }
+        .card-head h3 { margin: 0 0 4px; }
+        .card-head .card-hint { margin-bottom: 0; }
+        .filter-row {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .chip {
+            border: 1px solid #cfdcff; background: #f7f9ff; color: #2b3f75;
+            border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+            cursor: pointer;
+        }
+        .chip.active { background: #1d4fbb; border-color: #1d4fbb; color: #fff; }
+        .filter-select, .filter-search, .filter-date {
+            border: 1px solid #cfdcff; border-radius: 10px; padding: 7px 10px;
+            font-size: 13px; color: #15306b; background: #fff; min-width: 140px;
+        }
+        .filter-date { min-width: 138px; }
+        .filter-sep { color: #8a97b3; font-size: 12px; }
+        .range-caption { font-size: 12px; color: #5d6a85; margin-left: 4px; }
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; margin-bottom: 10px;
+        }
+        .stats-row.last-year { margin-bottom: 16px; }
+        .stat {
+            background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+            border: 1px solid #d9e6ff; border-radius: 14px; padding: 14px 14px 12px;
+        }
+        .stat .k { font-size: 11px; color: #5d6a85; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+        .stat .v { font-size: 22px; font-weight: 800; color: #15306b; line-height: 1.1; }
+        .stat .d { font-size: 11px; margin-top: 6px; font-weight: 600; }
+        .stat .d.up { color: #1cc88a; }
+        .stat .d.down { color: #e74a3b; }
+        .stat .d.flat { color: #6b7893; }
+        .stat.last-year {
+            background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
+            border-color: #f0dd9a;
+        }
+        .stat.last-year .k { color: #8a6d1f; }
+        .stat.last-year .v { color: #6b4e00; }
+        .charts-grid {
+            display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px;
+        }
+        .charts-grid-3 {
+            display: grid; grid-template-columns: 1.1fr 0.9fr 0.9fr; gap: 16px; margin-bottom: 16px;
+        }
+        .chart-wrap { position: relative; height: 280px; }
+        .compare-panel {
+            display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+            gap: 12px; margin-top: 12px; padding: 12px 14px;
+            background: #f7f9ff; border: 1px solid #d9e6ff; border-radius: 12px;
+        }
+        .compare-panel .k { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5d6a85; }
+        .compare-panel .range { font-size: 12px; color: #3d4d6f; margin-top: 4px; line-height: 1.35; }
+        .compare-panel .v { font-size: 22px; font-weight: 800; color: #15306b; line-height: 1.1; }
+        .compare-panel .d { font-size: 12px; font-weight: 600; }
+        .compare-panel .d.up { color: #1cc88a; }
+        .compare-panel .d.down { color: #e74a3b; }
+        .compare-panel .d.flat { color: #6b7893; }
         .table-container {
-            max-height: 500px;
-            overflow-y: auto;
-            position: relative;
+            max-height: 520px; overflow: auto; border: 1px solid #e6ecf8; border-radius: 12px;
         }
-        
-        .audit-section {
-            margin-bottom: 2rem;
-        }
-        
-        /* Freeze table headers */
-        .table-container table {
-            margin-bottom: 0;
-        }
-        
+        .table-container table { margin-bottom: 0; font-size: 12px; white-space: nowrap; }
         .table-container thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa;
-            z-index: 10;
-            border-bottom: 2px solid #dee2e6;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+            position: sticky; top: 0; background: #eef3fb; z-index: 10;
+            border-bottom: 2px solid #d5def0; color: #15306b;
         }
-        
-        /* Ensure proper styling for frozen headers */
-        .table-container .table-striped thead th {
-            background-color: #e9ecef;
+        .table tbody tr:last-child,
+        .table tbody tr:last-child td {
+            background-color: #f4f7ff !important; font-weight: 700;
+            position: sticky; bottom: 0; z-index: 5;
+            box-shadow: 0 -2px 6px rgba(21, 48, 107, 0.08);
         }
-        
-        /* Add some padding to prevent content from hiding behind header */
-        .table-container tbody tr:first-child td {
-            padding-top: 8px;
+        .muted { color: #6b7893; }
+        .building {
+            text-align: center; padding: 48px 16px; color: #3d4d6f;
         }
-        
-        .search-options {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .building h2 { margin: 12px 0 6px; font-size: 22px; }
+        .audit-spinner {
+            width: 42px; height: 42px; margin: 0 auto 12px;
+            border: 4px solid #d9e6ff; border-top-color: #1d4fbb;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
         }
-        
-        .search-type-section {
-            display: none;
-            margin-top: 15px;
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .section-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+        .pager { display: flex; gap: 8px; align-items: center; font-size: 12px; color: #5d6a85; }
+        .upload-section {
+            background: #f3f8ff; border: 1px dashed #9db7f3; border-radius: 12px; padding: 14px;
         }
-        
-        .search-type-section.active {
-            display: block;
+        @media (max-width: 1100px) {
+            .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
+            .chart-wrap { height: 240px; }
         }
-        
-        .form-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .form-row label {
-            margin-bottom: 0;
-            white-space: nowrap;
-        }
-        /* Style the totals row */
-        /* Style the totals row and make it sticky */
-.table tbody tr:last-child {
-    background-color: #f8f9fa !important;
-    border-top: 2px solid #dee2e6;
-    font-weight: bold;
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    box-shadow: 0 -2px 2px -1px rgba(0, 0, 0, 0.4);
-}
-
-.table tbody tr:last-child td {
-    background-color: #f8f9fa !important;
-}
-
-
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
-    <div class="container mt-4">
-        <h1>{{ te('Master Audit') }}</h1>
-        <p>Welcome to the audit page, {{ current_user }}!</p>
-        
-        <!-- Search Options Form -->
-        <div class="search-options">
-            <h4>{{ te('Order Selection Criteria') }}</h4>
-            <form method="POST" id="auditForm">
-                <!-- Search Type Selection -->
-                <div class="form-row">
-                    <label class="form-label">{{ te('Search by:') }}</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="search_type" id="search_orders" value="orders" 
-                               {% if search_type == 'orders' or not search_type %}checked{% endif %}>
-                        <label class="form-check-label" for="search_orders">{{ te('Number of Orders') }}</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="search_type" id="search_days" value="days"
-                               {% if search_type == 'days' %}checked{% endif %}>
-                        <label class="form-check-label" for="search_days">{{ te('Last X Days') }}</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="search_type" id="search_since" value="since"
-                               {% if search_type == 'since' %}checked{% endif %}>
-                        <label class="form-check-label" for="search_since">{{ te('Since Date') }}</label>
-                    </div>
-                </div>
-                
-                <!-- Database Selection (common to all search types) -->
-                <div class="form-row">
-                    <label class="form-label">{{ te('Database:') }}</label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="database_filter" id="db_both" value="both"
-                               {% if database_filter == 'both' or not database_filter %}checked{% endif %}>
-                        <label class="form-check-label" for="db_both">{{ te('Both') }}</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="database_filter" id="db_fdc" value="fdc"
-                               {% if database_filter == 'fdc' %}checked{% endif %}>
-                        <label class="form-check-label" for="db_fdc">{{ te('FDC') }}</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="database_filter" id="db_efashion" value="efashion"
-                               {% if database_filter == 'efashion' %}checked{% endif %}>
-                        <label class="form-check-label" for="db_efashion">{{ te('E-Fashion') }}</label>
-                    </div>
-                </div>
-                
-                <!-- Number of Orders Section -->
-                <div id="orders_section" class="search-type-section {% if search_type == 'orders' or not search_type %}active{% endif %}">
-                    <div class="form-row">
-                        <label for="num_orders" class="form-label">{{ te('Last') }}</label>
-                        <input type="number" class="form-control" id="num_orders" name="num_orders" 
-                               value="{{ num_orders or 20 }}" min="1" max="1000" style="width: 100px;">
-                        <label class="form-label">{{ te('orders') }}</label>
-                    </div>
-                </div>
-                
-                <!-- Last X Days Section -->
-                <div id="days_section" class="search-type-section {% if search_type == 'days' %}active{% endif %}">
-                    <div class="form-row">
-                        <label for="days_back" class="form-label">{{ te('Last') }}</label>
-                        <input type="number" class="form-control" id="days_back" name="days_back" 
-       value="{{ days_back or 7 }}" min="0" max="365" style="width: 100px;">
-                        <label class="form-label">{{ te('days') }}</label>
-                    </div>
-                </div>
-                
-                <!-- Since Date Section -->
-                <div id="since_section" class="search-type-section {% if search_type == 'since' %}active{% endif %}">
-                    <div class="form-row">
-                        <label for="since_date" class="form-label">{{ te('Orders since:') }}</label>
-                        <input type="text" class="form-control" id="since_date" name="since_date" 
-                               value="{{ since_date or '' }}" placeholder="{{ te('MM-DD-YYYY') }}" style="width: 150px;">
-                        <small class="text-muted">{{ te('Format: MM-DD-YYYY (e.g., 12-01-2023)') }}</small>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <button type="submit" class="btn btn-primary">{{ te('Update Results') }}</button>
-                    <button type="button" class="btn btn-secondary" onclick="resetForm()">{{ te('Reset to Defaults') }}</button>
-                </div>
-            </form>
-        </div>
-        <!-- Excel Upload Section - Only show if there are sold out items -->
-{% if show_upload_section %}
-<div class="upload-section">
-    <h4><i class="fas fa-upload"></i> Upload Inventory Excel File</h4>
-    <p class="mb-3">{{ te('Upload an Excel file to match additional inventory data with the sold out SKUs above.') }}</p>
-    
-    <form method="POST" enctype="multipart/form-data" id="uploadForm">
-        <!-- Preserve existing form data -->
-        <input type="hidden" name="search_type" value="{{ search_type }}">
-        <input type="hidden" name="database_filter" value="{{ database_filter }}">
-        <input type="hidden" name="num_orders" value="{{ num_orders }}">
-        <input type="hidden" name="days_back" value="{{ days_back }}">
-        <input type="hidden" name="since_date" value="{{ since_date }}">
-        
-        <div class="form-row">
-            <label for="inventory_file" class="form-label">{{ te('Select Excel File:') }}</label>
-            <input type="file" class="form-control" id="inventory_file" name="inventory_file" 
-                   accept=".xlsx,.xls" required style="width: 300px;">
-            <button type="submit" class="btn btn-success upload-button">
-                <i class="fas fa-upload"></i> Upload & Match Inventory
-            </button>
-        </div>
-        
-        <div class="file-upload-info">
-            <strong>{{ te('Required Excel columns:') }}</strong> Product Name, Stock SKU, Warehouse, Location, On Hand, Available, Reserved, Safety Stock, Average Cost, Total Value<br>
-            <strong>{{ te('Supported formats:') }}</strong> .xlsx, .xls<br>
-            <strong>{{ te('Note:') }}</strong> The system will match SKUs from the sold out table with the "Stock SKU" column in your Excel file.
-        </div>
-    </form>
-</div>
-{% endif %}
-
-<!-- Matched Inventory Section - Only show if there are matches -->
-{% if matched_inventory_html %}
-<div class="audit-section">
-    <div class="card">
-        <div class="card-header">
-            <h3>{{ te('Matched Inventory from Excel Upload') }}</h3>
-            <small class="text-muted">{{ te('SKUs that appear in both the sold out table and uploaded Excel file') }}</small>
-        </div>
-        <div class="card-body">
-            <div class="table-container">
-                {{ matched_inventory_html|safe }}
+    <div class="page-wrap">
+        <div class="title-row">
+            <div>
+                <h1>{{ te('Master Audit') }}</h1>
+                <p class="title-sub">{{ te('Wholesale order dashboard') }} — {{ current_user }}</p>
             </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-        <!-- Orders Section -->
-        <div class="audit-section">
-            <div class="card">
-                <div class="card-header">
-                    <h3>
-                        {% if search_type == 'days' %}
-                            Orders from Last {{ days_back or 7 }} Days
-                        {% elif search_type == 'since' %}
-                            Orders Since {{ since_date or 'N/A' }}
-                        {% else %}
-                            Last {{ num_orders or 20 }} Orders
-                        {% endif %}
-                        {% if database_filter == 'fdc' %}
-                            (FDC Only)
-                        {% elif database_filter == 'efashion' %}
-                            (E-Fashion Only)
-                        {% else %}
-                            (Both Databases)
-                        {% endif %}
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        {{ orders_html|safe }}
-                    </div>
-                </div>
+            <div class="title-actions">
+                <span class="cache-pill" id="cachePill">
+                    <span class="cache-dot {% if cache_status.refreshing %}busy{% endif %}" id="cacheDot"></span>
+                    <span id="cacheLabel">{{ te('Loading cache') }}…</span>
+                </span>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="pdfBtn">{{ te('Generate PDF report') }}</button>
+                <button type="button" class="btn btn-primary btn-sm" id="refreshBtn">{{ te('Refresh cache') }}</button>
             </div>
         </div>
 
-        <!-- Customer Pivot Summary (Middle View) -->
-        <div class="audit-section">
-            <div class="card">
-                <div class="card-header">
-                    <h3>{{ te('Customer Pivot Summary') }}</h3>
-                    <small class="text-muted">{{ te('Grouped by customer with Sam Moon and Fashion Q combined across all locations') }}</small>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        {{ customer_pivot_html|safe }}
-                    </div>
-                </div>
+        <div class="card-box" id="buildingBox">
+            <div class="building">
+                <div class="audit-spinner"></div>
+                <h2 id="buildingTitle">{{ te('Building dashboard cache') }}</h2>
+                <p class="muted" id="buildingHint">{{ te('First load builds 2024–2025 history once, then refreshes 2026 orders once a week. This page will not query the database on every visit.') }}</p>
             </div>
         </div>
-        
-        <!-- Sold Out SKUs from Selected Orders Section -->
-        <div class="audit-section">
-            <div class="card">
-                <div class="card-header">
-                    <h3>{{ te('Sold Out SKUs from Selected Orders') }}</h3>
-                    <small class="text-muted">{{ te('Items that have 0 or negative combined availability across both databases') }}</small>
+
+        <div id="dashboardRoot" class="hidden">
+            <div class="card-box">
+                <div class="filter-row">
+                    <button type="button" class="chip active" data-range="ytd">YTD</button>
+                    <button type="button" class="chip" data-range="last3">{{ te('Last 3 months') }}</button>
+                    <button type="button" class="chip" data-range="last12">{{ te('Last 12 months') }}</button>
+                    <button type="button" class="chip" data-range="all">{{ te('All cached') }}</button>
+                    <select id="periodKind" class="filter-select" style="min-width: 150px;">
+                        <option value="">{{ te('Date range') }}</option>
+                        <option value="month">{{ te('By month') }}</option>
+                        <option value="year">{{ te('By year') }}</option>
+                        <option value="custom">{{ te('Custom') }}</option>
+                    </select>
+                    <span id="monthInputs" class="hidden filter-row" style="gap:6px;">
+                        <input type="number" id="monthYear" class="filter-date" min="2020" max="2035" placeholder="YYYY" aria-label="{{ te('Year') }}" style="min-width:88px;">
+                        <input type="number" id="monthNum" class="filter-date" min="1" max="12" placeholder="MM" aria-label="{{ te('Month') }}" style="min-width:70px;">
+                    </span>
+                    <input type="number" id="yearInput" class="filter-date hidden" min="2020" max="2035" placeholder="YYYY" aria-label="{{ te('Year') }}" style="min-width:110px;">
+                    <span id="customRange" class="hidden filter-row" style="gap:6px;">
+                        <input type="date" id="dateFrom" class="filter-date" aria-label="{{ te('From date') }}">
+                        <span class="filter-sep">–</span>
+                        <input type="date" id="dateTo" class="filter-date" aria-label="{{ te('To date') }}">
+                    </span>
+                    <span class="range-caption" id="rangeCaption"></span>
+                    <select id="dbSelect" class="filter-select">
+                        <option value="both">{{ te('Both databases') }}</option>
+                        <option value="fdc">FDC</option>
+                        <option value="efas">E-Fashion</option>
+                    </select>
                 </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        {{ sold_out_html|safe }}
+            </div>
+
+            <div class="stats-row" id="kpiRow"></div>
+            <div class="stats-row last-year" id="kpiRowLast"></div>
+
+            <div class="charts-grid">
+                <div class="card-box">
+                    <div class="card-head">
+                        <div>
+                            <h3>{{ te('Monthly sales') }}</h3>
+                            <p class="card-hint">{{ te('Combined, FDC, or E-Fashion vs same months last year') }}</p>
+                        </div>
+                        <div class="filter-row" id="salesChartMode">
+                            <button type="button" class="chip active" data-sales-mode="both">{{ te('Combined') }}</button>
+                            <button type="button" class="chip" data-sales-mode="fdc">FDC</button>
+                            <button type="button" class="chip" data-sales-mode="efas">E-Fashion</button>
+                        </div>
                     </div>
+                    <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+                    <div class="compare-panel" id="lastYearSalesBox">
+                        <div>
+                            <div class="k">{{ te('Last year comparison') }}</div>
+                            <div class="range" id="lastYearRange">{{ te('Same date range, one year earlier') }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-box">
+                    <h3>{{ te('Monthly volume') }}</h3>
+                    <p class="card-hint">{{ te('Bags shipped and order count') }}</p>
+                    <div class="chart-wrap"><canvas id="volumeChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="charts-grid-3">
+                <div class="card-box">
+                    <div class="card-head">
+                        <div>
+                            <h3>{{ te('Top customers') }}</h3>
+                            <p class="card-hint" id="customerChartHint">{{ te('Ranked by total sales') }}</p>
+                        </div>
+                        <div class="filter-row" id="topCustomerMode">
+                            <button type="button" class="chip active" data-top-mode="sales">{{ te('Total sales') }}</button>
+                            <button type="button" class="chip" data-top-mode="orders">{{ te('Order count') }}</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrap"><canvas id="customerChart"></canvas></div>
+                </div>
+                <div class="card-box">
+                    <h3>{{ te('Style mix') }}</h3>
+                    <p class="card-hint" id="prefixChartHint">{{ te('Share of bags by SKU prefix') }}</p>
+                    <div class="chart-wrap"><canvas id="prefixChart"></canvas></div>
+                </div>
+                <div class="card-box">
+                    <h3>{{ te('Color mix') }}</h3>
+                    <p class="card-hint" id="colorChartHint">{{ te('Bag count by color') }}</p>
+                    <div class="chart-wrap"><canvas id="colorChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <h3>{{ te('Customer Pivot Summary') }}</h3>
+                <p class="card-hint">{{ te('Grouped by customer with Sam Moon and Fashion Q combined across all locations') }}</p>
+                <div class="table-container" id="customerTableWrap"></div>
+            </div>
+
+            <div class="card-box">
+                <h3>{{ te('Orders') }}</h3>
+                <p class="card-hint">{{ te('Cached order headers for the selected period') }}</p>
+                <div class="section-tools">
+                    <input type="search" id="orderSearch" class="filter-search" placeholder="{{ te('Search customer or order') }}">
+                    <div class="pager">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prevOrders">Prev</button>
+                        <span id="orderPageLabel">1 / 1</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="nextOrders">Next</button>
+                    </div>
+                </div>
+                <div class="table-container" id="ordersTableWrap"></div>
+            </div>
+
+            <div class="card-box">
+                <h3>{{ te('Sold Out SKUs from Selected Orders') }}</h3>
+                <p class="card-hint">{{ te('Inventory check runs only when you ask for it, using cached orders for this period.') }}</p>
+                <div class="section-tools">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="loadSoldOutBtn">{{ te('Load sold-out for this period') }}</button>
+                    <span class="muted" id="soldOutMeta"></span>
+                </div>
+                <div id="soldOutWrap"><p class="muted">{{ te('Not loaded yet.') }}</p></div>
+                <div id="uploadWrap" class="upload-section hidden" style="margin-top:14px;">
+                    <form id="uploadForm">
+                        <label class="mb-1 d-block"><strong>{{ te('Select Excel File:') }}</strong></label>
+                        <input type="file" class="form-control-file" id="inventory_file" name="inventory_file" accept=".xlsx,.xls" required>
+                        <button type="submit" class="btn btn-success btn-sm" style="margin-top:10px;">{{ te('Upload & Match Inventory') }}</button>
+                        <div class="muted" style="margin-top:8px;">
+                            {{ te('Required Excel columns:') }} Stock SKU, On Hand, Available, Reserved
+                        </div>
+                    </form>
+                    <div id="matchedWrap" style="margin-top:12px;"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        // Show/hide sections based on search type selection
-        document.querySelectorAll('input[name="search_type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                // Hide all sections
-                document.querySelectorAll('.search-type-section').forEach(section => {
-                    section.classList.remove('active');
+    (function () {
+        const PREFIX_COLUMNS = ['S(ES)', 'N(EN)', 'BN', 'BT', 'GN', 'M(EM)', 'L', 'GT', 'T(ET)', 'TJ', 'Other'];
+        const PREFIX_COLORS = ['#1d4fbb', '#36b9cc', '#1cc88a', '#f6c23e', '#e74a3b', '#6f42c1', '#fd7e14', '#20c997', '#4e73df', '#858796', '#c6c9d3'];
+        const COLOR_HEX = {
+            ABL:'#0000FF', BG:'#F5F5DC', BK:'#000000', BL:'#0000FF', BP:'#FFC0CB', BR:'#8B4513',
+            CF:'#8B4513', CG:'#8B4513', CO:'#FFA500', DM:'#0000FF', DPL:'#800080', FU:'#FFC0CB',
+            GN:'#008000', GY:'#808080', KH:'#F5F5DC', LBL:'#0000FF', LV:'#800080', MD:'#FFD700',
+            MV:'#800080', NV:'#000080', OL:'#008000', OR:'#FFA500', OW:'#F7F4EA', PK:'#FFC0CB',
+            PL:'#800080', PP:'#800080', RD:'#FF0000', ST:'#F5F5DC', TN:'#8B4513', TP:'#F5F5DC',
+            TQ:'#40E0D0', WN:'#800080', WT:'#F4F4F4', YL:'#F5D000', MG:'#008000', LR:'#FF0000',
+            FL:'#FF69B4', LP:'#8B4513', RG:'#FFD700', SG:'#008000', TL:'#0000FF', SL:'#C0C0C0',
+            GD:'#FFD700', IV:'#FFFFF0', LB:'#ADD8E6', WH:'#F4F4F4', BE:'#F5F5DC', CAM:'#C19A6B',
+            ML:'#6B8E9F', MT:'#98FF98', NY:'#000080', CA:'#C19A6B'
+        };
+        function hexForColor(code) {
+            const key = String(code || '').toUpperCase();
+            if (COLOR_HEX[key]) return COLOR_HEX[key];
+            const first = key.split('-')[0];
+            if (COLOR_HEX[first]) return COLOR_HEX[first];
+            let h = 0;
+            for (let i = 0; i < key.length; i++) h = ((h * 31) + key.charCodeAt(i)) >>> 0;
+            return 'hsl(' + (h % 360) + ', 42%, 46%)';
+        }
+        function isLightHex(color) {
+            const raw = String(color || '');
+            if (raw.indexOf('hsl') === 0) return false;
+            const h = raw.replace('#', '');
+            if (h.length < 6) return false;
+            const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+            return ((r * 299) + (g * 587) + (b * 114)) / 1000 > 165;
+        }
+        let payload = null;
+        let rangeMode = 'ytd';
+        let periodKind = '';
+        let selectedMonth = '';
+        let selectedYear = '';
+        let customFrom = '';
+        let customTo = '';
+        let dbKey = 'both';
+        let salesChartMode = 'both';
+        let topCustomerMode = 'sales';
+        let orderPage = 0;
+        const pageSize = 50;
+        const charts = {};
+
+        const el = (id) => document.getElementById(id);
+
+        function money(n) {
+            return '$' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function int(n) {
+            return (Number(n) || 0).toLocaleString();
+        }
+        function mixPct(part, total) {
+            const qty = Number(part) || 0;
+            const all = Number(total) || 0;
+            if (!all || !qty) return '0%';
+            const p = (qty / all) * 100;
+            if (p > 0 && p < 0.5) return '<1%';
+            return (p >= 10 ? p.toFixed(0) : p.toFixed(1)) + '%';
+        }
+        const doughnutPctPlugin = {
+            id: 'doughnutPct',
+            afterDatasetsDraw: function (chart) {
+                if (chart.config.type !== 'doughnut') return;
+                const total = (chart.data.datasets[0].data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                if (!total) return;
+                const ctx = chart.ctx;
+                chart.getDatasetMeta(0).data.forEach(function (arc, i) {
+                    const v = Number(chart.data.datasets[0].data[i]) || 0;
+                    const p = (v / total) * 100;
+                    if (p < 4) return;
+                    const pos = arc.tooltipPosition();
+                    ctx.save();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '600 11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p >= 10 ? p.toFixed(0) + '%' : p.toFixed(1) + '%', pos.x, pos.y);
+                    ctx.restore();
                 });
-                
-                // Show the selected section
-                const selectedSection = document.getElementById(this.value + '_section');
-                if (selectedSection) {
-                    selectedSection.classList.add('active');
+            }
+        };
+        function pct(curr, prev) {
+            if (!prev) return { text: 'vs last year', cls: 'flat' };
+            const change = ((curr - prev) / prev) * 100;
+            const cls = change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'flat';
+            const arrow = change > 0.5 ? '▲' : change < -0.5 ? '▼' : '●';
+            return { text: arrow + ' ' + Math.abs(change).toFixed(1) + '% vs last year', cls };
+        }
+        function pad(n) { return String(n).padStart(2, '0'); }
+        function ymFromDate(date) {
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1);
+        }
+        function parseMonth(month) {
+            const [y, m] = String(month).split('-').map(Number);
+            return new Date(y, m - 1, 1);
+        }
+        function addMonths(month, count) {
+            const d = parseMonth(month);
+            d.setMonth(d.getMonth() + count);
+            return ymFromDate(d);
+        }
+        function lastDayOfMonth(month) {
+            const d = parseMonth(month);
+            const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+            return last.getFullYear() + '-' + pad(last.getMonth() + 1) + '-' + pad(last.getDate());
+        }
+        function setCacheUi(status) {
+            const dot = el('cacheDot');
+            const label = el('cacheLabel');
+            const refreshing = !!(status && status.refreshing);
+            const err = status && status.state === 'error';
+            dot.className = 'cache-dot' + (refreshing ? ' busy' : err ? ' err' : '');
+            if (refreshing) {
+                label.textContent = 'Refreshing cache…';
+            } else if (status && status.generated_at) {
+                const when = status.generated_at.replace('T', ' ').slice(0, 19);
+                const extra = status.order_count ? ' · ' + int(status.order_count) + ' orders' : '';
+                const hist = (status.history_start && status.history_end)
+                    ? ' · History ' + status.history_start.slice(0, 4) + '–' + status.history_end.slice(0, 4)
+                    : '';
+                label.textContent = 'Cached ' + when + extra + hist;
+            } else {
+                label.textContent = 'No cache yet';
+            }
+        }
+
+        function monthLabel(month) {
+            const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const [y, m] = String(month).split('-').map(Number);
+            return (names[m - 1] || month) + ' ' + y;
+        }
+        function cachedSpan() {
+            const months = (payload && payload.months) || [];
+            if (!months.length) return { min: '', max: '' };
+            return { min: months[0] + '-01', max: lastDayOfMonth(months[months.length - 1]) };
+        }
+        function syncPeriodUi() {
+            el('monthInputs').classList.toggle('hidden', periodKind !== 'month');
+            el('yearInput').classList.toggle('hidden', periodKind !== 'year');
+            el('customRange').classList.toggle('hidden', periodKind !== 'custom');
+            document.querySelectorAll('.chip[data-range]').forEach((c) => {
+                c.classList.toggle('active', !periodKind && c.getAttribute('data-range') === rangeMode);
+            });
+        }
+        function fillMonthInputs(ym) {
+            if (!ym || ym.length < 7) return;
+            el('monthYear').value = ym.slice(0, 4);
+            el('monthNum').value = String(Number(ym.slice(5, 7)));
+        }
+        function readTypedMonth() {
+            const y = parseInt(el('monthYear').value, 10);
+            const m = parseInt(el('monthNum').value, 10);
+            if (!y || y < 2000 || y > 2100 || !m || m < 1 || m > 12) return '';
+            return y + '-' + pad(m);
+        }
+        function fillPeriodOptions() {
+            const months = (payload && payload.months) || [];
+            if (selectedMonth) fillMonthInputs(selectedMonth);
+            if (selectedYear) el('yearInput').value = selectedYear;
+            const span = cachedSpan();
+            const years = [];
+            months.forEach(function (m) {
+                const y = m.slice(0, 4);
+                if (years.indexOf(y) === -1) years.push(y);
+            });
+            if (years.length) {
+                el('monthYear').min = years[0];
+                el('monthYear').max = years[years.length - 1];
+                el('yearInput').min = years[0];
+                el('yearInput').max = years[years.length - 1];
+            }
+            ['dateFrom', 'dateTo'].forEach(function (id) {
+                const inp = el(id);
+                inp.min = span.min;
+                inp.max = span.max;
+            });
+            if (customFrom) el('dateFrom').value = customFrom;
+            if (customTo) el('dateTo').value = customTo;
+            syncPeriodUi();
+        }
+        function applyPeriodKind(kind) {
+            periodKind = kind || '';
+            el('periodKind').value = periodKind;
+            const months = (payload && payload.months) || [];
+            const last = months.length ? months[months.length - 1] : '';
+            const span = cachedSpan();
+            if (periodKind === 'month') {
+                if (!selectedMonth) selectedMonth = last;
+                fillMonthInputs(selectedMonth);
+            } else if (periodKind === 'year') {
+                if (!selectedYear) selectedYear = last ? last.slice(0, 4) : '';
+                el('yearInput').value = selectedYear;
+            } else if (periodKind === 'custom') {
+                if (!customFrom) customFrom = last ? last + '-01' : span.min;
+                if (!customTo) customTo = span.max;
+                el('dateFrom').value = customFrom;
+                el('dateTo').value = customTo;
+            } else {
+                selectedMonth = '';
+                selectedYear = '';
+            }
+            orderPage = 0;
+            syncPeriodUi();
+            renderAll();
+        }
+
+        function selectedMonths(allMonths) {
+            if (!allMonths.length) return [];
+            if (periodKind === 'month' && selectedMonth) {
+                const found = allMonths.filter((m) => m === selectedMonth);
+                return found.length ? found : [selectedMonth];
+            }
+            if (periodKind === 'year' && selectedYear) {
+                const found = allMonths.filter((m) => m.startsWith(selectedYear));
+                if (found.length) return found;
+                const out = [];
+                for (let i = 1; i <= 12; i++) out.push(selectedYear + '-' + pad(i));
+                return out;
+            }
+            if (periodKind === 'custom' && customFrom && customTo) {
+                let fromM = customFrom.slice(0, 7);
+                let toM = customTo.slice(0, 7);
+                if (fromM > toM) { const t = fromM; fromM = toM; toM = t; }
+                return allMonths.filter((m) => m >= fromM && m <= toM);
+            }
+            const last = allMonths[allMonths.length - 1];
+            if (rangeMode === 'all') return allMonths.slice();
+            if (rangeMode === 'ytd') {
+                const year = last.slice(0, 4);
+                return allMonths.filter((m) => m.startsWith(year));
+            }
+            const count = rangeMode === 'last3' ? 3 : 12;
+            return allMonths.slice(Math.max(0, allMonths.length - count));
+        }
+
+        function orderDateBounds(months) {
+            if (periodKind === 'custom' && customFrom && customTo) {
+                let start = customFrom;
+                let end = customTo;
+                if (start > end) { const t = start; start = end; end = t; }
+                return { start: start, end: end };
+            }
+            if (!months.length) return { start: '', end: '' };
+            return { start: months[0] + '-01', end: lastDayOfMonth(months[months.length - 1]) };
+        }
+
+        function rangeCaptionText(months) {
+            const raw = orderDateBounds(months);
+            const bounds = clipRange(raw.start, raw.end);
+            if (!bounds.start || !bounds.end) return '';
+            return bounds.start + ' – ' + bounds.end;
+        }
+
+        function lastYearMonth(ym) {
+            const [y, m] = String(ym).split('-');
+            return (Number(y) - 1) + '-' + m;
+        }
+        function shiftIsoYear(iso, delta) {
+            const parts = String(iso || '').split('-').map(Number);
+            const y = (parts[0] || 0) + delta;
+            const m = parts[1] || 1;
+            const d = parts[2] || 1;
+            const last = new Date(y, m, 0).getDate();
+            return y + '-' + pad(m) + '-' + pad(Math.min(d, last));
+        }
+        function lastYearDateBounds(bounds) {
+            if (!bounds || !bounds.start || !bounds.end) return { start: '', end: '' };
+            return { start: shiftIsoYear(bounds.start, -1), end: shiftIsoYear(bounds.end, -1) };
+        }
+        function lastYearMonthlyRows(allMonthly, months) {
+            const map = {};
+            (allMonthly || []).forEach(function (row) { map[row.month] = row; });
+            return (months || []).map(function (ym) { return map[lastYearMonth(ym)] || null; });
+        }
+        function dbWantedCode() {
+            if (dbKey === 'fdc') return 'FDC';
+            if (dbKey === 'efas') return 'E_FAS';
+            return '';
+        }
+        function cacheOrderSpan() {
+            let min = '', max = '';
+            (payload.orders || []).forEach(function (o) {
+                const d = o.order_date || '';
+                if (!d) return;
+                if (!min || d < min) min = d;
+                if (!max || d > max) max = d;
+            });
+            return { min: min, max: max };
+        }
+        function clipRange(start, end) {
+            const span = cacheOrderSpan();
+            let s = start || '';
+            let e = end || '';
+            if (span.min && s && s < span.min) s = span.min;
+            if (span.max && e && e > span.max) e = span.max;
+            if (s && e && s > e) {
+                return { start: '', end: '', clipped: true, cacheMin: span.min, intendedStart: start, intendedEnd: end };
+            }
+            return {
+                start: s,
+                end: e,
+                clipped: !!(start && s !== start) || !!(end && e !== end),
+                cacheMin: span.min,
+                intendedStart: start,
+                intendedEnd: end
+            };
+        }
+        function sumCachedOrders(start, end) {
+            const acc = { revenue: 0, orders: 0, qty: 0, items: 0 };
+            if (!start || !end) return acc;
+            const wanted = dbWantedCode();
+            (payload.orders || []).forEach(function (o) {
+                if (wanted && o.database !== wanted) return;
+                if (!o.order_date || o.order_date < start || o.order_date > end) return;
+                acc.revenue += Number(o.order_amount) || 0;
+                acc.orders += 1;
+                acc.qty += Number(o.qty) || 0;
+                acc.items += Number(o.items) || 0;
+            });
+            return acc;
+        }
+        function kpiCardHtml(label, value, delta, extraClass) {
+            return '<div class="stat' + (extraClass ? ' ' + extraClass : '') + '"><div class="k">' + label +
+                '</div><div class="v">' + value + '</div><div class="d ' + delta.cls + '">' + delta.text + '</div></div>';
+        }
+
+        function emptyPrefixMap() {
+            return Object.fromEntries(PREFIX_COLUMNS.map(function (c) { return [c, { qty: 0, revenue: 0 }]; }));
+        }
+        function addPrefixMaps(into, src) {
+            PREFIX_COLUMNS.forEach(function (col) {
+                const row = (src || {})[col] || {};
+                into[col].qty += Number(row.qty) || 0;
+                into[col].revenue += Number(row.revenue) || 0;
+            });
+            return into;
+        }
+        function mixForRange(dbData, months, start, end) {
+            const prefixMap = emptyPrefixMap();
+            const colorMap = {};
+            const dailyP = (dbData && dbData.daily_prefixes) || {};
+            const dailyC = (dbData && dbData.daily_colors) || {};
+            const hasDaily = Object.keys(dailyP).length > 0 || Object.keys(dailyC).length > 0;
+            if (hasDaily && start && end) {
+                Object.keys(dailyP).forEach(function (day) {
+                    if (day < start || day > end) return;
+                    addPrefixMaps(prefixMap, dailyP[day]);
+                });
+                Object.keys(dailyC).forEach(function (day) {
+                    if (day < start || day > end) return;
+                    const row = dailyC[day] || {};
+                    Object.keys(row).forEach(function (code) {
+                        colorMap[code] = (colorMap[code] || 0) + (Number(row[code]) || 0);
+                    });
+                });
+                return { prefixes: prefixMap, colors: colorMap };
+            }
+            const monthSet = new Set(months || []);
+            ((dbData && dbData.monthly) || []).forEach(function (m) {
+                if (!monthSet.has(m.month)) return;
+                addPrefixMaps(prefixMap, m.prefixes);
+                const row = m.colors || {};
+                Object.keys(row).forEach(function (code) {
+                    colorMap[code] = (colorMap[code] || 0) + (Number(row[code]) || 0);
+                });
+            });
+            return { prefixes: prefixMap, colors: colorMap };
+        }
+        function customersForPeriod(dbData, months, start, end) {
+            const wanted = dbWantedCode();
+            const fromOrders = {};
+            (payload.orders || []).forEach(function (o) {
+                if (wanted && o.database !== wanted) return;
+                if (start && o.order_date < start) return;
+                if (end && o.order_date > end) return;
+                const name = o.customer || '';
+                if (!fromOrders[name]) {
+                    fromOrders[name] = {
+                        customer: name, revenue: 0, orders: 0, items: 0, qty: 0,
+                        unique_styles: 0, prefixes: emptyPrefixMap()
+                    };
+                }
+                fromOrders[name].revenue += Number(o.order_amount) || 0;
+                fromOrders[name].orders += 1;
+                fromOrders[name].items += Number(o.items) || 0;
+                fromOrders[name].qty += Number(o.qty) || 0;
+            });
+            ((dbData && dbData.customers) || []).forEach(function (c) {
+                const mix = sumCustomerForMonths(c, months);
+                const row = fromOrders[c.customer];
+                if (!row) return;
+                row.prefixes = mix.prefixes;
+                row.unique_styles = mix.unique_styles;
+            });
+            return Object.keys(fromOrders).map(function (k) { return fromOrders[k]; })
+                .filter(function (c) { return c.revenue || c.qty; })
+                .sort(function (a, b) { return b.revenue - a.revenue; });
+        }
+        function sumCustomerForMonths(customer, months) {
+            const out = {
+                customer: customer.customer,
+                revenue: 0, orders: 0, items: 0, qty: 0, unique_styles: 0,
+                prefixes: emptyPrefixMap()
+            };
+            if (!months.length) return out;
+            const monthMap = customer.months || {};
+            months.forEach((month) => {
+                const row = monthMap[month];
+                if (!row) return;
+                out.revenue += row.revenue || 0;
+                out.orders += row.orders || 0;
+                out.items += row.items || 0;
+                out.qty += row.qty || 0;
+                out.unique_styles += row.unique_styles || 0;
+                PREFIX_COLUMNS.forEach((col) => {
+                    const src = (row.prefixes || {})[col] || {};
+                    out.prefixes[col].qty += src.qty || 0;
+                    out.prefixes[col].revenue += src.revenue || 0;
+                });
+            });
+            if (months.length === (payload.months || []).length) {
+                out.unique_styles = customer.unique_styles || 0;
+            }
+            return out;
+        }
+
+        function destroyChart(name) {
+            if (charts[name]) {
+                charts[name].destroy();
+                charts[name] = null;
+            }
+        }
+
+        function makeChart(name, ctx, config) {
+            destroyChart(name);
+            charts[name] = new Chart(ctx, config);
+        }
+
+        function renderKpis(curr, last, styles, lyMeta) {
+            const aov = curr.orders ? curr.revenue / curr.orders : 0;
+            const lastAov = last.orders ? last.revenue / last.orders : 0;
+            const cards = [
+                ['Sales', money(curr.revenue), pct(curr.revenue, last.revenue)],
+                ['Orders', int(curr.orders), pct(curr.orders, last.orders)],
+                ['Bags', int(curr.qty), pct(curr.qty, last.qty)],
+                ['Avg order', money(aov), pct(aov, lastAov)],
+                ['款次', int(curr.items), pct(curr.items, last.items)],
+                ['款数', int(styles), { text: 'unique styles in period', cls: 'flat' }],
+            ];
+            el('kpiRow').innerHTML = cards.map(function (row) {
+                return kpiCardHtml(row[0], row[1], row[2], '');
+            }).join('');
+            const rangeText = (lyMeta && lyMeta.start && lyMeta.end) ? (lyMeta.start + ' – ' + lyMeta.end) : 'No last-year dates in cache';
+            const coverText = (lyMeta && lyMeta.clipped)
+                ? ('Incomplete cache' + (lyMeta.cacheMin ? ' from ' + lyMeta.cacheMin : ''))
+                : 'Same dates last year';
+            const lastCards = [
+                ['Last year sales', last.orders || last.revenue ? money(last.revenue) : '—', { text: rangeText, cls: 'flat' }],
+                ['Last year orders', last.orders ? int(last.orders) : '—', { text: rangeText, cls: 'flat' }],
+                ['Last year bags', last.orders || last.qty ? int(last.qty) : '—', { text: rangeText, cls: 'flat' }],
+                ['Last year avg order', last.orders ? money(lastAov) : '—', { text: rangeText, cls: 'flat' }],
+                ['Last year 款次', last.orders || last.items ? int(last.items) : '—', { text: rangeText, cls: 'flat' }],
+                ['Last year coverage', (lyMeta && lyMeta.start) ? (lyMeta.clipped ? 'Partial' : 'Complete') : '—', { text: coverText, cls: lyMeta && lyMeta.clipped ? 'down' : 'flat' }],
+            ];
+            const lastRow = el('kpiRowLast');
+            if (lastRow) {
+                lastRow.innerHTML = lastCards.map(function (row) {
+                    return kpiCardHtml(row[0], row[1], row[2], 'last-year');
+                }).join('');
+            }
+        }
+
+        function renderLastYearSales(monthly, allMonthly, bounds, lyMeta) {
+            const rangeEl = el('lastYearRange');
+            if (!rangeEl) return lastYearMonthlyRows(allMonthly, monthly.map(function (m) { return m.month; }));
+            const intended = lastYearDateBounds(bounds);
+            if (!intended.start) {
+                rangeEl.textContent = 'Select a date range to compare last year.';
+                return lastYearMonthlyRows(allMonthly, monthly.map(function (m) { return m.month; }));
+            }
+            const used = (lyMeta && lyMeta.start) ? (lyMeta.start + ' – ' + lyMeta.end) : (intended.start + ' – ' + intended.end);
+            const extra = (lyMeta && lyMeta.clipped)
+                ? '  ·  Cache starts ' + (lyMeta.cacheMin || '') + ', so last year is incomplete. Refresh cache for a full YoY.'
+                : '';
+            rangeEl.textContent = 'Comparing to ' + used + extra;
+            return lastYearMonthlyRows(allMonthly, monthly.map(function (m) { return m.month; }));
+        }
+
+        function salesModeKey() {
+            return salesChartMode === 'fdc' || salesChartMode === 'efas' ? salesChartMode : 'both';
+        }
+        function monthLookup(rows) {
+            const map = {};
+            (rows || []).forEach(function (row) { map[row.month] = row; });
+            return map;
+        }
+        function salesValue(row, mode) {
+            if (!row) return 0;
+            if (mode === 'fdc') return Number(row.fdc_revenue) || 0;
+            if (mode === 'efas') return Number(row.efas_revenue) || 0;
+            return Number(row.revenue) || 0;
+        }
+
+        function renderCharts(monthly, customers, allMonthly, bounds, lyMeta, bothMonthly, months, mix) {
+            const labels = (months && months.length) ? months.slice() : monthly.map((m) => m.month);
+            renderLastYearSales(monthly, allMonthly || [], bounds || {}, lyMeta);
+            const mode = salesModeKey();
+            const bothMap = monthLookup(bothMonthly || allMonthly || []);
+            const fdcVals = labels.map(function (ym) { return salesValue(bothMap[ym], 'fdc'); });
+            const efasVals = labels.map(function (ym) { return salesValue(bothMap[ym], 'efas'); });
+            const lyCombined = labels.map(function (ym) {
+                const row = bothMap[lastYearMonth(ym)];
+                return row ? salesValue(row, 'both') : null;
+            });
+            const lyFdc = labels.map(function (ym) {
+                const row = bothMap[lastYearMonth(ym)];
+                return row ? salesValue(row, 'fdc') : null;
+            });
+            const lyEfas = labels.map(function (ym) {
+                const row = bothMap[lastYearMonth(ym)];
+                return row ? salesValue(row, 'efas') : null;
+            });
+            let datasets;
+            if (mode === 'fdc') {
+                datasets = [
+                    { label: 'FDC', data: fdcVals, backgroundColor: 'rgba(54,185,204,0.8)', borderRadius: 6 },
+                    { label: 'Last year FDC', data: lyFdc, type: 'line', borderColor: '#f6c23e', backgroundColor: 'transparent', tension: 0.3, spanGaps: true, borderWidth: 2, fill: false, order: 0, stack: 'lastYear' }
+                ];
+            } else if (mode === 'efas') {
+                datasets = [
+                    { label: 'E-Fashion', data: efasVals, backgroundColor: 'rgba(28,200,138,0.8)', borderRadius: 6 },
+                    { label: 'Last year E-Fashion', data: lyEfas, type: 'line', borderColor: '#f6c23e', backgroundColor: 'transparent', tension: 0.3, spanGaps: true, borderWidth: 2, fill: false, order: 0, stack: 'lastYear' }
+                ];
+            } else {
+                datasets = [
+                    { label: 'FDC', data: fdcVals, backgroundColor: 'rgba(54,185,204,0.85)', borderRadius: 4, stack: 'sales' },
+                    { label: 'E-Fashion', data: efasVals, backgroundColor: 'rgba(28,200,138,0.8)', borderRadius: 4, stack: 'sales' },
+                    { label: 'Last year combined', data: lyCombined, type: 'line', borderColor: '#f6c23e', backgroundColor: 'transparent', tension: 0.3, spanGaps: true, borderWidth: 2, fill: false, order: 0, stack: 'lastYear' }
+                ];
+            }
+            makeChart('sales', el('salesChart'), {
+                type: 'bar',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        x: { stacked: mode === 'both' },
+                        y: { stacked: mode === 'both', ticks: { callback: (v) => '$' + Number(v).toLocaleString() } }
+                    }
                 }
             });
-        });
-        
-        // Reset form to defaults
-        function resetForm() {
-            document.getElementById('search_orders').checked = true;
-            document.getElementById('db_both').checked = true;
-            document.getElementById('num_orders').value = 20;
-            document.getElementById('days_back').value = 7;
-            document.getElementById('since_date').value = '';
-            
-            // Show orders section
-            document.querySelectorAll('.search-type-section').forEach(section => {
-                section.classList.remove('active');
+            makeChart('volume', el('volumeChart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Bags', data: labels.map(function (ym) { const row = monthLookup(monthly)[ym]; return row ? (row.qty || 0) : 0; }), borderColor: '#1d4fbb', backgroundColor: 'rgba(29,79,187,0.12)', fill: true, tension: 0.35, yAxisID: 'y' },
+                        { label: 'Orders', data: labels.map(function (ym) { const row = monthLookup(monthly)[ym]; return row ? (row.orders || 0) : 0; }), borderColor: '#f6c23e', tension: 0.35, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } }
+                }
             });
-            document.getElementById('orders_section').classList.add('active');
+            const byOrders = topCustomerMode === 'orders';
+            const ranked = customers.slice().sort(function (a, b) {
+                if (byOrders) {
+                    return (b.orders || 0) - (a.orders || 0) || (b.revenue || 0) - (a.revenue || 0);
+                }
+                return (b.revenue || 0) - (a.revenue || 0) || (b.orders || 0) - (a.orders || 0);
+            });
+            const top = ranked.slice(0, 8);
+            const hint = el('customerChartHint');
+            if (hint) hint.textContent = byOrders ? 'Ranked by order count' : 'Ranked by total sales';
+            makeChart('customer', el('customerChart'), {
+                type: 'bar',
+                data: {
+                    labels: top.map((c) => c.customer),
+                    datasets: [{
+                        label: byOrders ? 'Orders' : 'Sales',
+                        data: top.map((c) => byOrders ? c.orders : c.revenue),
+                        backgroundColor: byOrders ? '#f6c23e' : '#4e73df',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    const c = top[ctx.dataIndex];
+                                    if (!c) return '';
+                                    if (byOrders) return ' Orders: ' + int(c.orders) + '  ·  ' + money(c.revenue);
+                                    return ' Sales: ' + money(c.revenue) + '  ·  ' + int(c.orders) + ' orders';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function (v) {
+                                    return byOrders ? int(v) : ('$' + Number(v).toLocaleString());
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            const prefixSource = (mix && mix.prefixes) || {};
+            const prefixTotals = PREFIX_COLUMNS.map((col) => ((prefixSource[col] || {}).qty || 0));
+            const prefixLabels = [];
+            const prefixValues = [];
+            const prefixColors = [];
+            PREFIX_COLUMNS.forEach((col, i) => {
+                if (!prefixTotals[i]) return;
+                prefixLabels.push(col);
+                prefixValues.push(prefixTotals[i]);
+                prefixColors.push(PREFIX_COLORS[i]);
+            });
+            const prefixHint = el('prefixChartHint');
+            const prefixQty = prefixValues.reduce(function (a, b) { return a + b; }, 0);
+            if (prefixHint) {
+                prefixHint.textContent = prefixQty
+                    ? ('Share of bags by SKU prefix  ·  ' + int(prefixQty) + ' bags')
+                    : 'No style mix in this date range';
+            }
+            makeChart('prefix', el('prefixChart'), {
+                type: 'doughnut',
+                data: { labels: prefixLabels, datasets: [{ data: prefixValues, backgroundColor: prefixColors }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                generateLabels: function (chart) {
+                                    const data = chart.data.datasets[0].data || [];
+                                    const total = data.reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                                    const colors = chart.data.datasets[0].backgroundColor || [];
+                                    const meta = chart.getDatasetMeta(0);
+                                    return (chart.data.labels || []).map(function (label, i) {
+                                        const hidden = !!(meta.data[i] && meta.data[i].hidden);
+                                        return {
+                                            text: label + '  ' + mixPct(data[i], total),
+                                            fillStyle: colors[i],
+                                            strokeStyle: colors[i],
+                                            hidden: hidden,
+                                            index: i,
+                                            datasetIndex: 0
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    const total = (ctx.dataset.data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                                    const v = Number(ctx.raw) || 0;
+                                    return ' ' + ctx.label + ': ' + int(v) + '  (' + mixPct(v, total) + ')';
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [doughnutPctPlugin]
+            });
+            const colorMap = (mix && mix.colors) || {};
+            const colorPairs = Object.keys(colorMap).map(function (code) {
+                return { code: code, qty: colorMap[code] };
+            }).filter(function (row) { return row.qty > 0; }).sort(function (a, b) { return b.qty - a.qty; });
+            const colorLimit = 12;
+            const colorLabels = [];
+            const colorValues = [];
+            const colorFills = [];
+            const colorBorders = [];
+            let otherQty = 0;
+            colorPairs.forEach(function (row, i) {
+                if (i < colorLimit) {
+                    const fill = hexForColor(row.code);
+                    colorLabels.push(row.code);
+                    colorValues.push(row.qty);
+                    colorFills.push(fill);
+                    colorBorders.push(isLightHex(fill) ? '#c5cddb' : fill);
+                } else {
+                    otherQty += row.qty;
+                }
+            });
+            if (otherQty > 0) {
+                colorLabels.push('Other');
+                colorValues.push(otherQty);
+                colorFills.push('#c6c9d3');
+                colorBorders.push('#c6c9d3');
+            }
+            const colorHint = el('colorChartHint');
+            const colorQty = colorValues.reduce(function (a, b) { return a + b; }, 0);
+            if (colorHint) {
+                colorHint.textContent = colorQty
+                    ? ('Bag count by color  ·  ' + int(colorQty) + ' bags')
+                    : 'No color mix in this date range';
+            }
+            makeChart('color', el('colorChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: colorLabels,
+                    datasets: [{
+                        data: colorValues,
+                        backgroundColor: colorFills,
+                        borderColor: colorBorders,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                generateLabels: function (chart) {
+                                    const data = chart.data.datasets[0].data || [];
+                                    const total = data.reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                                    const fills = chart.data.datasets[0].backgroundColor || [];
+                                    const meta = chart.getDatasetMeta(0);
+                                    return (chart.data.labels || []).map(function (label, i) {
+                                        return {
+                                            text: label + '  ' + mixPct(data[i], total),
+                                            fillStyle: fills[i],
+                                            strokeStyle: isLightHex(fills[i]) ? '#c5cddb' : fills[i],
+                                            hidden: !!(meta.data[i] && meta.data[i].hidden),
+                                            index: i,
+                                            datasetIndex: 0
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (ctx) {
+                                    const total = (ctx.dataset.data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+                                    const v = Number(ctx.raw) || 0;
+                                    return ' ' + ctx.label + ': ' + int(v) + '  (' + mixPct(v, total) + ')';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
-        
-        // Date input validation
-        document.getElementById('since_date').addEventListener('input', function() {
-            const datePattern = /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-\d{4}$/;
-            if (this.value && !datePattern.test(this.value)) {
-                this.setCustomValidity('Please enter date in MM-DD-YYYY format');
-            } else {
-                this.setCustomValidity('');
+
+        function asp(qty, revenue) {
+            return qty > 0 ? money(revenue / qty) : '$0.00';
+        }
+
+        function renderCustomerTable(customers) {
+            const totals = {
+                revenue: 0, orders: 0, items: 0, qty: 0, unique_styles: 0,
+                prefixes: Object.fromEntries(PREFIX_COLUMNS.map((c) => [c, { qty: 0, revenue: 0 }]))
+            };
+            const rows = customers.map((c) => {
+                totals.revenue += c.revenue; totals.orders += c.orders; totals.items += c.items;
+                totals.qty += c.qty; totals.unique_styles += c.unique_styles;
+                PREFIX_COLUMNS.forEach((col) => {
+                    totals.prefixes[col].qty += c.prefixes[col].qty;
+                    totals.prefixes[col].revenue += c.prefixes[col].revenue;
+                });
+                const prefixCells = PREFIX_COLUMNS.map((col) =>
+                    '<td>' + int(c.prefixes[col].qty) + ' <span class="muted">' + mixPct(c.prefixes[col].qty, c.qty) + '</span></td><td>' + asp(c.prefixes[col].qty, c.prefixes[col].revenue) + '</td>'
+                ).join('');
+                return '<tr><td>' + c.customer + '</td><td>' + money(c.revenue) + '</td><td>' + int(c.orders) +
+                    '</td><td>' + int(c.items) + '</td><td>' + int(c.unique_styles) + '</td><td>' + int(c.qty) + '</td>' + prefixCells + '</tr>';
+            }).join('');
+            const totalPrefix = PREFIX_COLUMNS.map((col) =>
+                '<td><strong>' + int(totals.prefixes[col].qty) + ' <span class="muted">' + mixPct(totals.prefixes[col].qty, totals.qty) + '</span></strong></td><td><strong>' + asp(totals.prefixes[col].qty, totals.prefixes[col].revenue) + '</strong></td>'
+            ).join('');
+            const headPrefix = PREFIX_COLUMNS.map((col) => '<th>' + col + '</th><th>' + col + '均价</th>').join('');
+            el('customerTableWrap').innerHTML =
+                '<table class="table table-bordered table-striped table-sm" id="customer_pivot_table"><thead><tr>' +
+                '<th>customer</th><th>销售额</th><th>总单数</th><th>款次</th><th>款数</th><th>共计（只包）</th>' + headPrefix +
+                '</tr></thead><tbody>' + rows +
+                '<tr><td><strong>TOTALS</strong></td><td><strong>' + money(totals.revenue) + '</strong></td><td><strong>' + int(totals.orders) +
+                '</strong></td><td><strong>' + int(totals.items) + '</strong></td><td><strong>' + int(totals.unique_styles) +
+                '</strong></td><td><strong>' + int(totals.qty) + '</strong></td>' + totalPrefix + '</tr></tbody></table>';
+        }
+
+        function filteredOrders(months) {
+            const bounds = orderDateBounds(months);
+            const q = (el('orderSearch').value || '').trim().toLowerCase();
+            const dbWanted = dbKey === 'fdc' ? 'FDC' : dbKey === 'efas' ? 'E_FAS' : '';
+            return (payload.orders || []).filter((o) => {
+                if (dbWanted && o.database !== dbWanted) return false;
+                if (bounds.start && o.order_date < bounds.start) return false;
+                if (bounds.end && o.order_date > bounds.end) return false;
+                if (q && !(String(o.customer || '').toLowerCase().includes(q) || String(o.order_number || '').toLowerCase().includes(q) || String(o.customer_raw || '').toLowerCase().includes(q))) return false;
+                return true;
+            });
+        }
+
+        function renderOrders(months) {
+            const orders = filteredOrders(months);
+            const pages = Math.max(1, Math.ceil(orders.length / pageSize));
+            if (orderPage >= pages) orderPage = pages - 1;
+            const slice = orders.slice(orderPage * pageSize, (orderPage + 1) * pageSize);
+            el('orderPageLabel').textContent = (orderPage + 1) + ' / ' + pages + ' · ' + int(orders.length);
+            const body = slice.map((o) =>
+                '<tr><td>' + o.database + '</td><td><a href="https://www.fdcef.com/order_lookup/' + o.order_number + '" target="_blank">' + o.order_number +
+                '</a></td><td>' + (o.order_date_display || o.order_date) + '</td><td>' + (o.customer_raw || o.customer) +
+                '</td><td>' + money(o.order_amount) + '</td><td>' + money(o.order_total) + '</td><td>' + int(o.items) + '</td><td>' + int(o.qty) + '</td></tr>'
+            ).join('');
+            const totRev = orders.reduce((a, o) => a + (o.order_amount || 0), 0);
+            const totAll = orders.reduce((a, o) => a + (o.order_total || 0), 0);
+            const totItems = orders.reduce((a, o) => a + (o.items || 0), 0);
+            const totQty = orders.reduce((a, o) => a + (o.qty || 0), 0);
+            el('ordersTableWrap').innerHTML =
+                '<table class="table table-bordered table-striped table-sm" id="orders_table"><thead><tr>' +
+                '<th>Database</th><th>Order Number</th><th>Order Date</th><th>Customer</th><th>Order Amount</th><th>Order Total</th><th>Total Items</th><th>Total Quantity</th>' +
+                '</tr></thead><tbody>' + body +
+                '<tr><td><strong>TOTALS</strong></td><td><strong>' + int(orders.length) + ' orders</strong></td><td></td><td></td><td><strong>' +
+                money(totRev) + '</strong></td><td><strong>' + money(totAll) + '</strong></td><td><strong>' + int(totItems) +
+                '</strong></td><td><strong>' + int(totQty) + '</strong></td></tr></tbody></table>';
+        }
+
+        function renderAll() {
+            if (!payload) return;
+            const dbData = (payload.databases || {})[dbKey] || { monthly: [], customers: [] };
+            const bothData = (payload.databases || {}).both || { monthly: [] };
+            const months = selectedMonths(payload.months || []);
+            const monthSet = new Set(months);
+            const monthly = (dbData.monthly || []).filter((m) => monthSet.has(m.month));
+            const rawBounds = orderDateBounds(months);
+            const bounds = clipRange(rawBounds.start, rawBounds.end);
+            const intendedLy = lastYearDateBounds({ start: bounds.start, end: bounds.end });
+            const lyMeta = clipRange(intendedLy.start, intendedLy.end);
+            const curr = sumCachedOrders(bounds.start, bounds.end);
+            const last = sumCachedOrders(lyMeta.start, lyMeta.end);
+            const mix = mixForRange(dbData, months, bounds.start, bounds.end);
+            const customers = customersForPeriod(dbData, months, bounds.start, bounds.end);
+            const styles = months.length === (payload.months || []).length
+                ? (dbData.unique_styles || 0)
+                : (months.length === 1
+                    ? monthly.reduce((acc, row) => acc + (Number(row.unique_styles) || 0), 0)
+                    : customers.reduce((acc, c) => acc + (c.unique_styles || 0), 0));
+            renderKpis(curr, last, styles, lyMeta);
+            renderCharts(monthly, customers, dbData.monthly || [], bounds, lyMeta, bothData.monthly || [], months, mix);
+            renderCustomerTable(customers);
+            renderOrders(months);
+            const cap = el('rangeCaption');
+            if (cap) cap.textContent = rangeCaptionText(months);
+        }
+
+        function dbLabel() {
+            if (dbKey === 'fdc') return 'FDC';
+            if (dbKey === 'efas') return 'E-Fashion';
+            return 'Both databases';
+        }
+        function chartImage(canvasId) {
+            const canvas = el(canvasId);
+            if (!canvas || !canvas.width) return '';
+            try {
+                const tmp = document.createElement('canvas');
+                tmp.width = canvas.width;
+                tmp.height = canvas.height;
+                const ctx = tmp.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, tmp.width, tmp.height);
+                ctx.drawImage(canvas, 0, 0);
+                return tmp.toDataURL('image/jpeg', 0.82);
+            } catch (err) {
+                return '';
+            }
+        }
+        function collectReportSnapshot() {
+            const dbData = (payload.databases || {})[dbKey] || { monthly: [], customers: [] };
+            const months = selectedMonths(payload.months || []);
+            const monthSet = new Set(months);
+            const monthly = (dbData.monthly || []).filter((m) => monthSet.has(m.month));
+            const bounds = clipRange(orderDateBounds(months).start, orderDateBounds(months).end);
+            const mix = mixForRange(dbData, months, bounds.start, bounds.end);
+            const customersAll = customersForPeriod(dbData, months, bounds.start, bounds.end);
+            const byOrders = topCustomerMode === 'orders';
+            const ranked = customersAll.slice().sort(function (a, b) {
+                if (byOrders) return (b.orders || 0) - (a.orders || 0) || (b.revenue || 0) - (a.revenue || 0);
+                return (b.revenue || 0) - (a.revenue || 0) || (b.orders || 0) - (a.orders || 0);
+            });
+            const sum = (rows, key) => rows.reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
+            const revenue = sum(monthly, 'revenue');
+            const orders = sum(monthly, 'orders');
+            const qty = sum(monthly, 'qty');
+            const items = sum(monthly, 'items');
+            const styles = months.length === (payload.months || []).length
+                ? (dbData.unique_styles || 0)
+                : (months.length === 1
+                    ? monthly.reduce((acc, row) => acc + (Number(row.unique_styles) || 0), 0)
+                    : customersAll.reduce((acc, c) => acc + (c.unique_styles || 0), 0));
+            const prefixTotals = PREFIX_COLUMNS.map((col) => ((mix.prefixes[col] || {}).qty || 0));
+            const prefixSum = prefixTotals.reduce((acc, n) => acc + n, 0);
+            const prefixes = PREFIX_COLUMNS.map(function (col, i) {
+                return { name: col, qty: prefixTotals[i], pct: mixPct(prefixTotals[i], prefixSum) };
+            }).filter(function (row) { return row.qty > 0; });
+            const colorMap = mix.colors || {};
+            const colorPairs = Object.keys(colorMap).map(function (code) {
+                return { code: code, qty: colorMap[code] };
+            }).filter(function (row) { return row.qty > 0; }).sort(function (a, b) { return b.qty - a.qty; });
+            const colorSum = colorPairs.reduce(function (acc, row) { return acc + row.qty; }, 0);
+            const colors = [];
+            let otherQty = 0;
+            colorPairs.forEach(function (row, i) {
+                if (i < 12) colors.push({ name: row.code, qty: row.qty, pct: mixPct(row.qty, colorSum) });
+                else otherQty += row.qty;
+            });
+            if (otherQty > 0) colors.push({ name: 'Other', qty: otherQty, pct: mixPct(otherQty, colorSum) });
+            return {
+                meta: {
+                    period_label: rangeCaptionText(months) || 'Selected period',
+                    db_label: dbLabel(),
+                    top_customer_mode: topCustomerMode
+                },
+                kpis: {
+                    sales: revenue,
+                    orders: orders,
+                    bags: qty,
+                    aov: orders ? revenue / orders : 0,
+                    items: items,
+                    styles: styles
+                },
+                monthly: monthly.map(function (m) {
+                    return {
+                        month: m.month,
+                        revenue: m.revenue,
+                        orders: m.orders,
+                        qty: m.qty,
+                        items: m.items,
+                        fdc_revenue: m.fdc_revenue,
+                        efas_revenue: m.efas_revenue
+                    };
+                }),
+                customers: ranked.slice(0, 15).map(function (c) {
+                    return {
+                        customer: c.customer,
+                        revenue: c.revenue,
+                        orders: c.orders,
+                        qty: c.qty,
+                        items: c.items
+                    };
+                }),
+                prefixes: prefixes,
+                colors: colors,
+                charts: {
+                    sales: chartImage('salesChart'),
+                    volume: chartImage('volumeChart'),
+                    customer: chartImage('customerChart'),
+                    prefix: chartImage('prefixChart'),
+                    color: chartImage('colorChart')
+                }
+            };
+        }
+
+        function showDashboard() {
+            el('buildingBox').classList.add('hidden');
+            el('dashboardRoot').classList.remove('hidden');
+        }
+
+        async function loadData() {
+            const res = await fetch('/audit/api/data');
+            if (res.status === 202) {
+                const body = await res.json();
+                setCacheUi(body.status || {});
+                return false;
+            }
+            const body = await res.json();
+            if (!body.ok) {
+                setCacheUi(body.status || {});
+                return false;
+            }
+            payload = body.data;
+            setCacheUi(body.status || {});
+            fillPeriodOptions();
+            showDashboard();
+            renderAll();
+            return true;
+        }
+
+        async function pollUntilReady() {
+            for (let i = 0; i < 180; i++) {
+                const ready = await loadData();
+                if (ready) return;
+                await new Promise((r) => setTimeout(r, 2000));
+            }
+            el('buildingTitle').textContent = 'Still building cache';
+            el('buildingHint').textContent = 'The background job is taking longer than expected. You can wait or click Refresh cache.';
+        }
+
+        document.querySelectorAll('.chip[data-range]').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                rangeMode = chip.getAttribute('data-range');
+                periodKind = '';
+                selectedMonth = '';
+                selectedYear = '';
+                el('periodKind').value = '';
+                el('monthYear').value = '';
+                el('monthNum').value = '';
+                el('yearInput').value = '';
+                orderPage = 0;
+                syncPeriodUi();
+                renderAll();
+            });
+        });
+        el('periodKind').addEventListener('change', function () {
+            applyPeriodKind(this.value);
+        });
+        function onMonthTyped() {
+            const ym = readTypedMonth();
+            if (!ym) return;
+            selectedMonth = ym;
+            periodKind = 'month';
+            el('periodKind').value = 'month';
+            orderPage = 0;
+            syncPeriodUi();
+            renderAll();
+        }
+        el('monthYear').addEventListener('change', onMonthTyped);
+        el('monthNum').addEventListener('change', onMonthTyped);
+        el('monthYear').addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') onMonthTyped();
+        });
+        el('monthNum').addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') onMonthTyped();
+        });
+        el('yearInput').addEventListener('change', function () {
+            const y = String(this.value || '').trim();
+            if (!/^\d{4}$/.test(y)) return;
+            selectedYear = y;
+            periodKind = 'year';
+            el('periodKind').value = 'year';
+            orderPage = 0;
+            syncPeriodUi();
+            renderAll();
+        });
+        el('yearInput').addEventListener('keydown', function (ev) {
+            if (ev.key !== 'Enter') return;
+            const y = String(this.value || '').trim();
+            if (!/^\d{4}$/.test(y)) return;
+            selectedYear = y;
+            periodKind = 'year';
+            el('periodKind').value = 'year';
+            orderPage = 0;
+            syncPeriodUi();
+            renderAll();
+        });
+        function onCustomDateChange() {
+            customFrom = el('dateFrom').value;
+            customTo = el('dateTo').value;
+            if (customFrom && customTo && customFrom > customTo) {
+                const t = customFrom;
+                customFrom = customTo;
+                customTo = t;
+                el('dateFrom').value = customFrom;
+                el('dateTo').value = customTo;
+            }
+            periodKind = 'custom';
+            el('periodKind').value = 'custom';
+            orderPage = 0;
+            syncPeriodUi();
+            renderAll();
+        }
+        el('dateFrom').addEventListener('change', onCustomDateChange);
+        el('dateTo').addEventListener('change', onCustomDateChange);
+        document.querySelectorAll('.chip[data-top-mode]').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip[data-top-mode]').forEach((c) => c.classList.remove('active'));
+                chip.classList.add('active');
+                topCustomerMode = chip.getAttribute('data-top-mode') || 'sales';
+                renderAll();
+            });
+        });
+        document.querySelectorAll('.chip[data-sales-mode]').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip[data-sales-mode]').forEach((c) => c.classList.remove('active'));
+                chip.classList.add('active');
+                salesChartMode = chip.getAttribute('data-sales-mode') || 'both';
+                renderAll();
+            });
+        });
+        el('dbSelect').addEventListener('change', function () {
+            dbKey = this.value;
+            salesChartMode = dbKey === 'fdc' || dbKey === 'efas' ? dbKey : 'both';
+            document.querySelectorAll('.chip[data-sales-mode]').forEach((c) => {
+                c.classList.toggle('active', c.getAttribute('data-sales-mode') === salesChartMode);
+            });
+            orderPage = 0;
+            renderAll();
+        });
+        el('orderSearch').addEventListener('input', () => { orderPage = 0; renderAll(); });
+        el('prevOrders').addEventListener('click', () => { orderPage = Math.max(0, orderPage - 1); renderAll(); });
+        el('nextOrders').addEventListener('click', () => { orderPage += 1; renderAll(); });
+        el('refreshBtn').addEventListener('click', async () => {
+            await fetch('/audit/api/refresh', { method: 'POST' });
+            el('buildingBox').classList.remove('hidden');
+            el('dashboardRoot').classList.add('hidden');
+            el('buildingTitle').textContent = 'Refreshing cache';
+            pollUntilReady();
+        });
+        el('pdfBtn').addEventListener('click', async () => {
+            if (!payload) {
+                alert('Dashboard is still loading.');
+                return;
+            }
+            const btn = el('pdfBtn');
+            btn.disabled = true;
+            const original = btn.textContent;
+            btn.textContent = 'Building PDF…';
+            try {
+                const res = await fetch('/audit/api/pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(collectReportSnapshot())
+                });
+                if (!res.ok) {
+                    let message = 'Could not generate PDF.';
+                    try {
+                        const err = await res.json();
+                        if (err && err.error) message = err.error;
+                    } catch (ignore) {}
+                    alert(message);
+                    return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const stamp = (el('rangeCaption').textContent || 'period').replace(/[^\dA-Za-z]+/g, '-');
+                a.href = url;
+                a.download = 'FDC_Audit_' + stamp + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('Could not generate PDF.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = original;
             }
         });
-        
-        // Auto-submit form when Enter is pressed in input fields
-        document.querySelectorAll('input[type="number"], input[type="text"]').forEach(input => {
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('auditForm').submit();
-                }
+        el('loadSoldOutBtn').addEventListener('click', async () => {
+            if (!payload) return;
+            const months = selectedMonths(payload.months || []);
+            const bounds = orderDateBounds(months);
+            el('soldOutMeta').textContent = 'Loading inventory…';
+            const res = await fetch('/audit/api/sold-out', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    database_filter: dbKey === 'efas' ? 'efashion' : dbKey,
+                    start_date: bounds.start,
+                    end_date: bounds.end
+                })
             });
+            const body = await res.json();
+            el('soldOutWrap').innerHTML = '<div class="table-container">' + (body.html || '<p>No data.</p>') + '</div>';
+            el('soldOutMeta').textContent = body.order_count
+                ? ('Checked ' + body.order_count + ' orders' + (body.truncated ? ' (newest 400)' : ''))
+                : '';
+            el('uploadWrap').classList.toggle('hidden', !body.has_sold_out);
         });
+        el('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!payload) return;
+            const months = selectedMonths(payload.months || []);
+            const bounds = orderDateBounds(months);
+            const form = new FormData();
+            form.append('inventory_file', el('inventory_file').files[0]);
+            form.append('database_filter', dbKey === 'efas' ? 'efashion' : dbKey);
+            form.append('start_date', bounds.start);
+            form.append('end_date', bounds.end);
+            el('matchedWrap').innerHTML = '<p class="muted">Matching…</p>';
+            const res = await fetch('/audit/api/match-inventory', { method: 'POST', body: form });
+            const body = await res.json();
+            el('matchedWrap').innerHTML = '<div class="table-container">' + (body.html || '') + '</div>';
+        });
+
+        setCacheUi({{ cache_status|tojson }});
+        pollUntilReady();
+    })();
     </script>
 </body>
 </html>

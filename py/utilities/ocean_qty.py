@@ -36,6 +36,42 @@ def ocean_qty_sql_scalar(column: str = "ocean.ocean_qty") -> str:
     return f"CAST(ISNULL({column}, 0) AS INT)"
 
 
+def fetch_ocean_pos_by_style_prefix(conn, style_prefix: str) -> dict[str, list[str]]:
+    """Return {STYLE: [PO, ...]} for open ocean POs matching a style prefix."""
+    search_param = f"{style_prefix.strip()}%"
+    by_style: dict[str, list[str]] = {}
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT RTRIM(pl.prod_cd) AS sku,
+                   RTRIM(pl.pur_num) AS po
+            FROM dbo.plog pl
+            WHERE pl.prod_cd LIKE ?
+            AND pl.hdl_chg = 0
+            AND pl.log_qty > 0
+            AND pl.pur_num IS NOT NULL
+            AND LTRIM(RTRIM(pl.pur_num)) != ''
+            AND pl.pur_num NOT IN (
+                SELECT DISTINCT pur_num FROM plog WHERE prod_cd LIKE ? AND hdl_chg > 0
+            )
+            """,
+            (search_param, search_param),
+        )
+        for sku, po in cursor.fetchall():
+            sku_key = _norm_sku(sku)
+            po_key = _norm_sku(po).upper()
+            if not sku_key or not po_key:
+                continue
+            style = sku_key.split(" ", 1)[0].upper()
+            pos = by_style.setdefault(style, [])
+            if po_key not in pos:
+                pos.append(po_key)
+    finally:
+        cursor.close()
+    return by_style
+
+
 def fetch_ocean_qty_by_style_prefix(conn, style_prefix: str) -> dict[str, int]:
     """Return {trimmed SKU: ocean qty} for all SKUs matching a style prefix."""
     search_param = f"{style_prefix.strip()}%"
@@ -126,6 +162,69 @@ def apply_ocean_qty_to_rows(
             values[ocean_index] = ocean_lookup[sku]
         updated.append(tuple(values))
     return updated
+
+
+def fetch_all_open_ocean_qty(conn) -> dict[str, int]:
+    """Return {trimmed SKU: ocean qty} for every open plog line."""
+    lookup: dict[str, int] = {}
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT RTRIM(pl.prod_cd) AS sku,
+                   SUM(CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END) AS qty
+            FROM dbo.plog pl
+            WHERE pl.hdl_chg = 0
+            AND pl.log_qty > 0
+            AND pl.pur_num NOT IN (
+                SELECT DISTINCT pur_num
+                FROM dbo.plog p2
+                WHERE RTRIM(p2.prod_cd) = RTRIM(pl.prod_cd)
+                  AND p2.hdl_chg > 0
+            )
+            GROUP BY RTRIM(pl.prod_cd)
+            """
+        )
+        for sku, qty in cursor.fetchall():
+            key = _norm_sku(sku)
+            if key:
+                lookup[key] = int(qty or 0)
+    finally:
+        cursor.close()
+    return lookup
+
+
+def style_from_sku(sku: str) -> str:
+    text = _norm_sku(sku).upper()
+    if not text:
+        return ""
+    return text.split(" ", 1)[0]
+
+
+def summarize_open_ocean_styles(conn, *, top_n: int | None = 20) -> dict[str, object]:
+    """Distinct styles with open ocean qty, plus the largest styles."""
+    by_style: dict[str, dict[str, int]] = {}
+    for sku, qty in fetch_all_open_ocean_qty(conn).items():
+        if qty <= 0:
+            continue
+        style = style_from_sku(sku)
+        if not style:
+            continue
+        entry = by_style.setdefault(style, {"ocean_qty": 0, "sku_count": 0})
+        entry["ocean_qty"] += qty
+        entry["sku_count"] += 1
+    ranked = sorted(by_style.items(), key=lambda kv: (-kv[1]["ocean_qty"], kv[0]))
+    picked = ranked if not top_n else ranked[: max(1, int(top_n))]
+    return {
+        "style_count": len(by_style),
+        "sku_count": sum(v["sku_count"] for v in by_style.values()),
+        "total_ocean": sum(v["ocean_qty"] for v in by_style.values()),
+        "styles": [
+            {"style": style, "ocean_qty": bits["ocean_qty"], "sku_count": bits["sku_count"]}
+            for style, bits in picked
+        ],
+        "truncated": bool(top_n) and len(ranked) > max(1, int(top_n)),
+    }
 
 
 def resolve_ocean_qty(conn, sku: str, fallback=0) -> int:

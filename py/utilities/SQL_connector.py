@@ -469,30 +469,7 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
         try:
             conn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}')
             cursor = conn.cursor()
-            
-            # Debug the new date calculation
-            if days_back or since_date:
-                debug_query = f"""
-                    SELECT 
-                        GETDATE() as current_datetime,
-                        DATEDIFF(day, '20230101', GETDATE()) + 81088 as today_in_new_format,
-                        DATEDIFF(day, '20230101', DATEADD(day, -{days_back if days_back else 0}, GETDATE())) + 81088 as cutoff_in_new_format,
-                        MAX(o.ord_dt) as latest_order_date,
-                        COUNT(*) as total_orders_in_db
-                    FROM orders o
-                """
-                cursor.execute(debug_query)
-                debug_result = cursor.fetchone()
-                
-                # Check how many orders match our criteria
-                count_query = f"""
-                    SELECT COUNT(*) as matching_orders
-                    FROM orders o
-                    {where_clause}
-                """
-                cursor.execute(count_query)
-                count_result = cursor.fetchone()
-            
+
             # Main query to get orders
             query = f"""
                 SELECT {top_clause}
@@ -529,6 +506,106 @@ def get_orders_by_criteria(num_orders=20, database_filter='both', days_back=None
             app.logger.info(f"General error in {db_name}: {e}")
     
     return all_orders
+
+
+def _iso_to_ord_dt(iso_date: str) -> int:
+    """OMS stores order dates as days since 2023-01-01, offset 81088."""
+    from datetime import datetime as dt
+
+    parsed = dt.strptime(str(iso_date)[:10], "%Y-%m-%d")
+    epoch = dt(2023, 1, 1)
+    return (parsed - epoch).days + 81088
+
+
+def _fetch_audit_order_lines(where_clause: str) -> list:
+    line_rows = []
+    driver = sql_server_config["driver"]
+    server = sql_server_config["server"]
+    username = sql_server_config["username"]
+    password = sql_server_config["password"]
+    databases_to_query = [
+        (sql_server_config["database_fdc"], "FDC"),
+        (sql_server_config["database_oms_ef"], "E_FAS"),
+    ]
+    query = f"""
+        SELECT
+            o.ord_num,
+            CONVERT(varchar(10), DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101'), 23) AS iso_date,
+            c.cus_nm AS customer_name,
+            ISNULL(o.ord_amt, 0) AS order_amount,
+            ISNULL(o.handl_fee, 0) AS handling_fee,
+            ISNULL(o.misc_chg, 0) AS misc_charge,
+            ol.prod_cd AS sku,
+            ISNULL(ol.order_qty, 0) AS qty,
+            ISNULL(ol.unit_prs, 0) AS unit_price
+        FROM orders o
+        JOIN customer c ON o.cus_id = c.cus_id
+        LEFT JOIN ord_log ol ON o.ord_num = ol.ord_num
+        {where_clause}
+    """
+    for db_name, db_display in databases_to_query:
+        conn = None
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={driver};SERVER={server};DATABASE={db_name};UID={username};PWD={password}',
+                timeout=180,
+            )
+            cursor = conn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            for row in rows:
+                line_rows.append((
+                    db_display,
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5],
+                    row[6],
+                    row[7],
+                    row[8],
+                ))
+        except pyodbc.Error as e:
+            app.logger.error(f"SQL Error pulling audit lines from {db_name}: {e}")
+        except Exception as e:
+            app.logger.error(f"Error pulling audit lines from {db_name}: {e}")
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    return line_rows
+
+
+def get_audit_order_lines_range(start_iso: str, end_iso: str) -> list:
+    """Pull order lines for an inclusive ISO date range."""
+    start_serial = _iso_to_ord_dt(start_iso)
+    end_serial = _iso_to_ord_dt(end_iso)
+    where_clause = f"""
+        WHERE o.ord_dt >= {int(start_serial)}
+          AND o.ord_dt <= {int(end_serial)}
+    """
+    return _fetch_audit_order_lines(where_clause)
+
+
+def get_audit_order_lines(months_back=18):
+    """One date-range pull per database: order headers joined to line items.
+
+    Used by the audit dashboard cache so page views never scan SQL Server.
+    """
+    from datetime import date
+
+    months_back = max(1, min(int(months_back or 18), 60))
+    end = date.today()
+    start_month = end.month - months_back
+    start_year = end.year
+    while start_month <= 0:
+        start_month += 12
+        start_year -= 1
+    start = date(start_year, start_month, 1)
+    return get_audit_order_lines_range(start.isoformat(), end.isoformat())
 
 
 def get_order_skus_for_orders(orders_data):

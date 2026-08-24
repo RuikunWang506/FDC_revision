@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ _('page.container_hub.title') }}</title>
+    <title>Container Hub 货柜中心</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -12,8 +12,37 @@
         .hub-header {
             background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
             color: #fff;
-            padding: 1.5rem 0 1rem;
-            margin-bottom: 1.5rem;
+            padding: .55rem 0;
+            margin-bottom: 1rem;
+        }
+        .hub-header-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: .4rem .75rem;
+        }
+        .hub-header h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.25;
+        }
+        .hub-header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: .35rem .45rem;
+        }
+        .hub-updated {
+            display: flex;
+            align-items: baseline;
+            gap: .4rem;
+            font-size: .78rem;
+            line-height: 1.2;
+            white-space: nowrap;
+            color: rgba(255,255,255,.8);
         }
         .hub-card {
             background: #fff;
@@ -61,6 +90,68 @@
             text-transform: uppercase;
             letter-spacing: .04em;
             color: #666;
+            line-height: 1.2;
+        }
+        .zh {
+            display: block;
+            font-size: .85em;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+        .zh-inline {
+            display: inline;
+            font-size: .88em;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: 0;
+            margin-left: .3rem;
+            opacity: .85;
+        }
+        .hub-header h1 .zh-inline,
+        .hub-header .btn-outline-light .zh-inline,
+        .hub-header .btn-info .zh-inline {
+            color: rgba(255,255,255,.85);
+        }
+        .hub-table th .zh,
+        .table thead th .zh {
+            color: #889;
+            font-size: .85em;
+        }
+        .stat-pill {
+            text-align: center;
+            line-height: 1.2;
+        }
+        .stat-pill .zh {
+            font-size: .78em;
+            color: #667;
+        }
+        .status-badge {
+            text-align: center;
+            line-height: 1.15;
+        }
+        .status-badge .zh {
+            font-size: .85em;
+            opacity: .9;
+        }
+        .action-row .btn,
+        .shipment-upload-panel .btn,
+        .modal-body .btn-block,
+        .modal-footer .btn {
+            line-height: 1.15;
+            text-align: center;
+        }
+        .modal-title .zh {
+            font-size: .8em;
+            color: #667eea;
+        }
+        .shipment-toggle .zh-inline {
+            color: #5a7a9a;
+        }
+        .import-vendor-box label .zh {
+            color: #889;
         }
         .hub-table tbody tr.row-new { border-left: 4px solid #ffc107; }
         .hub-table tbody tr.row-ocean { border-left: 4px solid #007bff; }
@@ -90,7 +181,7 @@
             background: #fff;
             border: 1px solid #e9ecef;
             border-radius: 10px;
-            padding: .75rem 1rem;
+            padding: .45rem .85rem;
             font-weight: 600;
             color: #1e3a5f;
         }
@@ -109,12 +200,13 @@
         .shipment-dropzone .small {
             color: #6c757d;
         }
-        .table-wrap { max-height: calc(100vh - 280px); overflow: auto; }
-        .hub-header-links .btn {
-            font-size: .82rem;
+        .table-wrap { max-height: calc(100vh - 230px); overflow: auto; }
+        .hub-header-actions .btn {
+            font-size: .78rem;
             font-weight: 600;
-            margin-left: .5rem;
-            margin-bottom: .35rem;
+            padding: .2rem .5rem;
+            line-height: 1.2;
+            margin: 0;
         }
         .written-time-cell { line-height: 1.25; white-space: nowrap; }
         .written-time-cell .written-date { font-size: .82rem; }
@@ -174,26 +266,26 @@
 
     <div class="hub-header">
         <div class="container-fluid" style="max-width: 1400px;">
-            <div class="d-flex flex-wrap align-items-center justify-content-between">
+            <div class="hub-header-row">
                 <div>
-                    <h1 class="h3 mb-1"><i class="bi bi-box-seam"></i> Container Hub</h1>
-                    <small class="text-white-50">{{ te('Process new containers · manage ocean & landed POs') }}</small>
+                    <h1><i class="bi bi-box-seam"></i> Container Hub <span class="zh-inline">货柜中心</span></h1>
+                    <small class="text-white-50">Process new containers · manage ocean &amp; landed POs · 处理新货柜 · 管理在途与已到货 PO</small>
                 </div>
-                <div class="text-right">
-                    <div class="hub-header-links mb-2">
-                        <button type="button" id="guideBtn" class="btn btn-sm btn-outline-light">
-                            <i class="bi bi-question-circle"></i> Instruction / 使用说明
-                        </button>
-                        <a href="/container" class="btn btn-sm btn-info">
-                            <i class="bi bi-box-arrow-in-right"></i> Manual Process Container
-                        </a>
-                        <a href="{{ google_sheet_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light">
-                            <i class="bi bi-table"></i> Google Sheet
-                        </a>
-                    </div>
-                    <div class="small text-white-50">{{ te('Sheet updated') }}</div>
-                    <div id="lastUpdated">{{ te('Loading…') }}</div>
-                    <button id="refreshBtn" class="btn btn-sm btn-light mt-1">{{ te('Refresh') }}</button>
+                <div class="hub-header-actions">
+                    <button type="button" id="guideBtn" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-question-circle"></i> Instruction <span class="zh-inline">使用说明</span>
+                    </button>
+                    <a href="/container" class="btn btn-sm btn-info">
+                        <i class="bi bi-box-arrow-in-right"></i> Manual Process <span class="zh-inline">手动处理</span>
+                    </a>
+                    <a href="{{ google_sheet_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-table"></i> Google Sheet <span class="zh-inline">谷歌表格</span>
+                    </a>
+                    <span class="hub-updated">
+                        <span>Sheet updated 表格更新</span>
+                        <span id="lastUpdated">Loading…</span>
+                    </span>
+                    <button id="refreshBtn" class="btn btn-sm btn-light">Refresh <span class="zh-inline">刷新</span></button>
                 </div>
             </div>
         </div>
@@ -204,6 +296,7 @@
             <button class="shipment-toggle btn btn-link text-decoration-none collapsed" type="button"
                     data-toggle="collapse" data-target="#shipmentUploadPanel" aria-expanded="false">
                 <i class="bi bi-file-earmark-spreadsheet"></i> Weekly Shipment Tracking (2026 sheet)
+                <span class="zh-inline">每周货运跟踪（2026表）</span>
                 <span class="float-right"><i class="bi bi-chevron-down"></i></span>
             </button>
             <div id="shipmentUploadPanel" class="collapse mt-3">
@@ -222,13 +315,13 @@
                 <div class="d-flex flex-wrap align-items-center">
                     <input type="file" id="shipmentTrackingFile" class="d-none" accept=".xls,.xlsx,.xlsm">
                     <button type="button" id="shipmentChooseBtn" class="btn btn-sm btn-outline-primary mr-2 mb-2">
-                        Choose file
+                        Choose file<span class="zh">选择文件</span>
                     </button>
                     <button type="button" id="shipmentUploadBtn" class="btn btn-sm btn-primary mr-2 mb-2" disabled>
-                        Upload &amp; sync
+                        Upload &amp; sync<span class="zh">上传并同步</span>
                     </button>
                     <button type="button" id="shipmentViewBtn" class="btn btn-sm btn-outline-secondary mb-2" disabled>
-                        View uploaded 2026 data
+                        View uploaded 2026 data<span class="zh">查看已上传的 2026 数据</span>
                     </button>
                     <span id="shipmentFileLabel" class="small text-muted mb-2 ml-1"></span>
                 </div>
@@ -239,13 +332,13 @@
         <div class="hub-card mb-3">
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
                 <div id="filterPills">
-                    <span class="stat-pill active" data-filter="all">All <span id="countAll">0</span></span>
-                    <span class="stat-pill" data-filter="new">New <span id="countNew">0</span></span>
-                    <span class="stat-pill" data-filter="ocean">Ocean <span id="countOcean">0</span></span>
-                    <span class="stat-pill" data-filter="landed">Landed <span id="countLanded">0</span></span>
-                    <span class="stat-pill" data-filter="special">Australia (L) <span id="countSpecial">0</span></span>
+                    <span class="stat-pill active" data-filter="all">All <span id="countAll">0</span><span class="zh">全部</span></span>
+                    <span class="stat-pill" data-filter="new">New <span id="countNew">0</span><span class="zh">新建</span></span>
+                    <span class="stat-pill" data-filter="ocean">Ocean <span id="countOcean">0</span><span class="zh">在途</span></span>
+                    <span class="stat-pill" data-filter="landed">Landed <span id="countLanded">0</span><span class="zh">已到</span></span>
+                    <span class="stat-pill" data-filter="special">Australia (L) <span id="countSpecial">0</span><span class="zh">澳洲 (L)</span></span>
                 </div>
-                <input type="text" id="searchBox" class="form-control form-control-sm" style="max-width: 220px;" placeholder="{{ te('Search container…') }}">
+                <input type="text" id="searchBox" class="form-control form-control-sm" style="max-width: 220px;" placeholder="Search container… / 搜索货柜">
             </div>
 
             <div id="loadingState" class="text-center py-5">
@@ -257,14 +350,15 @@
                 <table class="table table-sm table-hover hub-table mb-0">
                     <thead>
                         <tr>
-                            <th>{{ te('Container') }}</th>
-                            <th>{{ te('BOL') }}</th>
-                            <th>{{ te('ETD / ETA') }}</th>
-                            <th>{{ te('Status') }}</th>
-                            <th>{{ te('Written Time') }}</th>
-                            <th>{{ te('PO Created') }}</th>
-                            <th>{{ te('MSRP') }}</th>
-                            <th>{{ te('Actions') }}</th>
+                            <th>Container<span class="zh">货柜号</span></th>
+                            <th>BOL<span class="zh">提单号</span></th>
+                            <th>ETD / ETA<span class="zh">离港 / 到港</span></th>
+                            <th>Status<span class="zh">状态</span></th>
+                            <th>Received<span class="zh">收货</span></th>
+                            <th>Written Time<span class="zh">写入时间</span></th>
+                            <th>PO Created<span class="zh">建 PO 时间</span></th>
+                            <th>MSRP<span class="zh">零售价</span></th>
+                            <th>Actions<span class="zh">操作</span></th>
                         </tr>
                     </thead>
                     <tbody id="hubTableBody"></tbody>
@@ -283,7 +377,7 @@
         <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Uploaded tracking — <span id="shipmentViewSheetName"></span></h5>
+                    <h5 class="modal-title">Uploaded tracking — <span id="shipmentViewSheetName"></span><span class="zh">已上传跟踪表</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body p-0">
@@ -291,12 +385,12 @@
                         <table class="table table-sm table-striped mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>{{ te('Container') }}</th>
-                                    <th>{{ te('Container #') }}</th>
-                                    <th>{{ te('Vessel NO') }}</th>
-                                    <th>{{ te('Deliver Date') }}</th>
-                                    <th>{{ te('ETD') }}</th>
-                                    <th>{{ te('ETA') }}</th>
+                                    <th>Container<span class="zh">货柜号</span></th>
+                                    <th>Container #<span class="zh">柜号</span></th>
+                                    <th>Vessel NO<span class="zh">船名</span></th>
+                                    <th>Deliver Date<span class="zh">交货日期</span></th>
+                                    <th>ETD<span class="zh">离港</span></th>
+                                    <th>ETA<span class="zh">到港</span></th>
                                 </tr>
                             </thead>
                             <tbody id="shipmentViewBody"></tbody>
@@ -311,7 +405,7 @@
         <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title"><i class="bi bi-book"></i> Container Hub — Instructions</h5>
+                    <h5 class="modal-title"><i class="bi bi-book"></i> Container Hub — Instructions<span class="zh">使用说明</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -344,6 +438,7 @@
                                     <li><strong>{{ te('Container') }}</strong> — click to open item lookup. <code>{{ te('FT…') }}</code> numbers display as <code>F…</code>.</li>
                                     <li><strong>{{ te('BOL') }}</strong> — bill of lading from weekly tracking; vessel name shown below.</li>
                                     <li><strong>{{ te('ETD / ETA') }}</strong> — departure (ETD) on top, arrival (ETA) below from weekly tracking.</li>
+                                    <li><strong>Received 收货</strong> — RCD date from the Google sheet (when received at 827).</li>
                                     <li><strong>{{ te('Written Time') }}</strong> — when the row was written on the Google sheet.</li>
                                     <li><strong>{{ te('PO Created') }}</strong> — OMS PO date/time from FDC (<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>{{ te('). Blank if no PO exists yet.') }}</li>
                                 </ul>
@@ -405,6 +500,7 @@
                                     <li><strong>Container 货柜号</strong> — 点击可打开货品查询。<code>{{ te('FT…') }}</code> 会显示为 <code>F…</code>。</li>
                                     <li><strong>BOL 提单号</strong> — 来自每周跟踪表；下方显示船名。</li>
                                     <li><strong>{{ te('ETD / ETA') }}</strong> — 上方为离港 ETD，下方为到港 ETA。</li>
+                                    <li><strong>Received 收货</strong> — Google 表 RCD 收货日期（827 到货）。</li>
                                     <li><strong>Written Time 写入时间</strong> — Google 表上该行的写入时间。</li>
                                     <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>）。尚未建 PO 时显示空白。</li>
                                 </ul>
@@ -459,19 +555,19 @@
         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Edit — <span id="editActionsContainer"></span></h5>
+                    <h5 class="modal-title">Edit — <span id="editActionsContainer"></span><span class="zh">编辑</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3" id="editActionsHint">{{ te('Delete the OMS PO or reprocess the container file and review the style grid before re-import.') }}</p>
                     <button type="button" class="btn btn-outline-warning btn-block mb-2" id="editUnlandBtn" style="display:none;">
-                        <i class="bi bi-arrow-counterclockwise"></i> Un-landed
+                        <i class="bi bi-arrow-counterclockwise"></i> Un-landed<span class="zh">取消到货</span>
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-block mb-2" id="editDeletePoBtn">
-                        <i class="bi bi-trash"></i> Delete PO
+                        <i class="bi bi-trash"></i> Delete PO<span class="zh">删除 PO</span>
                     </button>
                     <button type="button" class="btn btn-primary btn-block" id="editReprocessBtn">
-                        <i class="bi bi-arrow-repeat"></i> Reprocess
+                        <i class="bi bi-arrow-repeat"></i> Reprocess<span class="zh">重新处理</span>
                     </button>
                 </div>
             </div>
@@ -482,15 +578,15 @@
         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">{{ te('Container landed?') }}</h5>
+                    <h5 class="modal-title">Container landed?<span class="zh">货柜已到货？</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-0">Has <strong id="landedConfirmContainer"></strong> arrived at 827 and been received into OMS?</p>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ te('No') }}</button>
-                    <button type="button" class="btn btn-success btn-sm" id="landedConfirmYesBtn">{{ te('Yes, mark landed') }}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">No<span class="zh">否</span></button>
+                    <button type="button" class="btn btn-success btn-sm" id="landedConfirmYesBtn">Yes, mark landed<span class="zh">是，标记已到货</span></button>
                 </div>
             </div>
         </div>
@@ -500,7 +596,7 @@
         <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">Files — <span id="filesActionsContainer"></span></h5>
+                    <h5 class="modal-title">Files — <span id="filesActionsContainer"></span><span class="zh">文件</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body" id="filesActionsLinks"></div>
@@ -512,7 +608,7 @@
         <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Review &amp; Import — <span id="importPreviewContainer"></span></h5>
+                    <h5 class="modal-title">Review &amp; Import — <span id="importPreviewContainer"></span><span class="zh">核对并导入</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -522,7 +618,7 @@
                     <div class="import-vendor-box mb-3">
                         <div class="form-row align-items-end">
                             <div class="col-md-4">
-                                <label for="importVendorId">{{ te('Vendor ID (PO header)') }}</label>
+                                <label for="importVendorId">Vendor ID (PO header)<span class="zh">供应商编号（PO 表头）</span></label>
                                 <input type="text" id="importVendorId" class="form-control form-control-sm" autocomplete="off">
                             </div>
                             <div class="col-md-8">
@@ -535,8 +631,13 @@
                         <table class="table table-sm table-bordered">
                             <thead class="thead-light">
                                 <tr>
-                                    <th>{{ te('Style') }}</th><th>{{ te('Color') }}</th><th>{{ te('Was') }}</th><th>{{ te('Item#') }}</th>
-                                    <th>{{ te('Cost') }}</th><th>{{ te('Retail') }}</th><th>{{ te('PO Qty') }}</th>
+                                    <th>Style<span class="zh">款式</span></th>
+                                    <th>Color<span class="zh">颜色</span></th>
+                                    <th>Was<span class="zh">原值</span></th>
+                                    <th>Item#<span class="zh">货号</span></th>
+                                    <th>Cost<span class="zh">成本</span></th>
+                                    <th>Retail<span class="zh">零售价</span></th>
+                                    <th>PO Qty<span class="zh">采购数量</span></th>
                                 </tr>
                             </thead>
                             <tbody id="importPreviewBody"></tbody>
@@ -544,8 +645,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Cancel') }}</button>
-                    <button type="button" class="btn btn-success" id="confirmImportBtn">{{ te('Confirm Import') }}</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel<span class="zh">取消</span></button>
+                    <button type="button" class="btn btn-success" id="confirmImportBtn">Confirm Import<span class="zh">确认导入</span></button>
                 </div>
             </div>
         </div>
@@ -555,7 +656,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title">{{ te('Confirm Vendor ID') }}</h5>
+                    <h5 class="modal-title">Confirm Vendor ID<span class="zh">确认供应商编号</span></h5>
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -565,15 +666,15 @@
                         Confirm the vendor name below is correct before continuing.
                     </div>
                     <dl class="row mb-0 small">
-                        <dt class="col-sm-4">{{ te('Vendor ID') }}</dt>
+                        <dt class="col-sm-4">Vendor ID<span class="zh">供应商编号</span></dt>
                         <dd class="col-sm-8"><strong id="vendorConfirmId"></strong></dd>
-                        <dt class="col-sm-4">{{ te('Vendor name') }}</dt>
+                        <dt class="col-sm-4">Vendor name<span class="zh">供应商名称</span></dt>
                         <dd class="col-sm-8"><strong id="vendorConfirmName"></strong></dd>
                     </dl>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ te('Go back') }}</button>
-                    <button type="button" class="btn btn-success btn-sm" id="vendorConfirmProceedBtn">{{ te('Confirm and import') }}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Go back<span class="zh">返回</span></button>
+                    <button type="button" class="btn btn-success btn-sm" id="vendorConfirmProceedBtn">Confirm and import<span class="zh">确认并导入</span></button>
                 </div>
             </div>
         </div>
@@ -596,6 +697,26 @@
             return String(v == null ? '' : v)
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
+
+        function zhUnder(en, zh) {
+            return escapeHtml(en) + '<span class="zh">' + escapeHtml(zh) + '</span>';
+        }
+
+        var STATUS_ZH = { New: '新建', Ocean: '在途', Landed: '已到', Waiting: '等待' };
+        var LABEL_HTML = {
+            process: zhUnder('Process', '处理'),
+            files: zhUnder('Files', '文件'),
+            packslip: zhUnder('PackingList / Receive', '装箱单 / 收货'),
+            edit: zhUnder('Edit', '编辑'),
+            updateMsrp: zhUnder('Update MSRP', '更新零售价'),
+            reprocess: zhUnder('Reprocess', '重新处理'),
+            unland: zhUnder('Un-landed', '取消到货'),
+            confirmImport: zhUnder('Confirm Import', '确认导入'),
+            confirmAndImport: zhUnder('Confirm and import', '确认并导入'),
+            yesContinueVendor: zhUnder('Yes, continue with this vendor', '是，使用此供应商'),
+            yesLanded: zhUnder('Yes, mark landed', '是，标记已到货'),
+            uploadSync: zhUnder('Upload & sync', '上传并同步')
+        };
 
         function loadShipmentTrackingMeta() {
             $.getJSON('/boat/shipment_tracking/meta', function(res) {
@@ -653,7 +774,7 @@
                     alert('Failed: ' + ajaxErrorMessage(xhr, 'Upload failed'));
                 },
                 complete: function() {
-                    $btn.prop('disabled', !shipmentSelectedFile).text('Upload & sync');
+                    $btn.prop('disabled', !shipmentSelectedFile).html(LABEL_HTML.uploadSync);
                 }
             });
         }
@@ -686,10 +807,10 @@
         function msrpBadge(row) {
             var status = row.msrp_status || 'unknown';
             if (status === 'ok') {
-                return '<span class="status-badge status-msrp-ok">{{ te('OK') }}</span>';
+                return '<span class="status-badge status-msrp-ok">' + zhUnder('OK', '齐全') + '</span>';
             }
             if (status === 'need_ken') {
-                return '<span class="status-badge status-msrp-missing" title="Price1 missing in original Excel">{{ te('Need Ken') }}</span>';
+                return '<span class="status-badge status-msrp-missing" title="Price1 missing in original Excel">' + zhUnder('Need Ken', '需 Ken') + '</span>';
             }
             return '<span class="text-muted">—</span>';
         }
@@ -699,7 +820,9 @@
             if (row.action_mode === 'new') cls = 'status-new';
             else if (row.action_mode === 'ocean') cls = 'status-ocean';
             else if (row.action_mode === 'landed') cls = 'status-landed';
-            return '<span class="status-badge ' + cls + '">' + escapeHtml(row.status_label) + '</span>';
+            var zh = STATUS_ZH[row.status_label] || '';
+            var zhHtml = zh ? '<span class="zh">' + escapeHtml(zh) + '</span>' : '';
+            return '<span class="status-badge ' + cls + '">' + escapeHtml(row.status_label) + zhHtml + '</span>';
         }
 
         function datetimeCell(date, time) {
@@ -760,7 +883,7 @@
             var encoded = encodeURIComponent(JSON.stringify(items));
             return btn(
                 'btn-outline-secondary files-open-btn',
-                'Files',
+                LABEL_HTML.files,
                 'data-container="' + escapeHtml(container) + '" data-files="' + encoded + '"'
             );
         }
@@ -768,7 +891,7 @@
         function updateMsrpButton(container) {
             return btn(
                 'btn-outline-success update-msrp-btn',
-                'Update MSRP',
+                LABEL_HTML.updateMsrp,
                 'data-container="' + escapeHtml(container) + '" title="Push Price1 from original Excel to FDC + EFAS (RETAIL_PRS)"'
             );
         }
@@ -779,7 +902,9 @@
                 var style = item.type === 'po' ? 'success' : (item.type === 'styles' ? 'primary' : 'secondary');
                 return (
                     '<a href="' + escapeHtml(item.href) + '" class="btn btn-outline-' + style + ' btn-block mb-2" download>' +
-                    escapeHtml(item.label) + '</a>'
+                    escapeHtml(item.label) +
+                    (item.label_zh ? '<span class="zh">' + escapeHtml(item.label_zh) + '</span>' : '') +
+                    '</a>'
                 );
             }).join('');
             $('#filesActionsLinks').html(html);
@@ -788,28 +913,29 @@
 
         function buildActions(row) {
             var c = row.container;
-            var dl = function(type, label) {
+            var dl = function(type, label, labelZh) {
                 return {
                     type: type,
                     href: '/boat/download/' + encodeURIComponent(c) + '/' + type,
-                    label: label
+                    label: label,
+                    label_zh: labelZh || ''
                 };
             };
             var html = '<div class="action-cell"><div class="action-row">';
 
             if (row.action_mode === 'new') {
-                html += btn('btn-warning process-btn', 'Process', 'data-container="' + c + '"');
+                html += btn('btn-warning process-btn', LABEL_HTML.process, 'data-container="' + c + '"');
                 if (row.dropbox_available) {
-                    html += filesButton(c, [dl('original', 'Original')]);
+                    html += filesButton(c, [dl('original', 'Original', '原文件')]);
                 }
             } else if (row.action_mode === 'ocean') {
-                html += btn('btn-info packslip-btn', 'PackingList / Receive', 'data-container="' + c + '"');
+                html += btn('btn-info packslip-btn', LABEL_HTML.packslip, 'data-container="' + c + '"');
                 html += filesButton(c, [
-                    dl('po', 'PO CSV'),
-                    dl('styles', 'Styles CSV'),
-                    dl('original', 'Original')
+                    dl('po', 'PO CSV', '采购单 CSV'),
+                    dl('styles', 'Styles CSV', '款式 CSV'),
+                    dl('original', 'Original', '原文件')
                 ]);
-                html += btn('btn-primary edit-open-btn', 'Edit',
+                html += btn('btn-primary edit-open-btn', LABEL_HTML.edit,
                     'data-container="' + c + '" data-action-mode="ocean" data-msrp-status="' +
                     escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
                 if (row.show_update_msrp) {
@@ -817,18 +943,18 @@
                 }
             } else if (row.action_mode === 'landed') {
                 html += filesButton(c, [
-                    dl('po', 'PO CSV'),
-                    dl('styles', 'Styles CSV'),
-                    dl('original', 'Original')
+                    dl('po', 'PO CSV', '采购单 CSV'),
+                    dl('styles', 'Styles CSV', '款式 CSV'),
+                    dl('original', 'Original', '原文件')
                 ]);
-                html += btn('btn-primary edit-open-btn', 'Edit',
+                html += btn('btn-primary edit-open-btn', LABEL_HTML.edit,
                     'data-container="' + c + '" data-action-mode="landed" data-msrp-status="' +
                     escapeHtml(row.msrp_status || 'unknown') + '" data-in-oms="1"');
                 if (row.show_update_msrp) {
                     html += updateMsrpButton(c);
                 }
             } else {
-                html += '<span class="text-muted small">No Dropbox file</span>';
+                html += '<span class="text-muted small">' + zhUnder('No Dropbox file', '无 Dropbox 文件') + '</span>';
             }
 
             html += '</div></div>';
@@ -954,7 +1080,7 @@
 
             if (!pageRows.length) {
                 tbody.append(
-                    '<tr><td colspan="8" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
+                    '<tr><td colspan="9" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
                 );
             }
 
@@ -968,6 +1094,7 @@
                 tr.append($('<td></td>').html(bolCell(row)));
                 tr.append($('<td></td>').html(etdEtaCell(row)));
                 tr.append($('<td></td>').html(statusBadge(row)));
+                tr.append($('<td></td>').html(row.rcd ? escapeHtml(row.rcd) : '<span class="text-muted">—</span>'));
                 tr.append($('<td></td>').html(datetimeCell(row.written_date, row.written_time)));
                 tr.append($('<td></td>').html(datetimeCell(row.processed_date, row.processed_time)));
                 tr.append($('<td></td>').html(msrpBadge(row)));
@@ -1091,7 +1218,7 @@
             $('#importPreviewContainer').text(container);
             renderPreviewRows(importPreviewState.rows);
             loadImportVendorDefaults(container);
-            $('#confirmImportBtn').prop('disabled', false).text('Confirm Import');
+            $('#confirmImportBtn').prop('disabled', false).html(LABEL_HTML.confirmImport);
             $('#importPreviewModal').modal('show');
         }
 
@@ -1133,12 +1260,12 @@
                     } else {
                         alert('Error: ' + (res.error || res.message));
                     }
-                    $btn.prop('disabled', false).text('Confirm Import');
+                    $btn.prop('disabled', false).html(LABEL_HTML.confirmImport);
                     $proceedBtn.prop('disabled', false);
                 },
                 error: function(xhr) {
                     alert('Failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
-                    $btn.prop('disabled', false).text('Confirm Import');
+                    $btn.prop('disabled', false).html(LABEL_HTML.confirmImport);
                     $proceedBtn.prop('disabled', false);
                 }
             });
@@ -1150,8 +1277,8 @@
             $('#vendorConfirmName').text(vendorInfo.vendor_name || '(unknown)');
             var nonStandard = !vendorInfo.is_standard;
             $('#vendorConfirmWarning').toggle(nonStandard);
-            $('#vendorConfirmProceedBtn').text(
-                nonStandard ? 'Yes, continue with this vendor' : 'Confirm and import'
+            $('#vendorConfirmProceedBtn').html(
+                nonStandard ? LABEL_HTML.yesContinueVendor : LABEL_HTML.confirmAndImport
             ).prop('disabled', false);
             $('#vendorConfirmModal').modal('show');
         }
@@ -1165,7 +1292,7 @@
             return false;
         }
 
-        function runProcess(container, btn, label) {
+        function runProcess(container, btn, labelHtml) {
             var $btn = $(btn);
             $btn.prop('disabled', true).text('…');
             $.ajax({
@@ -1173,11 +1300,11 @@
                 method: 'POST',
                 dataType: 'json',
                 success: function(res) {
-                    $btn.prop('disabled', false).text(label);
+                    $btn.prop('disabled', false).html(labelHtml);
                     openPreviewFromResponse(container, res);
                 },
                 error: function(xhr) {
-                    $btn.prop('disabled', false).text(label);
+                    $btn.prop('disabled', false).html(labelHtml);
                     alert('Failed: ' + ajaxErrorMessage(xhr, 'Process failed'));
                 }
             });
@@ -1185,22 +1312,22 @@
 
         function runReprocess(container, btn) {
             var $btn = $(btn);
-            var label = $btn.text();
+            var labelHtml = $btn.html();
             $btn.prop('disabled', true).text('…');
             $.ajax({
                 url: '/boat/process/' + encodeURIComponent(container),
                 method: 'POST',
                 dataType: 'json',
                 success: function(res) {
-                    $btn.prop('disabled', false).text(label);
+                    $btn.prop('disabled', false).html(labelHtml);
                     openPreviewFromResponse(container, res);
                 },
                 error: function() {
                     $.getJSON('/boat/preview/' + encodeURIComponent(container), function(res) {
-                        $btn.prop('disabled', false).text(label);
+                        $btn.prop('disabled', false).html(labelHtml);
                         openPreviewFromResponse(container, res);
                     }).fail(function(xhr) {
-                        $btn.prop('disabled', false).text(label);
+                        $btn.prop('disabled', false).html(labelHtml);
                         alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not load preview'));
                     });
                 }
@@ -1214,8 +1341,8 @@
             editActionsState.inOms = !!inOms;
             $('#editActionsContainer').text(container);
             $('#editDeletePoBtn, #editReprocessBtn, #editUnlandBtn').prop('disabled', false);
-            $('#editReprocessBtn').text('Reprocess');
-            $('#editUnlandBtn').text('Un-landed');
+            $('#editReprocessBtn').html('<i class="bi bi-arrow-repeat"></i> ' + LABEL_HTML.reprocess);
+            $('#editUnlandBtn').html('<i class="bi bi-arrow-counterclockwise"></i> ' + LABEL_HTML.unland);
             if (actionMode === 'landed') {
                 $('#editUnlandBtn').show();
                 $('#editActionsHint').text(
@@ -1238,7 +1365,7 @@
                 return;
             }
             var $btn = triggerBtn ? $(triggerBtn) : $();
-            var btnLabel = 'Update MSRP';
+            var btnLabel = LABEL_HTML.updateMsrp;
             if ($btn.length) {
                 $btn.prop('disabled', true).text('Updating…');
             }
@@ -1247,12 +1374,12 @@
                 if (res.success) {
                     loadData(true);
                 } else if ($btn.length) {
-                    $btn.prop('disabled', false).text(btnLabel);
+                    $btn.prop('disabled', false).html(btnLabel);
                 }
             }).fail(function(xhr) {
                 alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not update MSRP'));
                 if ($btn.length) {
-                    $btn.prop('disabled', false).text(btnLabel);
+                    $btn.prop('disabled', false).html(btnLabel);
                 }
             });
         }
@@ -1273,18 +1400,18 @@
                     alert(res.message || 'Moved back to ocean');
                 } else {
                     alert('Error: ' + (res.error || res.message || 'Failed'));
-                    $btn.prop('disabled', false).text('Un-landed');
+                    $btn.prop('disabled', false).html('<i class="bi bi-arrow-counterclockwise"></i> ' + LABEL_HTML.unland);
                 }
             }).fail(function(xhr) {
                 alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not un-land'));
-                $btn.prop('disabled', false).text('Un-landed');
+                $btn.prop('disabled', false).html('<i class="bi bi-arrow-counterclockwise"></i> ' + LABEL_HTML.unland);
             });
         }
 
         function openLandedConfirm(container) {
             landedConfirmState.container = container;
             $('#landedConfirmContainer').text(container);
-            $('#landedConfirmYesBtn').prop('disabled', false).text('Yes, mark landed');
+            $('#landedConfirmYesBtn').prop('disabled', false).html(LABEL_HTML.yesLanded);
             $('#landedConfirmModal').modal('show');
         }
 
@@ -1298,11 +1425,11 @@
                     alert(res.message || 'Marked landed');
                 } else {
                     alert('Error: ' + (res.error || res.message || 'Failed'));
-                    $btn.prop('disabled', false).text('Yes, mark landed');
+                    $btn.prop('disabled', false).html(LABEL_HTML.yesLanded);
                 }
             }).fail(function(xhr) {
                 alert('Failed: ' + ajaxErrorMessage(xhr, 'Could not mark landed'));
-                $btn.prop('disabled', false).text('Yes, mark landed');
+                $btn.prop('disabled', false).html(LABEL_HTML.yesLanded);
             });
         }
 
@@ -1364,7 +1491,7 @@
         loadShipmentTrackingMeta();
 
         $(document).on('click', '.process-btn', function() {
-            runProcess($(this).data('container'), this, 'Process');
+            runProcess($(this).data('container'), this, LABEL_HTML.process);
         });
         $(document).on('click', '.edit-open-btn', function() {
             openEditModal(

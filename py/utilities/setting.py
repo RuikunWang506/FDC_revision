@@ -65,7 +65,20 @@ class Config:
         'openid'
     ]
     
-    LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Log file path for better accessibility
+    LOG_FILE = r'C:/FDC_FLASK_APP/log.txt'  # Legacy single file (left in place; new writes go to LOG_DIR)
+    LOG_DIR = os.path.join(r'C:/FDC_FLASK_APP', 'output', 'logs')
+    SYSTEM_LOG_FILE = os.path.join(LOG_DIR, 'system.log')
+    ERROR_LOG_FILE = os.path.join(LOG_DIR, 'error.log')
+    USER_LOG_FILE = os.path.join(LOG_DIR, 'user.log')
+    ONLINE_LOG_FILE = os.path.join(LOG_DIR, 'online.log')
+    VISITOR_LOG_FILE = os.path.join(LOG_DIR, 'visitor.log')
+
+    FDC_AI_PROVIDER = os.getenv('FDC_AI_PROVIDER', 'ollama').strip() or 'ollama'
+    FDC_AI_BASE_URL = (os.getenv('FDC_AI_BASE_URL') or 'http://127.0.0.1:11434').rstrip('/')
+    FDC_AI_FALLBACK_URL = (os.getenv('FDC_AI_FALLBACK_URL') or '').strip().rstrip('/')
+    FDC_AI_MODEL = (os.getenv('FDC_AI_MODEL') or '').strip()
+    FDC_AI_KEEP_ALIVE = os.getenv('FDC_AI_KEEP_ALIVE', '10m')
+    FDC_AI_NUM_GPU = os.getenv('FDC_AI_NUM_GPU', '').strip()
 
     
     # Email configuration
@@ -139,6 +152,11 @@ class Config:
 
     # Mail UI (IMAP/SMTP): local cache dir on Windows server
     EMAIL_DATA_DIR = Path(os.getenv('EMAIL_DATA_DIR', r'D:\Email'))
+
+    # Re-read Jinja templates from disk without restarting the process (works with debug off).
+    TEMPLATES_AUTO_RELOAD = True
+    # Cache CSS/JS/images in the browser so the homepage is not re-downloaded every visit.
+    SEND_FILE_MAX_AGE_DEFAULT = int(os.getenv('FDC_STATIC_MAX_AGE', str(12 * 60 * 60)))
 
 
 # Utility functions

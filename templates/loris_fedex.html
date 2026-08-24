@@ -243,6 +243,85 @@
             border-color: #ffc107;
             background: #fffdf5;
         }
+        .upc500-alias-cell {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25rem;
+            min-height: 28px;
+            min-width: 140px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: text;
+        }
+        .upc500-alias-cell.dirty {
+            background: #fffdf5;
+            box-shadow: inset 0 0 0 1px #ffc107;
+        }
+        .upc500-alias-cell.is-disabled {
+            cursor: default;
+            color: #adb5bd;
+        }
+        .upc500-alias-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.15rem;
+            max-width: 100%;
+            padding: 0.12rem 0.28rem 0.12rem 0.45rem;
+            border: 1px solid #d6bcfa;
+            border-radius: 0.35rem;
+            background: #f3ebff;
+            color: #5a2d91;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            line-height: 1.2;
+        }
+        .upc500-alias-chip .upc500-alias-remove {
+            border: 0;
+            background: transparent;
+            color: #6f42c1;
+            font-size: 0.95rem;
+            line-height: 1;
+            padding: 0 0.12rem;
+            cursor: pointer;
+        }
+        .upc500-alias-chip .upc500-alias-remove:hover {
+            color: #b02a37;
+        }
+        .upc500-alias-add {
+            border: 0;
+            background: transparent;
+            min-width: 76px;
+            flex: 1 1 76px;
+            padding: 2px 4px;
+            font-size: 0.8rem;
+            outline: none;
+        }
+        .upc500-alias-add::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+        }
+        .upc500-alias-cell.is-full .upc500-alias-add {
+            display: none;
+        }
+        .upc500-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .upc500-actions .btn {
+            font-size: 0.72rem;
+            padding: 0.15rem 0.4rem;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .upc500-sticker-meta {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 0.35rem 0.75rem;
+            align-items: center;
+        }
         .upc500-source-auto {
             display: inline-block;
             padding: 0.1rem 0.45rem;
@@ -287,6 +366,44 @@
             font-size: 1rem;
             margin-bottom: 0.35rem;
         }
+        .otb-upload-guide {
+            background: #fffbeb;
+            border: 1px solid #f5d98a;
+            border-radius: 0.5rem;
+            padding: 1rem 1.15rem;
+        }
+        .otb-upload-guide h6 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+        .otb-upload-guide ol,
+        .otb-upload-guide ul {
+            margin-bottom: 0;
+            padding-left: 1.15rem;
+        }
+        .otb-upload-guide li {
+            margin-bottom: 0.25rem;
+        }
+        .otb-col-chip {
+            display: inline-block;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #fff3cd;
+            border: 1px solid #e6c35c;
+            border-radius: 0.25rem;
+            padding: 0 0.3rem;
+        }
+        .otb-upload-guide .otb-step-badge {
+            width: 1.35rem;
+            height: 1.35rem;
+            font-size: 0.75rem;
+            vertical-align: middle;
+        }
+        .otb-upload-guide .otb-step-badge.step-1 { background: #0dcaf0; color: #fff; }
+        .otb-upload-guide .otb-step-badge.step-2 { background: #ffc107; color: #212529; }
+        .otb-upload-guide .otb-step-badge.step-3 { background: #198754; color: #fff; }
         .btn.btn-dymo {
             background-color: #c2410c;
             background-image: none;
@@ -570,7 +687,7 @@
                     </div>
                     <div class="row g-2 align-items-end mb-3">
                         <div class="col-md-5">
-                            <label for="upc500SearchInput" class="form-label mb-1">Search UPC / SKU</label>
+                            <label for="upc500SearchInput" class="form-label mb-1">Search UPC / SKU / alias</label>
                             <input type="text" id="upc500SearchInput" class="form-control" placeholder="Search…">
                         </div>
                         <div class="col-md-7 d-flex flex-wrap gap-2">
@@ -616,13 +733,79 @@
                                     <th style="width: 70px;">Row</th>
                                     <th style="width: 180px;">UPC</th>
                                     <th>SKU</th>
+                                    <th style="width: 260px;">Alias</th>
                                     <th style="width: 70px;">Source</th>
+                                    <th style="width: 210px;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="upc500TableBody">
-                                <tr><td colspan="4" class="text-center text-muted py-4">Load the section to view data.</td></tr>
+                                <tr><td colspan="6" class="text-center text-muted py-4">Load the section to view data.</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="upc500SheetModal" tabindex="-1" aria-labelledby="upc500SheetModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="upc500SheetModalLabel">
+                            <i class="fas fa-file-pdf"></i> Generate 30-label sheet
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">Uses sticker-maker layout: 30 labels per letter page (Avery). Download the PDF after it generates.</p>
+                        <div class="upc500-sticker-meta mb-3">
+                            <strong>SKU</strong><span id="upc500SheetSku" class="font-monospace">—</span>
+                            <strong>UPC</strong><span id="upc500SheetUpc" class="font-monospace">—</span>
+                            <label for="upc500SheetCount" class="mb-0"><strong>Sheets</strong></label>
+                            <input type="number" id="upc500SheetCount" class="form-control form-control-sm" min="1" max="50" value="1" style="max-width: 90px;">
+                        </div>
+                        <p class="small text-muted mb-0">Each sheet prints 30 copies of this SKU/UPC.</p>
+                        <p id="upc500SheetStatus" class="small mt-2 mb-0"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="upc500SheetDownloadBtn">
+                            <i class="fas fa-download"></i> Generate &amp; Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="upc500DymoModal" tabindex="-1" aria-labelledby="upc500DymoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header text-white" style="background: #e36c09;">
+                        <h5 class="modal-title" id="upc500DymoModalLabel">
+                            <i class="fas fa-print"></i> Dymo stickers — 2¼ × 1¼ (1933084)
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">Download the Dymo PDF, or send it to the LabelWriter 450 Turbo on the server.</p>
+                        <div class="upc500-sticker-meta mb-3">
+                            <strong>SKU</strong><span id="upc500DymoSku" class="font-monospace">—</span>
+                            <strong>UPC</strong><span id="upc500DymoUpc" class="font-monospace">—</span>
+                            <label for="upc500DymoQty" class="mb-0"><strong>Qty</strong></label>
+                            <input type="number" id="upc500DymoQty" class="form-control form-control-sm" min="1" max="5000" value="1" style="max-width: 90px;">
+                        </div>
+                        <div id="upc500DymoPreviewStatus" class="text-center py-3 text-muted">Loading label design…</div>
+                        <div id="upc500DymoPreviewGrid" class="dymo-preview-grid"></div>
+                        <p id="upc500DymoPrintMeta" class="dymo-print-meta"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-outline-primary" id="upc500DymoDownloadBtn" disabled>
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                        <button type="button" class="btn btn-dymo" id="upc500DymoPrintBtn" disabled>
+                            <i class="fas fa-print"></i> Print to Dymo
+                        </button>
                     </div>
                 </div>
             </div>
@@ -640,9 +823,40 @@
             </div>
             <div class="collapse" id="otbUploadSection">
                 <div class="card-body">
-                    <p class="text-muted mb-4">
-                        Three upload types — each box has a different purpose. Upload the matching Excel file to the labeled box.
-                    </p>
+                    <div class="otb-upload-guide mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-info-circle text-warning me-2"></i>
+                            <strong>使用说明</strong>
+                        </div>
+                        <p class="small text-muted mb-3 mb-lg-2">
+                            按顺序使用下面三个上传框。文件必须是 <strong>.xlsx</strong>。
+                            第 2 步需要含 <strong>OTB</strong> 工作表的确认文件；第 3 步需要含 <strong>Template</strong> 工作表的最终模板。
+                        </p>
+                        <div class="row g-3 small">
+                            <div class="col-lg-4">
+                                <h6 class="text-info"><span class="otb-step-badge step-1">1</span> OTB</h6>
+                                <ul>
+                                    <li>上传供应商 OTB 报价表（A 列为 SKU，E 列为报价）。</li>
+                                    <li>更新数据库中的报价。可一次上传多个文件。</li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-4">
+                                <h6 class="text-warning"><span class="otb-step-badge step-2">2</span> Confirmed OTB</h6>
+                                <p class="mb-1">上传确认采购文件 → 生成 Setup Sheet。确认颜色有两种方式（二选一）：</p>
+                                <ol>
+                                    <li><strong>颜色高亮：</strong>在 <span class="otb-col-chip">M Color</span> 上黄色高亮；数量取 <span class="otb-col-chip">L Proj Store Count</span>。</li>
+                                    <li><strong>月份数量：</strong>若 M 列未高亮，在 <span class="otb-col-chip">U</span> 列填写当月买货数量（如 SEPT）。颜色仍取 M 列，数量取 U 列。</li>
+                                </ol>
+                            </div>
+                            <div class="col-lg-4">
+                                <h6 class="text-success"><span class="otb-step-badge step-3">3</span> Final Template</h6>
+                                <ul>
+                                    <li>在生成的 Setup Sheet 上修改英文描述和颜色。</li>
+                                    <li>在此回传，保存为 Loris 下次默认值。第 2 步新分配的 UPC 会写入 500 UPC（模板中黄色行为新 UPC）。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row g-4">
                         <!-- 1. OTB -->
                         <div class="col-lg-4">
@@ -651,7 +865,7 @@
                                     <span class="otb-step-badge">1</span> OTB
                                 </div>
                                 <div class="card-body d-flex flex-column">
-                                    <p class="small text-muted mb-2">Vendor OTB price list → updates offered prices in the database.</p>
+                                    <p class="small text-muted mb-2">Vendor price list → database offered prices (SKU col A, price col E).</p>
                                     <div id="otb-drop-zone" class="drop-zone flex-grow-1">
                                         <i class="fas fa-file-excel fa-2x mb-2 text-info"></i>
                                         <h5>Upload OTB Excel</h5>
@@ -677,7 +891,7 @@
                                     <span class="otb-step-badge">2</span> Confirmed OTB
                                 </div>
                                 <div class="card-body d-flex flex-column">
-                                    <p class="small text-muted mb-2">Confirmed OTB → Setup Sheet. Exports <strong>yellow-highlighted</strong> colors (col M), qty from col L.</p>
+                                    <p class="small text-muted mb-2">Confirmed buy → Setup Sheet. Yellow <strong>M</strong> + qty <strong>L</strong>, or fill qty in <strong>U</strong> if M is not highlighted.</p>
                                     <div id="otb-setup-drop-zone" class="drop-zone flex-grow-1">
                                         <i class="fas fa-file-excel fa-2x mb-2 text-warning"></i>
                                         <h5>Upload Confirmed OTB</h5>
@@ -704,7 +918,7 @@
                                     <span class="otb-step-badge">3</span> Final Template
                                 </div>
                                 <div class="card-body d-flex flex-column">
-                                    <p class="small text-muted mb-2">Edited Setup Sheet back → saves English Description &amp; Color as Loris defaults.</p>
+                                    <p class="small text-muted mb-2">Edited Setup Sheet → save English Description &amp; Color as Loris defaults.</p>
                                     <div id="otb-final-drop-zone" class="drop-zone flex-grow-1">
                                         <i class="fas fa-file-excel fa-2x mb-2 text-success"></i>
                                         <h5>Upload Final Template</h5>
@@ -1280,6 +1494,8 @@
         let upc500Rows = [];
         let upc500ByRow = {};
         const dirtyRows = new Set();
+        const dirtyAliasSkus = new Set();
+        let aliasBySku = {};
         let searchQuery = '';
         let highlightRow = null;
         let loaded = false;
@@ -1330,10 +1546,145 @@
             fileStatus.innerHTML = html;
         }
 
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function aliasesForSku(sku) {
+            const key = (sku || '').trim().toUpperCase();
+            return key ? (aliasBySku[key] || []) : [];
+        }
+
+        function aliasCellHtml(rowNum, sku, aliases, dirty) {
+            const hasSku = !!(sku || '').trim();
+            const list = hasSku ? (aliases || []) : [];
+            const classes = [
+                'upc500-alias-cell',
+                dirty ? 'dirty' : '',
+                hasSku ? '' : 'is-disabled',
+                list.length >= 5 ? 'is-full' : '',
+            ].filter(Boolean).join(' ');
+            const chips = list.map(alias => {
+                const safe = escapeHtml(alias);
+                return `<span class="upc500-alias-chip" title="${safe}">${safe}<button type="button" class="upc500-alias-remove" data-alias="${safe}" aria-label="Remove ${safe}">&times;</button></span>`;
+            }).join('');
+            const placeholder = list.length ? '+' : 'click to add';
+            const input = hasSku && list.length < 5
+                ? `<input type="text" class="upc500-alias-add" placeholder="${placeholder}" maxlength="40" autocomplete="off">`
+                : '';
+            return `<div class="${classes}" data-row="${rowNum}">${chips}${input}</div>`;
+        }
+
+        function refreshAliasCell(cell, aliases, { restoreInput } = {}) {
+            if (!cell) return;
+            const rowNum = parseInt(cell.dataset.row, 10);
+            const record = upc500ByRow[rowNum];
+            const sku = record ? (record.sku || '').trim() : '';
+            const dirty = sku && dirtyAliasSkus.has(sku.toUpperCase());
+            const active = cell.querySelector('.upc500-alias-add');
+            const keepFocus = document.activeElement === active;
+            const pending = restoreInput !== false && keepFocus ? active.value : '';
+            cell.outerHTML = aliasCellHtml(rowNum, sku, aliases, dirty);
+            const next = tableBody.querySelector(`.upc500-alias-cell[data-row="${rowNum}"]`);
+            if (keepFocus && next) {
+                const add = next.querySelector('.upc500-alias-add');
+                if (add) {
+                    add.value = pending;
+                    add.focus();
+                }
+            }
+            return next;
+        }
+
+        function parseAliasInput(text, sku) {
+            const skuKey = (sku || '').trim().toUpperCase();
+            const seen = new Set();
+            const out = [];
+            String(text || '').split(/[,;\n]+/).forEach(part => {
+                const alias = part.trim();
+                if (!alias) return;
+                const key = alias.toUpperCase();
+                if (key === skuKey || seen.has(key)) return;
+                seen.add(key);
+                out.push(alias);
+            });
+            return out.slice(0, 5);
+        }
+
+        function skuForAliasKey(key) {
+            const row = upc500Rows.find(item => (item.sku || '').trim().toUpperCase() === key);
+            return row ? row.sku.trim() : key;
+        }
+
+        function refreshSaveBtn() {
+            saveBtn.disabled = dirtyRows.size === 0 && dirtyAliasSkus.size === 0;
+        }
+
         function markDirty(rowNum, inputEl) {
             dirtyRows.add(rowNum);
             if (inputEl) inputEl.classList.add('dirty');
-            saveBtn.disabled = false;
+            refreshSaveBtn();
+        }
+
+        function markAliasDirty(sku, inputEl) {
+            const key = (sku || '').trim().toUpperCase();
+            if (!key) return;
+            dirtyAliasSkus.add(key);
+            if (inputEl) inputEl.classList.add('dirty');
+            tableBody.querySelectorAll('.upc500-alias-cell').forEach(cell => {
+                const record = upc500ByRow[parseInt(cell.dataset.row, 10)];
+                if (record && (record.sku || '').trim().toUpperCase() === key) {
+                    cell.classList.add('dirty');
+                }
+            });
+            refreshSaveBtn();
+        }
+
+        function applyAliasesToSku(sku, aliases, { skipRow } = {}) {
+            const key = (sku || '').trim().toUpperCase();
+            if (!key) return;
+            aliasBySku[key] = aliases;
+            upc500Rows.forEach(item => {
+                if ((item.sku || '').trim().toUpperCase() === key) {
+                    item.aliases = aliases;
+                }
+            });
+            tableBody.querySelectorAll('.upc500-alias-cell').forEach(cell => {
+                const rowNum = parseInt(cell.dataset.row, 10);
+                if (skipRow && rowNum === skipRow) return;
+                const record = upc500ByRow[rowNum];
+                if (!record || (record.sku || '').trim().toUpperCase() !== key) return;
+                refreshAliasCell(cell, aliases);
+            });
+        }
+
+        function addAliasesFromText(cell, text) {
+            if (!cell) return false;
+            const rowNum = parseInt(cell.dataset.row, 10);
+            const record = upc500ByRow[rowNum];
+            if (!record || !(record.sku || '').trim()) return false;
+            const current = aliasesForSku(record.sku);
+            const incoming = parseAliasInput(text, record.sku);
+            if (!incoming.length) return false;
+            const next = [...current];
+            const seen = new Set(next.map(a => a.toUpperCase()));
+            for (const alias of incoming) {
+                if (next.length >= 5) break;
+                const key = alias.toUpperCase();
+                if (seen.has(key)) continue;
+                seen.add(key);
+                next.push(alias);
+            }
+            if (next.length === current.length) return false;
+            applyAliasesToSku(record.sku, next, { skipRow: rowNum });
+            markAliasDirty(record.sku);
+            refreshAliasCell(cell, next, { restoreInput: false });
+            const add = tableBody.querySelector(`.upc500-alias-cell[data-row="${rowNum}"] .upc500-alias-add`);
+            if (add) add.focus();
+            return true;
         }
 
         function getFilteredRows() {
@@ -1343,6 +1694,7 @@
                 (item.upc || '').toLowerCase().includes(q) ||
                 (item.sku || '').toLowerCase().includes(q) ||
                 (item.source || '').toLowerCase().includes(q) ||
+                (item.aliases || []).some(alias => String(alias).toLowerCase().includes(q)) ||
                 String(item.row).includes(q)
             );
         }
@@ -1350,7 +1702,7 @@
         function renderUpc500Table() {
             const rows = getFilteredRows();
             if (!rows.length) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No matching rows.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No matching rows.</td></tr>';
                 return;
             }
 
@@ -1366,6 +1718,13 @@
                 const sourceHtml = source.toLowerCase() === 'auto'
                     ? '<span class="upc500-source-auto">auto</span>'
                     : (source ? source.replace(/</g, '&lt;') : '');
+                const hasSkuUpc = !!(item.upc && (item.sku || '').trim());
+                const disabledAttr = hasSkuUpc ? '' : 'disabled title="Needs SKU and UPC"';
+                const skuVal = (item.sku || '').trim();
+                const aliases = skuVal
+                    ? (aliasBySku[skuVal.toUpperCase()] || item.aliases || [])
+                    : [];
+                const aliasDirty = skuVal && dirtyAliasSkus.has(skuVal.toUpperCase());
                 return `
                     <tr class="${rowClass}" data-row="${item.row}" id="upc500-row-${item.row}">
                         <td class="text-muted">${item.row}</td>
@@ -1374,7 +1733,20 @@
                             <input type="text" class="upc500-sku-input ${dirtyClass}"
                                 data-row="${item.row}" value="${(item.sku || '').replace(/"/g, '&quot;')}">
                         </td>
+                        <td>
+                            ${aliasCellHtml(item.row, skuVal, aliases, aliasDirty)}
+                        </td>
                         <td class="text-center">${sourceHtml}</td>
+                        <td>
+                            <div class="upc500-actions">
+                                <button type="button" class="btn btn-primary upc500-sheet-btn" data-row="${item.row}" ${disabledAttr}>
+                                    30 PDF
+                                </button>
+                                <button type="button" class="btn btn-dymo upc500-dymo-btn" data-row="${item.row}" ${disabledAttr}>
+                                    Dymo
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -1387,6 +1759,17 @@
                     record.sku = input.value.trim();
                     markDirty(rowNum, input);
                     updateNextUnmatchedUi();
+                    const hasBoth = !!(record.upc && record.sku);
+                    const tr = input.closest('tr');
+                    tr.querySelectorAll('.upc500-sheet-btn, .upc500-dymo-btn').forEach(btn => {
+                        btn.disabled = !hasBoth;
+                    });
+                    const aliasCell = tr.querySelector('.upc500-alias-cell');
+                    if (aliasCell) {
+                        const key = record.sku.toUpperCase();
+                        record.aliases = key ? (aliasBySku[key] || []) : [];
+                        refreshAliasCell(aliasCell, record.aliases);
+                    }
                 });
             });
 
@@ -1400,7 +1783,7 @@
 
         async function loadUpc500Data() {
             setFileStatus('secondary', '<i class="fas fa-spinner fa-spin"></i> Loading <code>Copy of 500 UPC.xlsx</code>…');
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin"></i> Loading…</td></tr>';
 
             try {
                 const response = await fetch("{{ url_for('lori_automation.loris_500_upc_get') }}", {
@@ -1414,7 +1797,7 @@
 
                 if (!data.stats || !data.stats.found) {
                     setFileStatus('warning', '<i class="fas fa-exclamation-triangle"></i> File not found. Expected: <code>Dropbox\\Elaine\\Copy of 500 UPC.xlsx</code>');
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Workbook not found.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Workbook not found.</td></tr>';
                     addNewBtn.disabled = true;
                     saveBtn.disabled = true;
                     return;
@@ -1422,8 +1805,16 @@
 
                 upc500Rows = data.rows || [];
                 upc500ByRow = {};
-                upc500Rows.forEach(item => { upc500ByRow[item.row] = item; });
+                aliasBySku = {};
+                upc500Rows.forEach(item => {
+                    upc500ByRow[item.row] = item;
+                    const skuKey = (item.sku || '').trim().toUpperCase();
+                    if (skuKey && !(skuKey in aliasBySku)) {
+                        aliasBySku[skuKey] = item.aliases || [];
+                    }
+                });
                 dirtyRows.clear();
+                dirtyAliasSkus.clear();
                 highlightRow = null;
                 loaded = true;
                 workStartRow = data.work_start_row || 1300;
@@ -1440,19 +1831,28 @@
             } catch (error) {
                 console.error('500 UPC load failed:', error);
                 setFileStatus('danger', `<i class="fas fa-times-circle"></i> ${error.message}`);
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">Failed to load.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Failed to load.</td></tr>';
             }
         }
 
         async function saveUpc500Changes() {
-            if (!dirtyRows.size) {
+            if (!dirtyRows.size && !dirtyAliasSkus.size) {
                 alert('No changes to save.');
                 return;
             }
 
+            tableBody.querySelectorAll('.upc500-alias-add').forEach(input => {
+                if (!input.value.trim()) return;
+                addAliasesFromText(input.closest('.upc500-alias-cell'), input.value);
+            });
+
             const updates = Array.from(dirtyRows).map(rowNum => ({
                 row: rowNum,
                 sku: (upc500ByRow[rowNum]?.sku || '').trim(),
+            }));
+            const aliases = Array.from(dirtyAliasSkus).map(key => ({
+                sku: skuForAliasKey(key),
+                aliases: aliasBySku[key] || [],
             }));
 
             saveBtn.disabled = true;
@@ -1463,7 +1863,7 @@
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ updates }),
+                    body: JSON.stringify({ updates, aliases }),
                 });
                 const data = await response.json();
                 if (!response.ok || data.error) {
@@ -1471,6 +1871,7 @@
                 }
 
                 dirtyRows.clear();
+                dirtyAliasSkus.clear();
                 highlightRow = null;
                 alert(data.message || 'Saved.');
                 await loadUpc500Data();
@@ -1479,7 +1880,7 @@
                 alert('Save failed: ' + error.message);
             } finally {
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> Save to Excel';
-                saveBtn.disabled = dirtyRows.size === 0;
+                refreshSaveBtn();
             }
         }
 
@@ -1498,6 +1899,7 @@
             }
 
             next.sku = sku;
+            next.aliases = aliasBySku[sku.toUpperCase()] || [];
             markDirty(next.row);
             highlightRow = next.row;
             newSkuInput.value = '';
@@ -1553,6 +1955,305 @@
         reloadBtn.addEventListener('click', () => {
             if (dirtyRows.size && !confirm('Reload and discard unsaved edits?')) return;
             loadUpc500Data();
+        });
+
+        const sheetModalEl = document.getElementById('upc500SheetModal');
+        const dymoModalEl = document.getElementById('upc500DymoModal');
+        const sheetSkuEl = document.getElementById('upc500SheetSku');
+        const sheetUpcEl = document.getElementById('upc500SheetUpc');
+        const sheetCountEl = document.getElementById('upc500SheetCount');
+        const sheetStatusEl = document.getElementById('upc500SheetStatus');
+        const sheetDownloadBtn = document.getElementById('upc500SheetDownloadBtn');
+        const dymoSkuEl = document.getElementById('upc500DymoSku');
+        const dymoUpcEl = document.getElementById('upc500DymoUpc');
+        const dymoQtyEl = document.getElementById('upc500DymoQty');
+        const dymoPreviewStatus = document.getElementById('upc500DymoPreviewStatus');
+        const dymoPreviewGrid = document.getElementById('upc500DymoPreviewGrid');
+        const dymoPrintMeta = document.getElementById('upc500DymoPrintMeta');
+        const dymoDownloadBtn = document.getElementById('upc500DymoDownloadBtn');
+        const dymoPrintBtn = document.getElementById('upc500DymoPrintBtn');
+        let upc500Sticker = null;
+
+        function stickerTsv(sku, upc, qty) {
+            return `${sku}\t${upc}\t${qty}`;
+        }
+
+        function safeFilenamePart(text) {
+            return String(text || 'label').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60);
+        }
+
+        function downloadBlobFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+        }
+
+        async function fetchPdfBlob(url, formData) {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+            });
+            const contentType = response.headers.get('content-type') || '';
+            if (!response.ok) {
+                if (contentType.includes('application/json')) {
+                    const data = await response.json();
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.blob();
+        }
+
+        function currentRowSkuUpc(rowNum) {
+            const record = upc500ByRow[rowNum];
+            if (!record) return null;
+            const input = tableBody.querySelector(`.upc500-sku-input[data-row="${rowNum}"]`);
+            const sku = (input ? input.value : record.sku || '').trim().toUpperCase();
+            const upc = String(record.upc || '').trim();
+            if (!sku || !upc) {
+                alert('This row needs both SKU and UPC.');
+                return null;
+            }
+            return { sku, upc };
+        }
+
+        function openUpc500SheetModal(rowNum) {
+            const pair = currentRowSkuUpc(rowNum);
+            if (!pair) return;
+            upc500Sticker = pair;
+            sheetSkuEl.textContent = pair.sku;
+            sheetUpcEl.textContent = pair.upc;
+            sheetCountEl.value = '1';
+            sheetStatusEl.textContent = '';
+            bootstrap.Modal.getOrCreateInstance(sheetModalEl).show();
+        }
+
+        function renderUpc500DymoPreview(data) {
+            dymoPreviewGrid.innerHTML = '';
+            (data.items || []).forEach(function(item) {
+                const wrap = document.createElement('div');
+                wrap.className = 'dymo-label-wrap';
+                const qty = document.createElement('span');
+                qty.className = 'dymo-qty-badge';
+                qty.id = 'upc500DymoQtyBadge';
+                qty.textContent = '× ' + item.quantity;
+                const card = document.createElement('div');
+                card.className = 'dymo-label-card';
+                const img = document.createElement('img');
+                img.src = item.barcode_png;
+                img.alt = item.barcode || '';
+                const barcodeNum = document.createElement('div');
+                barcodeNum.className = 'dymo-label-barcode-num';
+                barcodeNum.textContent = item.barcode || '';
+                const sku = document.createElement('div');
+                sku.className = 'dymo-label-sku';
+                sku.textContent = item.sku || '';
+                card.appendChild(img);
+                card.appendChild(barcodeNum);
+                card.appendChild(sku);
+                wrap.appendChild(qty);
+                wrap.appendChild(card);
+                dymoPreviewGrid.appendChild(wrap);
+            });
+            const printerNote = data.printer_warning
+                ? 'Printer not confirmed: ' + data.printer_warning
+                : 'Printer: ' + (data.printer || 'DYMO LabelWriter 450 Turbo');
+            dymoPrintMeta.textContent = (data.total_labels || 0) + ' label(s) · ' +
+                (data.label_size || '2-1/4 × 1-1/4 in') + ' · ' + printerNote;
+        }
+
+        async function openUpc500DymoModal(rowNum) {
+            const pair = currentRowSkuUpc(rowNum);
+            if (!pair) return;
+            upc500Sticker = pair;
+            dymoSkuEl.textContent = pair.sku;
+            dymoUpcEl.textContent = pair.upc;
+            dymoQtyEl.value = '1';
+            dymoPreviewStatus.style.display = 'block';
+            dymoPreviewStatus.textContent = 'Loading label design…';
+            dymoPreviewGrid.innerHTML = '';
+            dymoPrintMeta.textContent = '';
+            dymoDownloadBtn.disabled = true;
+            dymoPrintBtn.disabled = true;
+            bootstrap.Modal.getOrCreateInstance(dymoModalEl).show();
+
+            try {
+                const formData = new FormData();
+                formData.append('input_data', stickerTsv(pair.sku, pair.upc, 1));
+                const response = await fetch("{{ url_for('lori_automation.dymo_sticker_preview') }}", {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error((data && data.error) || 'Failed to build Dymo preview.');
+                }
+                dymoPreviewStatus.style.display = 'none';
+                renderUpc500DymoPreview(data);
+                dymoDownloadBtn.disabled = false;
+                dymoPrintBtn.disabled = false;
+            } catch (err) {
+                dymoPreviewStatus.textContent = err.message || 'Failed to load Dymo preview.';
+            }
+        }
+
+        function currentDymoQty() {
+            const qty = parseInt(dymoQtyEl.value, 10);
+            return Number.isFinite(qty) && qty > 0 ? qty : 1;
+        }
+
+        dymoQtyEl.addEventListener('input', () => {
+            const badge = document.getElementById('upc500DymoQtyBadge');
+            if (badge) badge.textContent = '× ' + currentDymoQty();
+            if (dymoPrintMeta.textContent) {
+                dymoPrintMeta.textContent = dymoPrintMeta.textContent.replace(
+                    /^\d+ label\(s\)/,
+                    currentDymoQty() + ' label(s)'
+                );
+            }
+        });
+
+        tableBody.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.upc500-alias-remove');
+            if (removeBtn) {
+                e.preventDefault();
+                const cell = removeBtn.closest('.upc500-alias-cell');
+                const record = cell ? upc500ByRow[parseInt(cell.dataset.row, 10)] : null;
+                if (record && (record.sku || '').trim()) {
+                    const aliasKey = (removeBtn.dataset.alias || '').toUpperCase();
+                    const next = aliasesForSku(record.sku).filter(a => a.toUpperCase() !== aliasKey);
+                    applyAliasesToSku(record.sku, next);
+                    markAliasDirty(record.sku, tableBody.querySelector(`.upc500-alias-cell[data-row="${record.row}"]`));
+                }
+                return;
+            }
+            const aliasCell = e.target.closest('.upc500-alias-cell');
+            if (aliasCell && !aliasCell.classList.contains('is-disabled')) {
+                const add = aliasCell.querySelector('.upc500-alias-add');
+                if (add && e.target !== add) add.focus();
+            }
+            const sheetBtn = e.target.closest('.upc500-sheet-btn');
+            const dymoBtn = e.target.closest('.upc500-dymo-btn');
+            if (sheetBtn && !sheetBtn.disabled) {
+                openUpc500SheetModal(parseInt(sheetBtn.dataset.row, 10));
+            } else if (dymoBtn && !dymoBtn.disabled) {
+                openUpc500DymoModal(parseInt(dymoBtn.dataset.row, 10));
+            }
+        });
+
+        tableBody.addEventListener('keydown', (e) => {
+            const input = e.target.closest('.upc500-alias-add');
+            if (!input) return;
+            const cell = input.closest('.upc500-alias-cell');
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addAliasesFromText(cell, input.value);
+            } else if (e.key === 'Backspace' && !input.value) {
+                const rowNum = parseInt(cell.dataset.row, 10);
+                const record = upc500ByRow[rowNum];
+                if (!record || !(record.sku || '').trim()) return;
+                const current = aliasesForSku(record.sku);
+                if (!current.length) return;
+                e.preventDefault();
+                applyAliasesToSku(record.sku, current.slice(0, -1), { skipRow: rowNum });
+                markAliasDirty(record.sku);
+                refreshAliasCell(cell, current.slice(0, -1), { restoreInput: false });
+                const add = tableBody.querySelector(`.upc500-alias-cell[data-row="${rowNum}"] .upc500-alias-add`);
+                if (add) add.focus();
+            }
+        });
+
+        tableBody.addEventListener('blur', (e) => {
+            const input = e.target.classList && e.target.classList.contains('upc500-alias-add')
+                ? e.target
+                : null;
+            if (!input || !input.value.trim()) return;
+            addAliasesFromText(input.closest('.upc500-alias-cell'), input.value);
+        }, true);
+
+        sheetDownloadBtn.addEventListener('click', async () => {
+            if (!upc500Sticker) return;
+            const sheets = parseInt(sheetCountEl.value, 10);
+            const sheetCount = Number.isFinite(sheets) && sheets > 0 ? sheets : 1;
+            const qty = sheetCount * 30;
+            const originalHtml = sheetDownloadBtn.innerHTML;
+            sheetDownloadBtn.disabled = true;
+            sheetDownloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+            sheetStatusEl.textContent = `Generating ${sheetCount} sheet(s) (${qty} labels)…`;
+            try {
+                const formData = new FormData();
+                formData.append('input_data', stickerTsv(upc500Sticker.sku, upc500Sticker.upc, qty));
+                formData.append('variant', '30_stickers');
+                const blob = await fetchPdfBlob("{{ url_for('lori_automation.generate_stickers_api') }}", formData);
+                downloadBlobFile(blob, `${safeFilenamePart(upc500Sticker.sku)}_30_stickers.pdf`);
+                sheetStatusEl.textContent = `Downloaded ${sheetCount} sheet(s) of 30 labels.`;
+            } catch (err) {
+                sheetStatusEl.textContent = err.message || 'Failed to generate 30-label PDF.';
+            } finally {
+                sheetDownloadBtn.innerHTML = originalHtml;
+                sheetDownloadBtn.disabled = false;
+            }
+        });
+
+        dymoDownloadBtn.addEventListener('click', async () => {
+            if (!upc500Sticker) return;
+            const qty = currentDymoQty();
+            const originalHtml = dymoDownloadBtn.innerHTML;
+            dymoDownloadBtn.disabled = true;
+            dymoPrintBtn.disabled = true;
+            dymoDownloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating…';
+            try {
+                const formData = new FormData();
+                formData.append('input_data', stickerTsv(upc500Sticker.sku, upc500Sticker.upc, qty));
+                const blob = await fetchPdfBlob("{{ url_for('lori_automation.download_dymo_stickers') }}", formData);
+                downloadBlobFile(blob, `${safeFilenamePart(upc500Sticker.sku)}_dymo.pdf`);
+            } catch (err) {
+                alert(err.message || 'Failed to download Dymo PDF.');
+            } finally {
+                dymoDownloadBtn.innerHTML = originalHtml;
+                dymoDownloadBtn.disabled = false;
+                dymoPrintBtn.disabled = false;
+            }
+        });
+
+        dymoPrintBtn.addEventListener('click', async () => {
+            if (!upc500Sticker) return;
+            const qty = currentDymoQty();
+            const originalHtml = dymoPrintBtn.innerHTML;
+            dymoDownloadBtn.disabled = true;
+            dymoPrintBtn.disabled = true;
+            dymoPrintBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Printing…';
+            try {
+                const formData = new FormData();
+                formData.append('input_data', stickerTsv(upc500Sticker.sku, upc500Sticker.upc, qty));
+                const response = await fetch("{{ url_for('lori_automation.print_dymo_stickers') }}", {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error((data && data.error) || 'Failed to print to Dymo.');
+                }
+                dymoPrintBtn.innerHTML = '<i class="fas fa-check"></i> Sent to ' + (data.printer || 'Dymo');
+                setTimeout(() => {
+                    dymoPrintBtn.innerHTML = originalHtml;
+                    dymoDownloadBtn.disabled = false;
+                    dymoPrintBtn.disabled = false;
+                }, 2500);
+            } catch (err) {
+                alert(err.message || 'Failed to print to Dymo.');
+                dymoPrintBtn.innerHTML = originalHtml;
+                dymoDownloadBtn.disabled = false;
+                dymoPrintBtn.disabled = false;
+            }
         });
 
         section.addEventListener('shown.bs.collapse', () => {

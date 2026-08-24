@@ -1,0 +1,296 @@
+/* FDC AI Assistant — TMX-style slide-over chat */
+
+.fdc-ai-root {
+  --fdc-ai-bg: rgba(15, 23, 42, 0.96);
+  --fdc-ai-border: rgba(255, 255, 255, 0.12);
+  --fdc-ai-text: #e2e8f0;
+  --fdc-ai-muted: #94a3b8;
+  --fdc-ai-accent: #818cf8;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.fdc-ai-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(4px);
+  z-index: 10050;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.fdc-ai-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fdc-ai-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 100vw);
+  height: 100vh;
+  background: var(--fdc-ai-bg);
+  border-left: 1px solid var(--fdc-ai-border);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.25);
+  z-index: 10060;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  color: var(--fdc-ai-text);
+}
+
+.fdc-ai-panel.open { transform: translateX(0); }
+
+.fdc-ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--fdc-ai-border);
+}
+
+.fdc-ai-header-actions { display: flex; align-items: center; gap: 2px; }
+.fdc-ai-header h2 { margin: 0; font-size: 0.95rem; font-weight: 700; }
+.fdc-ai-header p { margin: 2px 0 0; font-size: 0.75rem; color: var(--fdc-ai-muted); }
+.fdc-ai-thread-title {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--fdc-ai-text);
+  max-width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 1em;
+}
+
+.fdc-ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fdc-ai-msg {
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.fdc-ai-msg.user {
+  align-self: flex-end;
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.fdc-ai-msg.assistant {
+  align-self: flex-start;
+  border: 1px solid var(--fdc-ai-border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fdc-ai-msg.thinking {
+  color: var(--fdc-ai-muted);
+  font-style: italic;
+}
+
+.fdc-ai-msg a { color: var(--fdc-ai-accent); }
+.fdc-ai-msg code {
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.fdc-ai-empty {
+  border: 1px dashed var(--fdc-ai-border);
+  border-radius: 14px;
+  padding: 14px;
+  color: var(--fdc-ai-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.fdc-ai-chip {
+  display: inline-block;
+  margin: 6px 6px 0 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--fdc-ai-border);
+  background: transparent;
+  color: var(--fdc-ai-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.fdc-ai-chip:hover { border-color: var(--fdc-ai-accent); }
+
+.fdc-ai-history {
+  display: none;
+  flex: 1;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.fdc-ai-history.open { display: flex; }
+
+.fdc-ai-history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 16px 8px;
+  color: var(--fdc-ai-muted);
+  font-size: 0.78rem;
+}
+
+.fdc-ai-history-list {
+  overflow-y: auto;
+  padding: 0 10px 16px;
+}
+
+.fdc-ai-hist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.fdc-ai-hist-item:hover,
+.fdc-ai-hist-item.active {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--fdc-ai-border);
+}
+
+.fdc-ai-hist-main { flex: 1; min-width: 0; }
+.fdc-ai-hist-main strong {
+  display: block;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fdc-ai-hist-main span {
+  font-size: 0.72rem;
+  color: var(--fdc-ai-muted);
+}
+.fdc-ai-hist-main p {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--fdc-ai-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fdc-ai-form {
+  border-top: 1px solid var(--fdc-ai-border);
+  padding: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.fdc-ai-form textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid var(--fdc-ai-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--fdc-ai-text);
+  padding: 10px 12px;
+  font-size: 0.88rem;
+}
+
+.fdc-ai-form button {
+  border: none;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #fff;
+  width: 44px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fdc-ai-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.fdc-ai-icon-btn {
+  border: none;
+  background: transparent;
+  color: var(--fdc-ai-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.fdc-ai-icon-btn:hover {
+  color: var(--fdc-ai-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.fdc-ai-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 10040;
+  border: none;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.35);
+  cursor: pointer;
+}
+
+.fdc-ai-fab:hover { transform: translateY(-1px); }
+
+.fdc-help-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 76px;
+  z-index: 10030;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #2f7db8;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 4px 18px rgba(47, 125, 184, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fdc-help-fab:hover {
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(47, 125, 184, 0.55);
+}
+
+@media (max-width: 576px) {
+  .fdc-help-fab .fdc-help-fab-label { display: none; }
+  .fdc-help-fab { padding: 12px 14px; }
+}
+
+.fdc-online-menu { min-width: 300px; padding: 8px 0; }
+.fdc-online-menu .live-mini { padding: 8px 14px; }
+.fdc-online-menu .live-mini strong { display: block; }
+.fdc-online-menu .live-mini .meta { font-size: 0.78rem; color: #6c757d; }
+.fdc-online-menu .menu-foot { border-top: 1px solid #eee; font-size: 0.82rem; }

@@ -66,19 +66,22 @@ def log_response(response):
         
         # Format log message with color coding
         if 200 <= status_code < 300:
-            # Success - green with username
             log_message = f'🟢 SUCCESS: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code} [User: {username}]'
         elif 400 <= status_code < 500:
-            # Client error - red
             log_message = f'🔴 CLIENT_ERROR: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
         elif 500 <= status_code < 600:
-            # Server error - red
             log_message = f'🔴 SERVER_ERROR: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
         else:
-            # Other status codes
             log_message = f'🟡 OTHER: {details["client_ip"]} "{details["method"]} {details["path"]} {details["http_version"]}" {status_code}'
-        
-        log_event('INFO', log_message)
+
+        if username and username != 'anonymous' and 200 <= status_code < 300:
+            from py.utilities.logging_setup import log_user_action
+            log_user_action(log_message, username)
+        elif not username or username == 'anonymous':
+            from py.utilities.logging_setup import log_visitor_action
+            log_visitor_action(log_message)
+        else:
+            log_event('INFO' if status_code < 400 else 'WARNING', log_message)
     return response
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -116,6 +119,14 @@ def login():
                 "WARNING",
                 f"TURNSTILE_FAIL: IP: {client_ip}, UA: {request.headers.get('User-Agent', '')[:200]}",
             )
+            try:
+                from py.utilities.logging_setup import log_visitor_action
+
+                log_visitor_action(
+                    f'🔴 TURNSTILE_FAIL: IP: {client_ip}, UA: {request.headers.get("User-Agent", "")[:200]}'
+                )
+            except Exception:
+                pass
             return login_page()
 
         username = request.form.get("username")
@@ -173,8 +184,12 @@ def login():
             return redirect(redirect_url)
         else:
             flash("Invalid username or password")
-            # Log failed login attempt with detailed information
             log_event('WARNING', f'🔴 FAILED_LOGIN: Username: "{username}", Password: "[REDACTED]", IP: {client_ip}, Location: {location_data.get("city", "Unknown")}, User-Agent: {request.headers.get("User-Agent", "Unknown")}')
+            try:
+                from py.utilities.logging_setup import log_visitor_action
+                log_visitor_action(f'🔴 FAILED_LOGIN: Username: "{username}", IP: {client_ip}')
+            except Exception:
+                pass
     
     return login_page()
 
@@ -1257,6 +1272,22 @@ def log_user_activity(username):
         f"Device: @@@{user_agent.device.family}@@@; "
         f"Method: {request.method}; URL: {request.url}; Referrer: {referrer}"
     )
+    try:
+        from py.utilities.logging_setup import log_user_action
+
+        log_user_action(
+            f"***{username}*** has logged in. "
+            f"IP: ***{client_ip}***; "
+            f"Location: @@@{city}, {region}, {country}@@@ "
+            f"(lat: {lat}, lon: {lon}); "
+            f"Timezone: @@@{timezone}@@@; ISP: {isp}; Org: {org}; "
+            f"Browser: @@@{user_agent.browser.family} {user_agent.browser.version_string}@@@; "
+            f"OS: {user_agent.os.family} {user_agent.os.version_string}; "
+            f"Device: @@@{user_agent.device.family}@@@",
+            username,
+        )
+    except Exception:
+        pass
 
 def get_location(ip):
     # X-Forwarded-For may contain a CSV list; use the first client IP.

@@ -139,20 +139,30 @@ def build_boat_data_cache_key(*, sheet_hash: str, dropbox_keys: list[str]) -> st
     return f"{sheet_hash}:{dropbox_part}"
 
 
-def load_cached_boat_data(cache_key: str) -> dict[str, Any] | None:
-    meta = _read_json(_RESPONSE_META_JSON)
-    if meta.get("cache_key") != cache_key:
-        return None
+def load_latest_cached_boat_payload() -> dict[str, Any] | None:
+    """Return the last saved /boat/data payload even if the cache key changed."""
     if not os.path.isfile(_RESPONSE_JSON):
         return None
     with open(_RESPONSE_JSON, encoding="utf-8") as handle:
         payload = json.load(handle)
     if payload.get("success"):
+        meta = _read_json(_RESPONSE_META_JSON)
         payload["from_cache"] = True
-        payload["cache_key"] = cache_key
+        payload["cache_key"] = meta.get("cache_key", "")
         payload["cached_at"] = meta.get("cached_at", "")
         return payload
     return None
+
+
+def load_cached_boat_data(cache_key: str) -> dict[str, Any] | None:
+    meta = _read_json(_RESPONSE_META_JSON)
+    if meta.get("cache_key") != cache_key:
+        return None
+    payload = load_latest_cached_boat_payload()
+    if payload:
+        payload["cache_key"] = cache_key
+        payload["cached_at"] = meta.get("cached_at", "")
+    return payload
 
 
 def save_cached_boat_data(cache_key: str, payload: dict[str, Any]) -> None:

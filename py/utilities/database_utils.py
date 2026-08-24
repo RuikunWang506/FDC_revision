@@ -42,3 +42,15 @@ def get_sql_server_connection(database_name):
         f'UID={Config.SQL_SERVER_CONFIG["username"]};'
         f'PWD={Config.SQL_SERVER_CONFIG["password"]}'
     )
+
+
+def get_sql_server_connection_readonly(database_name):
+    """SQL Server connection flagged read-only (ApplicationIntent=ReadOnly)."""
+    return pyodbc.connect(
+        f'DRIVER={Config.SQL_SERVER_CONFIG["driver"]};'
+        f'SERVER={Config.SQL_SERVER_CONFIG["server"]};'
+        f'DATABASE={database_name};'
+        f'UID={Config.SQL_SERVER_CONFIG["username"]};'
+        f'PWD={Config.SQL_SERVER_CONFIG["password"]};'
+        f'ApplicationIntent=ReadOnly'
+    )
