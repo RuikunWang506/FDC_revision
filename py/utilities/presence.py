@@ -5,7 +5,13 @@ import secrets
 
 from flask import Blueprint, jsonify, session
 
-from py.utilities.online_presence import heartbeat, list_online_users, mark_offline, online_count
+from py.utilities.online_presence import (
+    heartbeat,
+    list_online_users,
+    mark_offline,
+    mark_online,
+    online_count,
+)
 from py.utilities.setting import login_required
 
 presence_bp = Blueprint('presence', __name__)
@@ -19,7 +25,33 @@ def _presence_session_id() -> str:
     return sid
 
 
+def touch_from_request() -> bool:
+    """Extend online duration from a real page/API request (not heartbeat)."""
+    if not _staff_ok():
+        return False
+    username = _presence_username()
+    if not username:
+        return False
+    return mark_online(_presence_session_id(), username, wake_ai=True)
+
+
+def _presence_username() -> str:
+    try:
+        from py.utilities.master_mode import real_username
+
+        return real_username()
+    except Exception:
+        return session.get('username') or ''
+
+
 def _staff_ok() -> bool:
+    try:
+        from py.utilities.master_mode import is_master_operator
+
+        if is_master_operator():
+            return True
+    except Exception:
+        pass
     try:
         from py.other.clientview import user_hides_staff_nav_links
 
@@ -35,7 +67,7 @@ def _staff_ok() -> bool:
 def presence_heartbeat():
     if not _staff_ok():
         return jsonify({'ok': False, 'error': 'forbidden'}), 403
-    username = session.get('username') or ''
+    username = _presence_username()
     if not username:
         return jsonify({'ok': False, 'error': 'not authenticated'}), 401
     sid = _presence_session_id()

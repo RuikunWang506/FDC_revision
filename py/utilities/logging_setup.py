@@ -324,11 +324,12 @@ def _read_last_n_lines(path, n):
         return decoded
 
 
-def read_log_page(path, page=1, per_page=100, search_term='', group_records=False):
+def read_log_page(path, page=1, per_page=100, search_term='', group_records=False, skip_line=None):
     """Newest-first page of formatted lines (or complete error chunks) without loading the whole file."""
     page = max(1, int(page or 1))
     per_page = max(1, min(int(per_page or 100), 500))
     needle = (search_term or '').strip().lower()
+    skip_fn = skip_line if callable(skip_line) else None
 
     if not os.path.isfile(path):
         return [], 1, 1, 0
@@ -339,20 +340,26 @@ def read_log_page(path, page=1, per_page=100, search_term='', group_records=Fals
         total = 0
         with open(path, 'r', encoding='utf-8', errors='replace') as fh:
             for rec in iter_log_records(fh):
+                if skip_fn and skip_fn(rec):
+                    continue
                 if needle and needle not in rec.lower():
                     continue
                 total += 1
                 buf.append(rec)
         window = list(buf)
-    elif needle:
+    elif needle or skip_fn:
         keep = page * per_page
         buf = deque(maxlen=keep)
         total = 0
         with open(path, 'r', encoding='utf-8', errors='replace') as fh:
             for line in fh:
-                if needle in line.lower():
-                    total += 1
-                    buf.append(line.rstrip('\n'))
+                raw = line.rstrip('\n')
+                if skip_fn and skip_fn(raw):
+                    continue
+                if needle and needle not in raw.lower():
+                    continue
+                total += 1
+                buf.append(raw)
         window = list(buf)
     else:
         total = _count_lines(path)

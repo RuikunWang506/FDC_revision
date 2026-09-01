@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import re
 from datetime import datetime
+from pathlib import Path
 
 import pyodbc
 from reportlab.lib.colors import white
@@ -13,7 +14,12 @@ from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
-from py.order.order_search import fetch_order_ship_to_lines, sql_server_config
+from py.order.order_search import (
+    fetch_order_notes,
+    fetch_order_ship_to_lines,
+    parse_boxes_from_notes,
+    sql_server_config,
+)
 
 BOL_DATA_ROWS = 5
 
@@ -62,6 +68,17 @@ FONT_FOOTER = 10
 FONT_FIELD = 11
 
 EMPTY_ROW = {"po": "", "description": "", "qty": "", "cases": "", "weight": "", "pallet": ""}
+_UCL_TEMPLATE = (
+    Path(__file__).resolve().parents[2] / "static" / "forms" / "UCL_Bill_of_Lading_23.pdf"
+)
+UCL_SHIPPER_CUSTOMER_ID = "5005"
+
+
+def _blank_if_na(raw) -> str:
+    s = str(raw or "").strip()
+    if not s or s.upper() in ("N/A", "NA", "NONE", "NULL"):
+        return ""
+    return s
 
 
 def _format_phone(raw) -> str:
@@ -167,7 +184,10 @@ def fetch_order_bol_context(order_number: str) -> tuple[dict | None, str | None]
                 ol.UT_DESC,
                 ol.PROD_CD,
                 CAST(ol.ORDER_QTY AS INT) AS qty,
-                CAST(ISNULL(ol.PC_UNIT, 0) AS INT) AS per_box
+                CAST(ISNULL(ol.PC_UNIT, 0) AS INT) AS per_box,
+                LTRIM(RTRIM(o.CUS_ID)) AS cus_id,
+                o.ATTN,
+                o.ORD_AMT
             FROM dbo.orders o
             INNER JOIN dbo.customer c ON o.cus_id = c.cus_id
             INNER JOIN dbo.ord_log ol ON o.ord_num = ol.ord_num
@@ -186,10 +206,17 @@ def fetch_order_bol_context(order_number: str) -> tuple[dict | None, str | None]
         return None, f"Order {order_number} not found."
 
     ship_phone = _format_phone(rows[0][0])
+    customer_id = _blank_if_na(rows[0][6])
+    attention = _blank_if_na(rows[0][7])
+    try:
+        invoice_value = float(rows[0][8]) if rows[0][8] is not None else 0.0
+    except (TypeError, ValueError):
+        invoice_value = 0.0
 
     ship_to_lines, ship_err = fetch_order_ship_to_lines(order_number)
     if ship_err:
         return None, ship_err
+    ship_to_address_text = "\n".join(ship_to_lines or [])
     if ship_phone:
         ship_to_lines = list(ship_to_lines) + [ship_phone]
 
@@ -198,6 +225,9 @@ def fetch_order_bol_context(order_number: str) -> tuple[dict | None, str | None]
     company = COMPANY_HEADER_BY_DIGITS.get(digit_len, COMPANY_HEADER_BY_DIGITS[5])
     shipper_text = "\n".join(
         [shipper["name"], shipper["address"], shipper["city"], shipper["phone"]]
+    )
+    shipper_address_text = "\n".join(
+        [shipper["name"], shipper["address"], shipper["city"]]
     )
 
     skus = [str(r[3] or "").strip() for r in rows]
@@ -220,12 +250,17 @@ def fetch_order_bol_context(order_number: str) -> tuple[dict | None, str | None]
         total_cases += cases
         total_weight += line_weight
 
+    notes_boxes = parse_boxes_from_notes(fetch_order_notes(order_number))
+    boxes = notes_boxes if notes_boxes else (total_cases or "")
+    weight_val = round(total_weight, 2) if total_weight else ""
+    declared_value = round(invoice_value, 2) if invoice_value else ""
+
     first_row = {
         "po": order_number,
         "description": "handbags",
         "qty": total_qty,
         "cases": total_cases,
-        "weight": round(total_weight, 2) if total_weight else "",
+        "weight": weight_val,
         "pallet": "",
     }
     data_rows = [first_row] + [dict(EMPTY_ROW) for _ in range(BOL_DATA_ROWS - 1)]
@@ -234,20 +269,129 @@ def fetch_order_bol_context(order_number: str) -> tuple[dict | None, str | None]
         {
             "order_number": order_number,
             "date": _format_bol_date(),
+            "date_mdy": datetime.now().strftime("%m/%d/%Y"),
             "bol_number": order_number,
             "pickup_confirm": "",
             "company_header": company,
+            "customer_id": customer_id,
+            "attention": attention,
+            "shipper": shipper,
             "shipper_text": shipper_text,
+            "shipper_address_text": shipper_address_text,
+            "shipper_phone": shipper.get("phone", ""),
             "ship_to_text": "\n".join(ship_to_lines),
+            "ship_to_address_text": ship_to_address_text,
+            "ship_to_phone": ship_phone,
             "data_rows": data_rows,
             "total_qty": total_qty,
             "total_cases": total_cases,
-            "total_weight": round(total_weight, 2) if total_weight else "",
+            "total_weight": weight_val,
+            "boxes": boxes,
+            "description_text": "handbags",
+            "declared_value": declared_value,
             "total_pallet": "",
             "remark": "",
         },
         None,
     )
+
+
+def _ucl_field_str(value) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _ucl_boxes_label(boxes) -> str:
+    raw = _ucl_field_str(boxes)
+    if not raw:
+        return ""
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return raw
+    if n <= 0:
+        return ""
+    return "1 box" if n == 1 else f"{n} boxes"
+
+
+def _ucl_weight_lb(weight) -> str:
+    raw = _ucl_field_str(weight)
+    if not raw:
+        return ""
+    try:
+        w = float(raw)
+    except (TypeError, ValueError):
+        return raw if raw.lower().endswith("lb") else f"{raw} lb"
+    if w <= 0:
+        return ""
+    if w == int(w):
+        return f"{int(w)} lb"
+    return f"{w:g} lb"
+
+
+def _ucl_money(amount) -> str:
+    raw = _ucl_field_str(amount)
+    if not raw:
+        return ""
+    try:
+        n = float(raw)
+    except (TypeError, ValueError):
+        return raw
+    if n <= 0:
+        return ""
+    if n == int(n):
+        return str(int(n))
+    return f"{n:.2f}"
+
+
+def fill_ucl_bol_pdf(ctx: dict) -> bytes:
+    """Prefill the official UCL fillable cargo receipt (all copies stay editable)."""
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import BooleanObject, NameObject
+
+    template = _UCL_TEMPLATE
+    if not template.is_file():
+        raise FileNotFoundError(f"UCL BOL template missing: {template}")
+
+    boxes_label = _ucl_boxes_label(ctx.get("boxes"))
+    values = {
+        "Text15": "",
+        "Text16": _ucl_field_str(ctx.get("date_mdy")),
+        "Text9": UCL_SHIPPER_CUSTOMER_ID,
+        "Text10": "",
+        "Text1": _ucl_field_str(ctx.get("shipper_address_text")),
+        "Text2": _ucl_field_str(ctx.get("shipper_phone")),
+        "Text4": _ucl_field_str(ctx.get("ship_to_address_text")),
+        "Text5": _ucl_field_str(ctx.get("attention")),
+        "Text3": _ucl_field_str(ctx.get("ship_to_phone")),
+        "PIECESRow1": boxes_label,
+        "WEIGHTRow1": _ucl_weight_lb(ctx.get("total_weight")),
+        "DESCRIPTIONRow1": "handbags",
+        "DATE PICKED UPRow1": _ucl_field_str(ctx.get("date_mdy")),
+        "PIECESRow1_2": boxes_label,
+        "fill_15": _ucl_money(ctx.get("declared_value")),
+        "Text6": _ucl_money(ctx.get("declared_value")),
+        "Check Box12": "/Yes",
+        "Check Box14": "/Yes",
+    }
+
+    reader = PdfReader(str(template))
+    writer = PdfWriter()
+    writer.append(reader)
+    acro = writer._root_object.get("/AcroForm")
+    if acro is not None:
+        acro.update({NameObject("/NeedAppearances"): BooleanObject(True)})
+
+    for page in writer.pages:
+        try:
+            writer.update_page_form_field_values(page, values, auto_regenerate=True)
+        except Exception:
+            writer.update_page_form_field_values(page, values, auto_regenerate=False)
+
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
 
 
 def _textfield(c, name, x, y, width, height, value="", multiline=False):

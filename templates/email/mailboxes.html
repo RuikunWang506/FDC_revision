@@ -10,7 +10,7 @@
         body { padding-top: 76px; margin: 0; }
 
         .fdc-mail-dashboard-wrapper {
-            background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
+            background: url("{{ url_for('static', filename=dashboard_bg.file if dashboard_bg is defined else 'rocker-sta-qr8Ci2tzyR8.jpg') }}") no-repeat center center fixed;
             background-size: cover;
             font-family: 'Inter', 'Segoe UI', sans-serif;
             color: #e8f4fd;

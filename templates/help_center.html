@@ -76,6 +76,10 @@
                 <a href="{{ url_for('help.index', category='page_guide') }}" class="help-sidebar-link">{{ _('page.help.page_guides') }}</a>
                 <a href="{{ url_for('help.index', category='terminology') }}" class="help-sidebar-link">{{ _('page.help.terms') }}</a>
                 <a href="{{ url_for('help.index', category='faq') }}" class="help-sidebar-link">{{ category_label('faq') }}</a>
+                {% if current_user and current_user|lower == 'yeti' %}
+                <a href="{{ url_for('ai_sql.schema_dictionary_page') }}" class="help-sidebar-link">Database dictionary</a>
+                <a href="{{ url_for('help.article', slug='db-dictionary') }}" class="help-sidebar-link">DB dictionary help</a>
+                {% endif %}
             </div>
             <div class="help-contact">
                 <strong>{{ _('page.help.more') }}</strong>

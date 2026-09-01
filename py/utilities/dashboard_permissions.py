@@ -26,6 +26,13 @@ PUBLIC_ENDPOINTS = frozenset(
         "tradeshowtool.lan_ping",
         "tradeshowtool.lan_ping_png",
         "tradeshowtool.lan_claim",
+        "whatnot_live.overlay",
+        "whatnot_live.overlay_alias",
+        "whatnot_live.camera",
+        "whatnot_live.stream",
+        "whatnot_live.ingest",
+        "whatnot_live.public_state",
+        "whatnot_live.webrtc_signal",
     }
 )
 
@@ -59,6 +66,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "master_audit": "audit",
     "vendor_app": "vendor_app",
     "container": "fdcef_container_search",
+    "whatnot_live": "whatnot_live",
 }
 
 # Single source of truth for admin UI + home filtering (order = display order)
@@ -86,6 +94,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Utilities"},
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Utilities"},
     {"id": "print_center", "title": "打印中心", "category": "Utilities"},
+    {"id": "whatnot_live", "title": "Whatnot Live", "category": "Utilities"},
     {"id": "tradeshowtool", "title": "Trade Show Tool", "category": "Utilities"},
     {"id": "boat", "title": "Shipping Intelligence", "category": "Logistics"},
     {"id": "fdcef_container_search", "title": "FDCEF container search", "category": "Logistics"},
@@ -123,6 +132,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "burlington_label_processor": {"href": "/burlington_label_processor", "label": "Burl Labels"},
     "tradeshowtool": {"href": "/tradeshowtool", "label": "Trade Show"},
     "print_center": {"href": "/print_center", "label": "Print"},
+    "whatnot_live": {"href": "/whatnot_live", "label": "Whatnot"},
     "boat": {"href": "/boat", "label": "Boat"},
     "fdcef_container_search": {"href": "/container_search", "label": "Containers"},
     "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
@@ -132,9 +142,15 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
 }
 
 
+WHATNOT_LIVE_USERS = frozenset({"yeti", "elaine"})
+
+
 def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_id: str) -> bool:
     """yeti always sees everything; missing tools key = unrestricted."""
-    if (username or "").strip().lower() == "yeti":
+    uname = (username or "").strip().lower()
+    if tool_id == "whatnot_live":
+        return uname in WHATNOT_LIVE_USERS
+    if uname == "yeti":
         return True
     if not perms:
         return True

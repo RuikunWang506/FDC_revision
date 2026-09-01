@@ -421,7 +421,11 @@ def fetch_description_counts(stock_filter=None, color_filter=None):
 
 
 def fetch_style_codes_for_filters(descriptions, stock_filter=None, color_filter=None):
-    """Return style codes for one or more descriptions with optional stock/color filters."""
+    """Return style codes for one or more descriptions with optional stock/color filters.
+
+    Stock/color checks are batched so selecting many descriptions (e.g. Select all)
+    does not open a SQL connection per style.
+    """
     desc_list = _normalize_description_list(descriptions)
     if not desc_list:
         return []
@@ -444,13 +448,40 @@ def fetch_style_codes_for_filters(descriptions, stock_filter=None, color_filter=
             code = style.strip().upper()
             if code in seen:
                 continue
-            if _style_meets_stock_color_filters(style, stock_filter, color_filter):
-                seen.add(code)
-                codes.append(code)
+            seen.add(code)
+            codes.append(code)
     finally:
         cur.close()
         conn.close()
-    return codes
+
+    if not codes:
+        return []
+
+    color_q = (color_filter or '').strip()
+    stock_f = (stock_filter or '').strip() or None
+    if not stock_f and not color_q:
+        return codes
+
+    if color_q:
+        stock_map = get_detailed_stock_for_styles_batch(codes)
+        return [
+            code for code in codes
+            if _filter_sku_rows(stock_map.get(code, []), stock_f, color_q)
+        ]
+
+    stock_data = _stock_data_for_styles_batched(codes)
+    filtered = []
+    for code in codes:
+        info = stock_data.get(code, {'quantity': 0, 'ocean': 0})
+        qty = info.get('quantity', 0) or 0
+        ocean = info.get('ocean', 0) or 0
+        if stock_f == 'instock' and qty > 0:
+            filtered.append(code)
+        elif stock_f == 'ocean' and ocean > 0:
+            filtered.append(code)
+        elif stock_f == 'both' and (qty > 0 or ocean > 0):
+            filtered.append(code)
+    return filtered
 
 
 def get_detailed_stock_for_styles_batch(styles):

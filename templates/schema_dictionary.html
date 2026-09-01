@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB dictionary</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page fdc-page-wide schema-dict-page">
+    <div class="page-header">
+        <div>
+            <h1>Database dictionary</h1>
+            <p class="text-muted mb-0">Yeti only · OMS FDC · OMS EF · MySQL onlinedb · joins from live app SQL</p>
+        </div>
+        <div class="schema-dict-actions">
+            <a class="btn-tool" href="{{ url_for('auth.user_settings') }}">← Settings</a>
+            <a class="btn-tool" href="{{ url_for('help.article', slug='db-dictionary') }}">Help article</a>
+            <button type="button" class="btn-tool btn-primary-tool" id="schema-refresh">Rescan all DBs</button>
+        </div>
+    </div>
+
+    <div class="schema-dict-toolbar">
+        <input type="search" id="schema-search" placeholder="Search table, column, SKU, CUS_ID, PROD_CD…" autocomplete="off">
+        <label class="schema-dict-check"><input type="checkbox" id="schema-core-only"> Core tables only</label>
+        <span class="schema-dict-meta" id="schema-meta">Loading…</span>
+    </div>
+
+    <section class="schema-dict-joins" id="schema-joins">
+        <details open>
+            <summary>Known connections (from existing FDC queries)</summary>
+            <div id="schema-joins-body"></div>
+        </details>
+    </section>
+
+    <div id="schema-dbs"></div>
+    <div class="fdc-empty" id="schema-empty" hidden>No matching tables.</div>
+</div>
+<script>
+(function () {
+  var data = null;
+  var $dbs = document.getElementById('schema-dbs');
+  var $meta = document.getElementById('schema-meta');
+  var $empty = document.getElementById('schema-empty');
+  var $search = document.getElementById('schema-search');
+  var $core = document.getElementById('schema-core-only');
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function kindBadge(kind) {
+    var k = kind || 'known';
+    return '<span class="schema-kind schema-kind-' + esc(k) + '">' + esc(k) + '</span>';
+  }
+
+  function tableId(dbId, key) {
+    return 'tbl-' + encodeURIComponent(dbId) + '-' + encodeURIComponent(key);
+  }
+
+  function matches(q, table) {
+    if (!q) return true;
+    var blob = [
+      table.name, table.key, table.description,
+      Object.keys(table.columns || {}).join(' '),
+      JSON.stringify(table.columns || {}),
+      JSON.stringify(table.connections || {})
+    ].join(' ').toLowerCase();
+    return blob.indexOf(q) !== -1;
+  }
+
+  function renderJoins() {
+    var box = document.getElementById('schema-joins-body');
+    if (!data) { box.innerHTML = ''; return; }
+    var kj = data.known_joins || {};
+    var html = '<ul class="schema-join-list">';
+    (kj.oms || []).forEach(function (j) {
+      html += '<li><code>' + esc(j.left) + '.' + esc(j.left_col) + '</code> → <code>' +
+        esc(j.right) + '.' + esc(j.right_col) + '</code> <span class="muted">' + esc(j.note) +
+        '</span> <em>' + esc(j.source) + '</em></li>';
+    });
+    (kj.mysql || []).forEach(function (j) {
+      html += '<li><code>onlinedb.' + esc(j.left) + '.' + esc(j.left_col) + '</code> · ' + esc(j.note) + '</li>';
+    });
+    (kj.cross_db || []).forEach(function (j) {
+      html += '<li>' + kindBadge('cross-db') + ' <code>' + esc(j.left_db) + '.' + esc(j.left) + '.' +
+        esc(j.left_col) + '</code> ↔ <code>' + esc(j.right_db) + '.' + esc(j.right) + '.' +
+        esc(j.right_col) + '</code> <span class="muted">' + esc(j.note) + '</span></li>';
+    });
+    html += '</ul>';
+    box.innerHTML = html;
+  }
+
+  function render() {
+    if (!data) return;
+    var q = ($search.value || '').trim().toLowerCase();
+    var coreOnly = $core.checked;
+    var html = '';
+    var shown = 0;
+    (data.databases || []).forEach(function (db) {
+      var tables = (db.tables || []).filter(function (t) {
+        if (coreOnly && !t.core && db.engine !== 'mysql') return false;
+        if (coreOnly && db.engine === 'mysql' && t.key !== 'products') return false;
+        return matches(q, t);
+      });
+      html += '<details class="schema-db" ' + (q || coreOnly ? 'open' : (db.engine === 'sqlserver' && db.label === 'FDC' ? 'open' : '')) + '>';
+      html += '<summary><strong>' + esc(db.label) + '</strong> <code>' + esc(db.id) + '</code> ';
+      html += '<span class="muted">' + esc(db.engine) + ' · ' + tables.length + '/' + (db.table_count || 0) + ' tables</span>';
+      if (db.error) html += ' <span class="schema-err">' + esc(db.error) + '</span>';
+      html += '</summary><div class="schema-db-body">';
+      if (!tables.length) {
+        html += '<p class="muted">No tables in this filter.</p>';
+      }
+      tables.forEach(function (t) {
+        shown += 1;
+        var open = q ? ' open' : (t.core ? ' open' : '');
+        html += '<details class="schema-table"' + open + ' id="' + tableId(db.id, t.key) + '">';
+        html += '<summary><code>' + esc(t.name) + '</code>';
+        if (t.core) html += ' <span class="schema-core">core</span>';
+        html += ' <span class="muted">' + (t.column_count || 0) + ' cols';
+        if (t.connections && t.connections.length) html += ' · ' + t.connections.length + ' links';
+        html += '</span>';
+        if (t.description) html += ' — ' + esc(t.description);
+        html += '</summary><div class="schema-table-body">';
+        if (t.primary_keys && t.primary_keys.length) {
+          html += '<p class="schema-pks">PK: ' + t.primary_keys.map(function (p) { return '<code>' + esc(p) + '</code>'; }).join(' ') + '</p>';
+        }
+        if (t.connections && t.connections.length) {
+          html += '<div class="schema-links"><strong>Connected</strong><ul>';
+          t.connections.forEach(function (c) {
+            html += '<li>' + kindBadge(c.kind) + ' <code>' + esc(c.column) + '</code> → <code>' +
+              esc(c.other_table) + '.' + esc(c.other_column) + '</code>';
+            if (c.note) html += ' <span class="muted">' + esc(c.note) + '</span>';
+            if (c.source) html += ' <em>' + esc(c.source) + '</em>';
+            html += '</li>';
+          });
+          html += '</ul></div>';
+        }
+        html += '<table class="schema-cols"><thead><tr><th>Column</th><th>Type</th><th>Meaning</th></tr></thead><tbody>';
+        Object.keys(t.columns || {}).forEach(function (col) {
+          var info = t.columns[col] || {};
+          html += '<tr><td><code>' + esc(col) + '</code>' + (info.pk ? ' <span class="schema-core">pk</span>' : '') +
+            '</td><td>' + esc(info.type) + '</td><td>' + esc(info.description) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        if (t.indexes && t.indexes.length) {
+          html += '<p class="muted schema-idx">Indexes: ' + t.indexes.map(function (i) { return '<code>' + esc(i) + '</code>'; }).join(' ') + '</p>';
+        }
+        html += '</div></details>';
+      });
+      html += '</div></details>';
+    });
+    $dbs.innerHTML = html;
+    $empty.hidden = shown > 0;
+    $meta.textContent = (data.generated_at ? ('Scanned ' + data.generated_at + ' · ') : '') + shown + ' tables shown';
+  }
+
+  function load(refresh) {
+    $meta.textContent = refresh ? 'Scanning FDC + EF + MySQL… this can take ~20s' : 'Loading…';
+    var url = '/api/ai/schema-dictionary' + (refresh ? '?refresh=1' : '');
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          $meta.textContent = (d && d.error) || 'Failed to load';
+          return;
+        }
+        data = d;
+        renderJoins();
+        render();
+      })
+      .catch(function (err) {
+        $meta.textContent = String(err);
+      });
+  }
+
+  $search.addEventListener('input', render);
+  $core.addEventListener('change', render);
+  document.getElementById('schema-refresh').addEventListener('click', function () { load(true); });
+  load(false);
+})();
+</script>
+</body>
+</html>

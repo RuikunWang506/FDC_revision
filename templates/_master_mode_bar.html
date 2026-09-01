@@ -1,0 +1,116 @@
+{% if master_mode %}
+<div class="fdc-master-bar" role="status">
+  <div class="fdc-master-bar-inner">
+    <span class="fdc-master-badge">MASTER MODE</span>
+    <span class="fdc-master-copy">
+      yetimaster
+      {% if master_impersonating %}
+      → viewing as <strong>{{ current_user }}</strong>
+      {% else %}
+      · secondary site view
+      {% endif %}
+    </span>
+    <form method="post" action="{{ url_for('auth.master_switch') }}" class="fdc-master-form">
+      <label class="sr-only" for="fdc-master-user">Switch user</label>
+      <select id="fdc-master-user" name="username" aria-label="Switch user">
+        {% for u in master_user_choices %}
+        <option value="{{ u.username }}"{% if current_user and u.username|lower == current_user|lower %} selected{% endif %}>
+          {{ u.username }}{% if u.group_name %} · {{ u.group_name }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+      <button type="submit">View as</button>
+    </form>
+    {% if master_impersonating %}
+    <a class="fdc-master-stop" href="{{ url_for('auth.master_stop') }}">Back to yetimaster</a>
+    {% endif %}
+  </div>
+</div>
+<script>document.body.classList.add('has-master-mode');</script>
+<style>
+body.has-master-mode.has-navbar {
+  padding-top: calc(92px + env(safe-area-inset-top, 0px)) !important;
+}
+body.has-master-mode.portal-minimal {
+  padding-top: 42px !important;
+}
+body.has-master-mode.has-navbar .navbar.fixed-top {
+  top: 42px !important;
+}
+.fdc-master-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1080;
+  height: 42px;
+  background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 50%, #b45309 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.28);
+}
+.fdc-master-bar-inner {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+.fdc-master-badge {
+  flex: 0 0 auto;
+  background: #facc15;
+  color: #1c1917;
+  font-size: 11px;
+  letter-spacing: .08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+.fdc-master-copy { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fdc-master-form {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.fdc-master-form select {
+  max-width: 220px;
+  height: 28px;
+  border-radius: 4px;
+  border: 0;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.fdc-master-form button,
+.fdc-master-stop {
+  height: 28px;
+  border: 0;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #fff;
+  color: #4c1d95;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.fdc-master-stop { background: #fde68a; color: #78350f; }
+.fdc-master-bar .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+}
+@media (max-width: 720px) {
+  .fdc-master-copy { display: none; }
+  .fdc-master-form select { max-width: 140px; }
+}
+</style>
+{% endif %}

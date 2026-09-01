@@ -18,6 +18,8 @@ HELP_CATEGORIES = (
     'faq',
 )
 
+YETI_ONLY_SLUGS = frozenset({'db-dictionary'})
+
 HELP_CATEGORY_ICONS = {
     'getting_started': '🚀',
     'page_guide': '📄',
@@ -43,6 +45,7 @@ ENDPOINT_TO_SLUG = {
     'log_center.display_visitor': 'page-log-center',
     'auth.manage_users': 'page-manage-users',
     'auth.user_settings': 'page-settings',
+    'ai_sql.schema_dictionary_page': 'db-dictionary',
     'auth.external_service_log': 'page-external-log',
     'location_service.location_service': 'page-location-service',
     'mobile_lite.mobile_view': 'page-mobile-lite',
@@ -74,6 +77,9 @@ ENDPOINT_TO_SLUG = {
     'burlington_label_processor.burlington_label_processor_page': 'page-burlington-labels',
     'tradeshowtool.tradeshowtool_page': 'page-tradeshow',
     'print_center.print_center_page': 'page-print-center',
+    'whatnot_live.hub': 'page-whatnot-live',
+    'whatnot_live.control': 'page-whatnot-live',
+    'whatnot_live.camera': 'page-whatnot-live',
     'warehousemap.warehouse': 'page-warehouse-map',
     'whmap.warehouse': 'page-warehouse-map',
     'pallet_detail.pallet_detail': 'page-pallet',
@@ -110,6 +116,26 @@ def get_help_slug(endpoint: str | None = None, path: str | None = None) -> str |
     if slug:
         return slug
     return get_help_slug_for_path(path)
+
+
+def _viewer_is_yeti() -> bool:
+    try:
+        from flask import has_request_context, session
+
+        if not has_request_context():
+            return False
+        return (session.get('username') or '').strip().lower() == 'yeti'
+    except Exception:
+        return False
+
+
+def _public_article(row: Optional[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    if not row:
+        return None
+    slug = str(row.get('slug') or '')
+    if slug in YETI_ONLY_SLUGS and not _viewer_is_yeti():
+        return None
+    return row
 
 
 def category_label(category: str) -> str:
@@ -296,7 +322,8 @@ def list_articles(category: Optional[str] = None, search: Optional[str] = None) 
             sql += ' WHERE ' + ' AND '.join(clauses)
         sql += ' ORDER BY sort_order ASC, title ASC'
         cursor.execute(sql, params)
-        return [apply_help_locale(r) for r in (cursor.fetchall() or [])]
+        rows = [apply_help_locale(r) for r in (cursor.fetchall() or [])]
+        return [r for r in rows if r and _public_article(r)]
     except Exception:
         return []
     finally:
@@ -325,7 +352,7 @@ def get_article_by_slug(slug: str) -> Optional[dict[str, Any]]:
             'SELECT id, slug, title, title_zh, category, body_html, body_html_zh, sort_order FROM help_articles WHERE slug = %s LIMIT 1',
             (slug,),
         )
-        return apply_help_locale(cursor.fetchone())
+        return _public_article(apply_help_locale(cursor.fetchone()))
     except Exception:
         return None
     finally:

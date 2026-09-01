@@ -4,10 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('log.tab.online') }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}?v=online-tl2">
 </head>
 <body class="fdc-staff-page has-navbar">
 {% include 'navbar.html' %}
+<style>
+/* After navbar/Bootstrap so tracks and bars actually paint (empty divs need height). */
+.online-dashboard .timeline-wrap { overflow-x: auto; }
+.online-dashboard .timeline-canvas { min-width: 100%; }
+.online-dashboard .timeline-axis {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    color: #687b8f;
+}
+.online-dashboard .timeline-axis-rail { position: relative; height: 22px; }
+.online-dashboard .timeline-axis-tick {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 0.7rem;
+}
+.online-dashboard .timeline-axis-tick.is-edge-end { transform: translateX(-100%); }
+.online-dashboard .timeline-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    min-height: 36px;
+}
+.online-dashboard .timeline-row .tl-name {
+    font-weight: 600;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.online-dashboard .timeline-track {
+    position: relative;
+    height: 28px;
+    width: 100%;
+    background: #f3f4f6;
+    border-radius: 4px;
+    border: 1px solid #d8e3ee;
+}
+.online-dashboard .timeline-track.is-single-day {
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent calc(12.5% - 1px),
+        rgba(0,0,0,.06) calc(12.5% - 1px),
+        rgba(0,0,0,.06) 12.5%
+    );
+}
+.online-dashboard .timeline-bar {
+    position: absolute;
+    top: 3px;
+    height: 22px;
+    border-radius: 4px;
+    min-width: 3px;
+    z-index: 1;
+}
+.online-dashboard .timeline-range-note {
+    font-size: 0.82rem;
+    color: #687b8f;
+    margin: -4px 0 12px;
+}
+</style>
 <div class="fdc-page fdc-page-wide log-viewer-page">
     <div class="page-header">
         <h1>🟢 {{ _('log.tab.online') }}</h1>
@@ -22,15 +88,28 @@
             </div>
         </div>
 
+        <div class="view-tabs">
+            <a href="{{ url_for('log_center.display_online', date_from=date_from, date_to=date_to, user=selected_user, min_sec=min_duration, merge=1 if merge_enabled else 0, merge_gap=merge_gap, search=search_term, view='dashboard') }}"
+               class="view-tab{% if view != 'raw' %} is-active{% endif %}">📊 {{ _('log.online.dashboard') }}</a>
+            <a href="{{ url_for('log_center.display_online', search=search_term, view='raw') }}"
+               class="view-tab{% if view == 'raw' %} is-active{% endif %}">📜 {{ _('log.online.raw') }}</a>
+        </div>
+
+        {% if view != 'raw' %}
         <div class="fdc-panel">
             <form method="get" action="{{ url_for('log_center.display_online') }}" class="toolbar">
+                <input type="hidden" name="view" value="dashboard">
                 <div class="toolbar-group">
                     <label for="filter-date-from">{{ _('log.online.date_from') }}</label>
-                    <input type="date" id="filter-date-from" name="date_from" value="{{ date_from }}">
+                    <input type="date" id="filter-date-from" name="date_from" value="{{ date_from }}"
+                           {% if date_min %}min="{{ date_min }}"{% endif %}
+                           {% if date_max %}max="{{ date_max }}"{% endif %}>
                 </div>
                 <div class="toolbar-group">
                     <label for="filter-date-to">{{ _('log.online.date_to') }}</label>
-                    <input type="date" id="filter-date-to" name="date_to" value="{{ date_to }}">
+                    <input type="date" id="filter-date-to" name="date_to" value="{{ date_to }}"
+                           {% if date_min %}min="{{ date_min }}"{% endif %}
+                           {% if date_max %}max="{{ date_max }}"{% endif %}>
                 </div>
                 <div class="toolbar-group">
                     <label for="filter-user">{{ _('log.online.user') }}</label>
@@ -42,15 +121,32 @@
                     </select>
                 </div>
                 <div class="toolbar-group">
+                    <label for="filter-min">{{ _('log.online.min_sec') }}</label>
+                    <input type="number" id="filter-min" name="min_sec" value="{{ min_duration }}" min="0" step="1" style="width:90px">
+                </div>
+                <div class="toolbar-group">
+                    <label for="filter-merge">{{ _('log.online.merge_gap') }}</label>
+                    <input type="number" id="filter-merge" name="merge_gap" value="{{ merge_gap }}" min="0" step="30" style="width:90px">
+                </div>
+                <div class="toolbar-group">
                     <label for="filter-search">{{ te('Search') }}</label>
                     <input type="search" id="filter-search" name="search" value="{{ search_term }}" placeholder="{{ te('Search logs...') }}">
                 </div>
+                <div class="toolbar-group">
+                    <label for="filter-merge-on">{{ _('log.online.merge') }}</label>
+                    <select id="filter-merge-on" name="merge">
+                        <option value="1"{% if merge_enabled %} selected{% endif %}>{{ _('log.online.merge_on') }}</option>
+                        <option value="0"{% if not merge_enabled %} selected{% endif %}>{{ _('log.online.merge_off') }}</option>
+                    </select>
+                </div>
                 <div class="toolbar-actions">
                     <button type="submit" class="btn-tool btn-primary-tool">{{ te('Search') }}</button>
-                    <a href="{{ url_for('log_center.display_online') }}" class="btn-tool btn-secondary-tool">{{ te('Clear') }}</a>
+                    <a href="{{ url_for('log_center.display_online', view='dashboard') }}" class="btn-tool btn-secondary-tool">{{ te('Clear') }}</a>
                 </div>
             </form>
-            <div class="date-presets" data-today-pst="{{ today_pst }}">
+            <div class="date-presets" data-today-pst="{{ today_pst }}"
+                 {% if date_min %}data-date-min="{{ date_min }}"{% endif %}
+                 {% if date_max %}data-date-max="{{ date_max }}"{% endif %}>
                 <button type="button" class="date-preset" data-preset="today">{{ _('log.online.today') }}</button>
                 <button type="button" class="date-preset" data-preset="yesterday">{{ _('log.online.yesterday') }}</button>
                 <button type="button" class="date-preset" data-preset="7d">{{ _('log.online.last7') }}</button>
@@ -60,8 +156,10 @@
         </div>
 
         <p class="stats-line">
-            {% if date_from or date_to %}{{ date_from or '…' }} – {{ date_to or '…' }} · {% endif %}
-            {{ _('log.online.sessions') }}: {{ total_count }}
+            {% if multi_day %}{{ date_from }} – {{ date_to }}{% else %}{{ date_from }}{% endif %}
+            · {{ _('log.online.raw_segments') }} {{ raw_session_count }}
+            · {{ _('log.online.shown_segments') }} {{ filtered_session_count }}
+            {% if merge_enabled %}（{{ _('log.online.merged') }}）{% endif %}
             {% if selected_user %} · {{ selected_user }}{% endif %}
         </p>
 
@@ -73,35 +171,154 @@
                 <div class="summary-card" style="--user-color: {{ row.color }}">
                     <div class="uname">{{ row.username }}</div>
                     <div class="total">{{ row.total_display }}</div>
-                    <div class="detail">{{ row.session_count }} {{ _('log.online.segments') }}</div>
+                    <div class="detail">{{ row.session_count }} {{ _('log.online.segments') }} · {{ row.first_start }} – {{ row.last_end }}</div>
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
 
+        {% if timeline and timeline.rows %}
+        <div class="fdc-panel">
+            <h3 class="panel-title">🕐 {{ _('log.online.timeline') }}</h3>
+            <p class="timeline-range-note">
+                {% if timeline.multi_day %}
+                {{ timeline.date_from }} – {{ timeline.date_to }} · {{ timeline.day_count }} {{ _('log.online.days') }}
+                {% else %}
+                {{ timeline.date_from }}
+                {% endif %}
+            </p>
+            <div class="timeline-wrap">
+                <div class="timeline-canvas{% if timeline.multi_day %} is-range{% endif %}"
+                     {% if timeline.multi_day %}style="min-width: max(100%, {{ timeline.day_count * 28 }}px);"{% endif %}>
+                    <div class="timeline-axis">
+                        <div></div>
+                        <div class="timeline-axis-rail">
+                            {% for tick in timeline.ticks %}
+                            <span class="timeline-axis-tick{% if loop.last %} is-edge-end{% endif %}"
+                                  style="left: {{ tick.left_pct }}%;">{{ tick.label }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% for row in timeline.rows %}
+                    <div class="timeline-row">
+                        <div class="tl-name" title="{{ row.username }}">{{ row.username }}</div>
+                        <div class="timeline-track{% if not timeline.multi_day %} is-single-day{% endif %}">
+                            {% for marker in timeline.day_markers %}
+                            <div class="timeline-day-sep" style="left: {{ marker.left_pct }}%;"></div>
+                            {% endfor %}
+                            {% for bar in row.bars %}
+                            <div class="timeline-bar"
+                                 style="position:absolute;top:3px;height:22px;left: {{ bar.left_pct }}%; width: {{ bar.width_pct }}%; background: {{ bar.color }};"
+                                 title="{{ row.username }}: {{ bar.start_label }} – {{ bar.end_label }} ({{ bar.duration_display }}){% if bar.fragment_count > 1 %} · {{ bar.fragment_count }}{% endif %}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="fdc-panel">
             <h3 class="panel-title">📋 {{ _('log.online.detail') }}</h3>
+            <p class="stats-line">{{ _('log.online.click_expand') }}</p>
             {% if sessions %}
             <div class="session-table-wrap">
                 <table class="session-table">
                     <thead>
                         <tr>
                             <th>{{ _('log.online.user') }}</th>
-                            <th>{{ _('log.online.duration') }}</th>
+                            {% if multi_day %}<th>{{ _('log.online.date') }}</th>{% endif %}
                             <th>{{ _('log.online.from') }}</th>
                             <th>{{ _('log.online.to') }}</th>
-                            <th>{{ _('log.online.logged_at') }}</th>
+                            <th>{{ _('log.online.duration') }}</th>
+                            <th>{{ _('log.online.activity') }}</th>
+                            <th>{{ _('log.online.notes') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for s in sessions %}
-                        <tr>
+                        <tr class="session-row-expandable" data-session-row="{{ loop.index }}" tabindex="0" role="button" aria-expanded="false">
                             <td><span style="color:{{ s.color }};font-weight:600">{{ s.username }}</span></td>
-                            <td><strong>{{ s.duration }}</strong></td>
-                            <td>{{ s.start }}</td>
-                            <td>{{ s.end }}</td>
-                            <td>{{ s.stamp }}</td>
+                            {% if multi_day %}<td>{{ s.date }}</td>{% endif %}
+                            <td>{{ s.start_display }}</td>
+                            <td>{{ s.end_display }}</td>
+                            <td><strong>{{ s.duration_display }}</strong></td>
+                            <td>
+                                {% if s.activity_count %}
+                                <span class="activity-count">{{ s.activity_count }}</span>
+                                {% else %}
+                                <span class="activity-count is-empty">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.fragment_count and s.fragment_count > 1 %}
+                                <span class="badge-frag">{{ s.fragment_count }} {{ _('log.online.fragments_merged') }}</span>
+                                <span class="session-expand-hint">{{ _('log.online.expand') }}</span>
+                                {% elif s.activity_count %}
+                                <span class="session-expand-hint">{{ _('log.online.expand') }}</span>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr class="session-activities-row" data-session-detail="{{ loop.index }}" hidden>
+                            <td colspan="{% if multi_day %}7{% else %}6{% endif %}">
+                                <div class="session-activities-panel">
+                                    {% if s.fragment_details %}
+                                        {% set active_frags = s.fragment_details | selectattr('activity_count') | list %}
+                                        {% set hidden_frag_count = s.fragment_details | length - active_frags | length %}
+                                        {% if hidden_frag_count %}
+                                        <div class="fragment-hidden-note">{{ _('log.online.hidden_fragments') }} {{ hidden_frag_count }}</div>
+                                        {% endif %}
+                                        {% for frag in active_frags %}
+                                        <div class="fragment-block">
+                                            <div class="fragment-title">
+                                                {{ frag.start_display }} – {{ frag.end_display }}
+                                                ({{ frag.duration_display }}) · {{ frag.activity_count }}
+                                            </div>
+                                            <ul class="activity-list">
+                                                {% for act in frag.activities %}
+                                                <li class="activity-item">
+                                                    <span class="activity-time">{{ act.time_display }}</span>
+                                                    <span class="activity-summary">{{ act.summary }}</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endfor %}
+                                        {% if s.gap_activities %}
+                                        <div class="fragment-block">
+                                            <div class="fragment-title">{{ _('log.online.gap_activities') }} · {{ s.gap_activities|length }}</div>
+                                            <ul class="activity-list">
+                                                {% for act in s.gap_activities %}
+                                                <li class="activity-item">
+                                                    <span class="activity-time">{{ act.time_display }}</span>
+                                                    <span class="activity-summary">{{ act.summary }}</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        {% if not active_frags and not s.gap_activities %}
+                                        <div class="activity-empty">{{ _('log.online.no_activity') }}</div>
+                                        {% endif %}
+                                    {% elif s.activities %}
+                                    <ul class="activity-list">
+                                        {% for act in s.activities %}
+                                        <li class="activity-item">
+                                            <span class="activity-time">{{ act.time_display }}</span>
+                                            <span class="activity-summary">{{ act.summary }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                    <div class="activity-empty">{{ _('log.online.no_activity') }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -111,23 +328,46 @@
             <div class="empty-log">{{ _('log.online.empty') }}</div>
             {% endif %}
         </div>
-    </div>
 
-    <div class="log-pagination-bar">
-        {% if page > 1 %}
-            <a href="{{ url_for('log_center.display_online', page=1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('First') }}</a>
-            <a href="{{ url_for('log_center.display_online', page=page-1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Previous') }}</a>
         {% else %}
-            <a class="disabled" href="#">{{ te('First') }}</a>
-            <a class="disabled" href="#">{{ te('Previous') }}</a>
-        {% endif %}
-        <span>Page {{ page }} / {{ total_pages }} ({{ total_count }})</span>
-        {% if page < total_pages %}
-            <a href="{{ url_for('log_center.display_online', page=page+1, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Next') }}</a>
-            <a href="{{ url_for('log_center.display_online', page=total_pages, search=search_term, date_from=date_from, date_to=date_to, user=selected_user) }}">{{ te('Last') }}</a>
-        {% else %}
-            <a class="disabled" href="#">{{ te('Next') }}</a>
-            <a class="disabled" href="#">{{ te('Last') }}</a>
+        <div class="fdc-panel">
+            <form action="{{ url_for('log_center.search_online') }}" method="post" class="toolbar">
+                <div class="toolbar-group">
+                    <label for="search-input">{{ te('Search') }}</label>
+                    <input type="text" id="search-input" name="search_term" placeholder="{{ te('Search logs...') }}" value="{{ search_term or '' }}">
+                </div>
+                <div class="toolbar-actions">
+                    <button type="submit" class="btn-tool btn-primary-tool">🔍 {{ te('Search') }}</button>
+                    <a href="{{ url_for('log_center.display_online', view='raw') }}" class="btn-tool btn-secondary-tool">{{ te('Clear') }}</a>
+                </div>
+            </form>
+        </div>
+        <div id="log-container">
+            {% if log_lines %}
+                {% for log_class, line in log_lines %}
+                <div class="log-entry {{ log_class }}">{{ line|safe }}</div>
+                {% endfor %}
+            {% else %}
+            <div class="empty-log">{{ _('log.online.empty') }}</div>
+            {% endif %}
+        </div>
+        <div class="log-pagination-bar">
+            {% if page > 1 %}
+                <a href="{{ url_for('log_center.display_online', page=1, search=search_term, view='raw') }}">{{ te('First') }}</a>
+                <a href="{{ url_for('log_center.display_online', page=page-1, search=search_term, view='raw') }}">{{ te('Previous') }}</a>
+            {% else %}
+                <a class="disabled" href="#">{{ te('First') }}</a>
+                <a class="disabled" href="#">{{ te('Previous') }}</a>
+            {% endif %}
+            <span>Page {{ page }} / {{ total_pages }} ({{ total_raw_count or 0 }})</span>
+            {% if page < total_pages %}
+                <a href="{{ url_for('log_center.display_online', page=page+1, search=search_term, view='raw') }}">{{ te('Next') }}</a>
+                <a href="{{ url_for('log_center.display_online', page=total_pages, search=search_term, view='raw') }}">{{ te('Last') }}</a>
+            {% else %}
+                <a class="disabled" href="#">{{ te('Next') }}</a>
+                <a class="disabled" href="#">{{ te('Last') }}</a>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
 </div>
@@ -140,6 +380,8 @@
     var toInput = document.getElementById('filter-date-to');
     var presetWrap = document.querySelector('.date-presets');
     var todayPst = presetWrap ? presetWrap.getAttribute('data-today-pst') : '';
+    var dateMin = (presetWrap && presetWrap.getAttribute('data-date-min')) || '';
+    var dateMax = (presetWrap && presetWrap.getAttribute('data-date-max')) || '';
 
     function fmtDate(d) {
         var y = d.getFullYear();
@@ -153,8 +395,17 @@
         d.setDate(d.getDate() + delta);
         return fmtDate(d);
     }
+    function clampDate(isoDate) {
+        if (!isoDate) return isoDate;
+        if (dateMin && isoDate < dateMin) return dateMin;
+        if (dateMax && isoDate > dateMax) return dateMax;
+        return isoDate;
+    }
     function setRange(from, to) {
         if (!fromInput || !toInput) return;
+        from = clampDate(from);
+        to = clampDate(to);
+        if (from > to) { var tmp = from; from = to; to = tmp; }
         fromInput.value = from;
         toInput.value = to;
         form.submit();
@@ -167,6 +418,28 @@
             else if (kind === 'yesterday') { var y = addDays(todayPst, -1); setRange(y, y); }
             else if (kind === '7d') setRange(addDays(todayPst, -6), todayPst);
             else if (kind === '30d') setRange(addDays(todayPst, -29), todayPst);
+        });
+    });
+})();
+
+(function () {
+    function toggleSessionRow(row) {
+        var key = row.getAttribute('data-session-row');
+        if (!key) return;
+        var detail = document.querySelector('[data-session-detail="' + key + '"]');
+        if (!detail) return;
+        var isOpen = !detail.hidden;
+        detail.hidden = isOpen;
+        row.classList.toggle('is-open', !isOpen);
+        row.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    }
+    document.querySelectorAll('.session-row-expandable').forEach(function (row) {
+        row.addEventListener('click', function () { toggleSessionRow(row); });
+        row.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleSessionRow(row);
+            }
         });
     });
 })();

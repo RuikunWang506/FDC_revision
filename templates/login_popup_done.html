@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Signed in</title>
+  <style>
+    body { font-family: Segoe UI, sans-serif; background: #0b0d12; color: #e8eef6; text-align: center; padding: 2.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <p>Signed in as <strong>{{ username }}</strong>. This window should close.</p>
+  <script>
+    (function () {
+      var payload = { type: "fdc-auth", ok: true, username: {{ username|tojson }} };
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(payload, window.location.origin);
+        }
+      } catch (e) {}
+      window.close();
+    })();
+  </script>
+</body>
+</html>

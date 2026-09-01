@@ -22,7 +22,7 @@
       margin: 0;
       font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       color: #e8f4fd;
-      background: url("{{ url_for('static', filename='josh-williams-NMEnVWulWLQ-unsplash.jpg') }}") no-repeat center center fixed;
+      background: url("{{ url_for('static', filename='rocker-sta-qr8Ci2tzyR8.jpg') }}") no-repeat center center fixed;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -357,6 +357,9 @@
 
     <div class="login-card">
       <form method="POST" action="{{ url_for('auth.login') }}">
+        {% if login_popup %}
+        <input type="hidden" name="popup" value="1">
+        {% endif %}
         <div class="form-group">
           <label for="username"><i class="fas fa-user mr-1"></i>{{ _('login.username') }}</label>
           <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
@@ -431,7 +434,7 @@
     </div>
   </div>
 
-  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@joshwi?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Josh Williams') }}</a> on <a href="https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Unsplash') }}</a> · June 3, 2026</p>
+  <p class="fdc-photo-credit">Photo by <a href="https://unsplash.com/@starocker?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">Rocker Sta</a> on <a href="https://unsplash.com/photos/birds-eye-view-photography-of-concrete-high-rise-buildings-qr8Ci2tzyR8?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText" rel="noopener noreferrer" target="_blank">{{ te('Unsplash') }}</a> · August 25, 2026</p>
 
   <footer class="login-footer">
     <img src="/static/icons/giraffe.ico" alt="">

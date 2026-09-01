@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('whatnot.control.title') }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body.wn-control {
+      background: #f4f8fb;
+      color: #26384d;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color-scheme: light;
+      padding-top: 38px !important;
+    }
+    body.wn-control .navbar.fixed-top { min-height: 38px; height: 38px; }
+    body.wn-control .navbar-brand { padding: 0.1rem 0.35rem !important; font-size: 0.85rem; }
+    body.wn-control .navbar-brand img { width: 30px; height: 30px; margin-right: 4px; }
+    body.wn-control .nav-link { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; font-size: 0.82rem; }
+    body.wn-control .wrap { max-width: 1860px; margin: 0 auto; padding: 0.35rem 0.6rem 0.5rem; }
+    body.wn-control .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.35rem;
+    }
+    body.wn-control h1 {
+      font-size: 1.12rem; font-weight: 800; margin: 0;
+      display: flex; align-items: center; gap: 0.45rem; color: #26384d;
+    }
+    body.wn-control h1 a { color: #b6537e; font-size: 0.78rem; font-weight: 700; }
+    body.wn-control .is-hidden { display: none !important; }
+    body.wn-control .seller-setup { margin-bottom: 0.35rem; }
+    body.wn-control .grid {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 0.7rem;
+      align-items: start;
+    }
+    @media (max-width: 1100px) { body.wn-control .grid { grid-template-columns: 1fr; } }
+    body.wn-control .panel {
+      background: #fff;
+      color: #26384d;
+      border: 1px solid #dce7ee;
+      border-radius: 12px;
+      padding: 0.55rem 0.65rem;
+      box-shadow: 0 8px 24px rgba(71, 104, 133, 0.07);
+    }
+    body.wn-control .panel-preview {
+      width: 100%;
+      justify-self: stretch;
+      background: #fff;
+      border: 1px solid #dce7ee;
+      border-radius: 12px;
+      padding: 0.55rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    body.wn-control .panel-preview h2 { justify-content: center; }
+    body.wn-control .panel h2 {
+      font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em;
+      color: #b6537e; margin: 0 0 0.3rem; text-transform: uppercase;
+      display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem 0.4rem;
+    }
+    body.wn-control label {
+      font-size: 0.7rem; font-weight: 700; color: #60768b; display: block; margin-bottom: 0.15rem;
+    }
+    body.wn-control input[type=text],
+    body.wn-control input[type=number] {
+      width: 100%; background: #f8fbfd; color: #26384d; border: 1px solid #cbdde7;
+      border-radius: 8px; padding: 0.4rem 0.55rem; margin-bottom: 0;
+      height: 36px; box-sizing: border-box;
+    }
+    body.wn-control input::placeholder { color: #91a2b1; opacity: 1; }
+    body.wn-control .btn {
+      height: 36px; display: inline-flex; align-items: center; justify-content: center;
+      padding: 0 0.75rem; line-height: 1; white-space: nowrap;
+    }
+    body.wn-control .btn.btn-pink {
+      background: #ffd2e5; border: 1px solid #f1b8d0; color: #8f315f; font-weight: 800;
+    }
+    body.wn-control .btn.btn-ghost {
+      background: #eef5f9; border: 1px solid #cbdde7; color: #3d5870; font-weight: 700;
+    }
+    body.wn-control .row-input { display: flex; gap: 0.4rem; align-items: stretch; margin-bottom: 0.55rem; }
+    body.wn-control .row-input input { flex: 1; min-width: 0; margin: 0; }
+    body.wn-control .row-input .btn { flex-shrink: 0; }
+    body.wn-control .set-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; margin-bottom: 0.55rem;
+    }
+    body.wn-control .kv {
+      display: grid; grid-template-columns: 92px 1fr; gap: 0.08rem 0.4rem;
+      font-size: 0.82rem; margin: 0 0 0.65rem; color: #26384d;
+    }
+    body.wn-control .kv b { color: #698095; font-weight: 600; }
+    body.wn-control .kv span { color: #26384d; }
+    body.wn-control .bid-now { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.02em; }
+    body.wn-control .preview-frame {
+      --preview-h: min(900px, calc(100vh - 10rem));
+      position: relative;
+      flex: 0 0 auto;
+      width: calc(var(--preview-h) * 9 / 16);
+      height: var(--preview-h);
+      min-width: 270px;
+      min-height: 480px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid #cbdde7;
+    }
+    body.wn-control .preview-frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+    body.wn-control .alert-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+    body.wn-control .alert-row .btn { height: 40px; width: 100%; }
+    body.wn-control .pill {
+      display: inline-block; padding: 0.12rem 0.45rem; border-radius: 999px;
+      font-size: 0.68rem; font-weight: 800; letter-spacing: 0.04em;
+    }
+    body.wn-control .pill.on { background: #dcfce7; color: #166534; }
+    body.wn-control .pill.off { background: #eef2f5; color: #647789; }
+    body.wn-control .pill.need { background: #fff4d6; color: #946200; }
+    body.wn-control .tiny { font-size: 0.72rem; color: #718498; margin: 0; }
+    body.wn-control .tiny code,
+    body.wn-control .tiny strong { color: #b6537e; }
+    body.wn-control .urlbox {
+      font-size: 0.72rem; word-break: break-all; background: #f8fbfd; color: #30475d;
+      border-radius: 8px; padding: 0.4rem 0.5rem; border: 1px solid #cbdde7; flex: 1; min-width: 0;
+    }
+    body.wn-control .seller-mini {
+      display: none; align-items: center; flex-wrap: wrap; gap: 0.55rem 0.75rem;
+      font-size: 0.82rem; color: #587087;
+      width: 100%; box-sizing: border-box;
+      padding: 0.25rem 0.85rem;
+      margin: 0;
+      background: #f4fafb;
+      border: 0;
+      border-bottom: 1px solid #d7e7e8;
+      border-radius: 0;
+    }
+    body.wn-control .seller-mini.is-on { display: flex; }
+    body.wn-control .seller-mini .mini-url {
+      flex: 1; min-width: 12rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    body.wn-control .seller-mini .btn { height: 28px; font-size: 0.72rem; margin: 0; }
+    body.wn-control .push-btn { width: 100%; margin-bottom: 0.7rem; }
+    body.wn-control .vol-box { margin-top: 0.75rem; }
+    body.wn-control .vol-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.4rem; margin-bottom: 0.3rem;
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #b6537e;
+    }
+    body.wn-control .vol-bar {
+      height: 12px; background: #edf3f6; border: 1px solid #cbdde7;
+      border-radius: 999px; overflow: hidden;
+    }
+    body.wn-control .vol-fill {
+      display: block; height: 100%; width: 0%;
+      background: #22c55e; transition: width 90ms linear;
+    }
+    body.wn-control .vol-fill.is-silent { background: #ca8a04; }
+    body.wn-control .vol-fill.is-off { background: #3f4554; width: 8% !important; }
+    body.wn-control .preview-actions {
+      margin: 0.2rem 0 0;
+      width: calc(min(900px, calc(100vh - 10rem)) * 9 / 16);
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="has-navbar wn-control">
+  {% include 'navbar.html' %}
+  <div class="seller-mini{% if state.live_id %} is-on{% endif %}" id="sellerDashMini">
+    <span class="pill on">{{ _('whatnot.attached') }}</span>
+    <span class="mini-url" id="sellerDashMiniUrl" title="">—</span>
+    <button class="btn btn-ghost" type="button" id="btnOpenDashboardMini">{{ _('whatnot.open_whatnot') }}</button>
+    <button class="btn btn-ghost" type="button" id="btnChangeShow">{{ _('whatnot.change') }}</button>
+  </div>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>{{ _('whatnot.control.heading') }} <a href="{{ url_for('whatnot_live.hub') }}">{{ _('whatnot.hub_link') }}</a></h1>
+    </div>
+
+    <div class="panel seller-setup{% if state.live_id %} is-hidden{% endif %}" id="sellerDashPanel">
+      <h2>{{ _('whatnot.bind_show') }}</h2>
+      <p class="tiny" style="margin-bottom:0.55rem;">{{ _('whatnot.bind_help') }}</p>
+      <label>{{ _('whatnot.seller_url') }}</label>
+      <div class="row-input">
+        <input id="liveUrl" type="text" placeholder="https://www.whatnot.com/dashboard/live/…" autocomplete="off">
+        <button class="btn btn-pink" type="button" id="btnAttachLive">{{ _('whatnot.attach') }}</button>
+        <button class="btn btn-ghost" type="button" id="btnOpenDashboard">{{ _('whatnot.open') }}</button>
+      </div>
+      <div class="kv mb-0">
+        <b>{{ _('whatnot.live_id') }}</b><span id="liveId">—</span>
+        <b>{{ _('whatnot.dashboard') }}</b><span id="liveWatching">{{ _('whatnot.not_attached') }}</span>
+        <b>{{ _('whatnot.extension') }}</b><span id="whatnotSess">{{ _('whatnot.checking') }}</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>{{ _('whatnot.item') }}</h2>
+        <label>{{ _('whatnot.sku') }}</label>
+        <div class="row-input">
+          <input id="skuInput" type="text" placeholder="CF101" autocomplete="off">
+          <button class="btn btn-pink" type="button" id="btnLoad">{{ _('whatnot.load') }}</button>
+        </div>
+        <div class="kv">
+          <b>{{ _('whatnot.listing') }}</b><span id="listingTitle">—</span>
+          <b>{{ _('whatnot.listing_cat') }}</b><span id="listingCat">—</span>
+          <b>{{ _('whatnot.sku') }}</b><span id="sku">—</span>
+          <b>{{ _('whatnot.style') }}</b><span id="style">—</span>
+          <b>{{ _('whatnot.color') }}</b><span id="color">—</span>
+          <b>{{ _('whatnot.condition') }}</b><span>{{ _('whatnot.condition_new') }}</span>
+          <b>{{ _('whatnot.db_msrp') }}</b><span id="msrpDb">—</span>
+          <b>{{ _('whatnot.on_overlay') }}</b><span id="msrpOv">—</span>
+          <b>{{ _('whatnot.dimensions') }}</b><span id="dimensions">—</span>
+          <b>{{ _('whatnot.weight') }}</b><span id="weight">—</span>
+          <b>{{ _('whatnot.current_bid') }}</b><span class="bid-now" id="bidNow">$0</span>
+          <b>{{ _('whatnot.bidder') }}</b><span id="bidder">—</span>
+          <b>{{ _('whatnot.time_left') }}</b><span id="timeLeft">—</span>
+          <b>{{ _('whatnot.start') }}</b><span id="startingBid">—</span>
+          <b>{{ _('whatnot.inc') }}</b><span id="increment">—</span>
+          <b>{{ _('whatnot.qty') }}</b><span id="available">—</span>
+          <b>{{ _('whatnot.gross') }}</b><span id="grossSales">—</span>
+          <b>{{ _('whatnot.orders') }}</b><span id="estOrders">—</span>
+        </div>
+        <p class="tiny" style="margin:-0.15rem 0 0.45rem;">{{ _('whatnot.from_whatnot') }}</p>
+        <label>{{ _('whatnot.ticker') }}</label>
+        <div class="row-input">
+          <input id="ticker" type="text">
+        </div>
+        <button class="btn btn-pink push-btn" type="button" id="btnSave">{{ _('whatnot.push') }}</button>
+        <div class="vol-box">
+          <div class="vol-head">
+            {{ _('whatnot.volume') }}
+            <span class="pill off" id="volPill">{{ _('whatnot.volume_off') }}</span>
+          </div>
+          <div class="vol-bar"><span class="vol-fill is-off" id="volFill"></span></div>
+        </div>
+      </div>
+
+      <div class="panel panel-preview">
+        <h2>{{ _('whatnot.show_preview') }}
+          <span class="pill off" id="camPill">{{ _('whatnot.camera_off') }}</span>
+          <span class="pill off" id="showPill">{{ _('whatnot.not_started') }}</span>
+          <span class="pill off" id="extPill">{{ _('whatnot.waiting') }}</span>
+        </h2>
+        <div class="preview-frame">
+          <iframe
+            id="showPreview"
+            src="{{ overlay_preview_url }}"
+            title="{{ _('whatnot.live_camera_overlay') }}"
+            allow="autoplay; camera; microphone; fullscreen"
+          ></iframe>
+        </div>
+        <div class="row-input preview-actions">
+          <span class="tiny" style="margin:0;">{{ _('whatnot.preview_note') }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const STREAM_URL = {{ url_for('whatnot_live.stream')|tojson }};
+    const LOAD_URL = {{ url_for('whatnot_live.load_sku')|tojson }};
+    const UPDATE_URL = {{ url_for('whatnot_live.update_state')|tojson }};
+    const WEBRTC_URL = {{ url_for('whatnot_live.webrtc_signal')|tojson }};
+    let currentDashboardUrl = "";
+    let extAck = false;
+    let sessTries = 0;
+    let sessTimer = null;
+    let sellerDashForced = false;
+    let overlayCamLive = false;
+    let lastBid = 0;
+    let lastPopupTs = 0;
+    let statePrimed = false;
+    let overlayRms = 0;
+    let overlayHasTrack = false;
+    let overlayAudioAt = 0;
+    let pubLevel = 0;
+    let pubMic = false;
+
+    const WN_T = {{ {
+      'times3': _('whatnot.times3'),
+      'not_attached': _('whatnot.not_attached'),
+      'ext_waiting': _('whatnot.ext_waiting'),
+      'ext_not_connected': _('whatnot.ext_not_connected'),
+      'cookie_ok': _('whatnot.cookie_ok'),
+      'need_login': _('whatnot.need_login'),
+      'no_cookie': _('whatnot.no_cookie'),
+      'attach_first': _('whatnot.attach_first'),
+      'paste_first': _('whatnot.paste_first'),
+      'attach_fail': _('whatnot.attach_fail'),
+      'sku_not_found': _('whatnot.sku_not_found'),
+      'camera_live': _('whatnot.camera_live'),
+      'camera_off': _('whatnot.camera_off'),
+      'show_live': _('whatnot.show_live'),
+      'not_started': _('whatnot.not_started'),
+      'ext_live': _('whatnot.ext_live'),
+      'from_source': _('whatnot.from_source'),
+      'waiting': _('whatnot.waiting'),
+      'volume_off': _('whatnot.volume_off'),
+      'volume_silent': _('whatnot.volume_silent'),
+      'volume_in': _('whatnot.volume_in'),
+      'volume_no_mic': _('whatnot.volume_no_mic'),
+    }|tojson }};
+    function wt(key, vars) {
+      let s = WN_T[key] || key;
+      if (vars) Object.keys(vars).forEach((k) => { s = s.split("{" + k + "}").join(vars[k]); });
+      return s;
+    }
+
+    function money(n) { return "$" + Math.round(Number(n || 0)).toLocaleString("en-US"); }
+    function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+    function playCue(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = ctx.currentTime;
+        function beep(freq, start, dur, wave, vol) {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = wave || "triangle";
+          o.frequency.setValueAtTime(freq, now + start);
+          g.gain.setValueAtTime(0.0001, now + start);
+          g.gain.exponentialRampToValueAtTime(vol || 0.18, now + start + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(now + start);
+          o.stop(now + start + dur + 0.03);
+        }
+        if (type === "high_bid") { beep(880, 0, 0.11); beep(1175, 0.1, 0.16); }
+        else if (type === "sold") { beep(523, 0, 0.14, "sine", 0.2); beep(659, 0.13, 0.14, "sine", 0.2); beep(784, 0.26, 0.28, "sine", 0.22); }
+        else { beep(392, 0, 0.18, "sine", 0.16); beep(494, 0.16, 0.2, "sine", 0.14); }
+        setTimeout(() => ctx.close().catch(() => {}), 1200);
+      } catch (e) {}
+    }
+    function setVolumeUI() {
+      const pill = document.getElementById("volPill");
+      const fill = document.getElementById("volFill");
+      if (!pill || !fill) return;
+      const overlayFresh = Date.now() - overlayAudioAt < 1800;
+      const rms = overlayFresh ? overlayRms : pubLevel;
+      const has = overlayFresh ? overlayHasTrack : pubMic;
+      const pct = Math.min(100, Math.round(Math.sqrt(Math.max(0, rms)) * 220));
+      fill.style.width = (has ? Math.max(6, pct) : 8) + "%";
+      fill.classList.remove("is-silent", "is-off");
+      if (!has) {
+        pill.textContent = overlayCamLive || pubMic ? wt("volume_no_mic") : wt("volume_off");
+        pill.className = "pill off";
+        fill.classList.add("is-off");
+        return;
+      }
+      if (rms < 0.025) {
+        pill.textContent = wt("volume_silent");
+        pill.className = "pill need";
+        fill.classList.add("is-silent");
+      } else {
+        pill.textContent = wt("volume_in");
+        pill.className = "pill on";
+      }
+    }
+    function dashboardUrl(s) {
+      if (s && s.dashboard_url) return s.dashboard_url;
+      if (s && s.live_id) return "https://www.whatnot.com/dashboard/live/" + s.live_id;
+      return "";
+    }
+    function lastInputUrl(s) {
+      return String((s && (s.live_url_input || s.dashboard_url)) || currentDashboardUrl || "").trim();
+    }
+    function setWhatnotSess(res) {
+      const el = document.getElementById("whatnotSess");
+      if (!el) return;
+      if (!res) {
+        el.textContent = sessTries < 8 ? wt("ext_waiting") : wt("ext_not_connected");
+        syncSellerDash();
+        return;
+      }
+      if (res.loggedIn) el.textContent = wt("cookie_ok");
+      else if (res.needLogin) el.textContent = wt("need_login");
+      else el.textContent = wt("no_cookie");
+      syncSellerDash();
+    }
+    function syncSellerDash() {
+      const panel = document.getElementById("sellerDashPanel");
+      const mini = document.getElementById("sellerDashMini");
+      const miniUrl = document.getElementById("sellerDashMiniUrl");
+      const hide = !!currentDashboardUrl && !sellerDashForced;
+      if (panel) panel.classList.toggle("is-hidden", hide);
+      if (mini) mini.classList.toggle("is-on", hide);
+      if (miniUrl) {
+        const shown = (currentDashboardUrl || "").replace(/^https:\/\/(www\.)?/, "");
+        miniUrl.textContent = shown || "—";
+        miniUrl.title = currentDashboardUrl || "";
+      }
+    }
+    function setCamPill(fromState) {
+      const cam = document.getElementById("camPill");
+      if (!cam) return;
+      const live = overlayCamLive || !!(fromState && fromState.camera_live);
+      cam.textContent = live ? wt("camera_live") : wt("camera_off");
+      cam.className = "pill " + (live ? "on" : "off");
+    }
+    function setShowPill(s) {
+      const el = document.getElementById("showPill");
+      if (!el) return;
+      const on = !!(s && (s.stream_live || s.show_live || Number(s.viewers || 0) > 0 || Number(s.bid || 0) > 0));
+      el.textContent = on ? wt("show_live") : wt("not_started");
+      el.className = "pill " + (on ? "on" : "off");
+    }
+    function askWhatnotSession() {
+      if (extAck) return;
+      sessTries += 1;
+      window.postMessage({ type: "fdc-check-whatnot-session" }, "*");
+      if (sessTries === 1) setWhatnotSess(null);
+      if (sessTimer) clearTimeout(sessTimer);
+      sessTimer = setTimeout(() => {
+        if (extAck) return;
+        if (sessTries < 8) askWhatnotSession();
+        else setWhatnotSess(null);
+      }, 700);
+    }
+    function openWhatnotDashboard() {
+      const url = currentDashboardUrl || document.getElementById("liveUrl").value.trim();
+      if (!url) { alert(wt("attach_first")); return; }
+      extAck = false;
+      window.postMessage({ type: "fdc-open-whatnot-dashboard", url: url }, "*");
+      setTimeout(() => {
+        if (extAck) return;
+        window.open(url, "whatnot-seller", "width=1280,height=900,scrollbars=yes");
+        setWhatnotSess({ needLogin: true });
+      }, 500);
+    }
+    window.addEventListener("message", (ev) => {
+      if (ev.origin !== location.origin) return;
+      if (!ev.data || !ev.data.type) return;
+      if (ev.data.type === "fdc-overlay-camera") {
+        overlayCamLive = !!ev.data.live;
+        setCamPill();
+        return;
+      }
+      if (ev.data.type === "fdc-overlay-audio") {
+        overlayRms = Number(ev.data.rms || 0);
+        overlayHasTrack = !!ev.data.hasTrack;
+        overlayAudioAt = Date.now();
+        setVolumeUI();
+        return;
+      }
+      if (ev.data.type === "fdc-whatnot-bridge-ready") {
+        if (!extAck) askWhatnotSession();
+        return;
+      }
+      if (ev.data.type !== "fdc-whatnot-session") return;
+      extAck = true;
+      if (sessTimer) clearTimeout(sessTimer);
+      setWhatnotSess(ev.data);
+    });
+
+    function applyState(s) {
+      if (!s) return;
+      setText("listingTitle", s.listing_title || "—");
+      setText("listingCat", s.listing_category || "—");
+      setText("sku", s.sku || "—");
+      setText("style", s.style || "—");
+      setText("color", s.color || "—");
+      setText("msrpDb", money(s.msrp || 0));
+      setText("msrpOv", money(s.msrp_overlay || 0) + " " + wt("times3"));
+      setText("dimensions", s.dimensions || "—");
+      setText("weight", s.weight || "—");
+      lastBid = Number(s.bid || 0);
+      setText("bidNow", money(lastBid));
+      setText("bidder", s.bidder || "—");
+      setText("timeLeft", s.time_left == null || s.time_left === "" ? "—" : (s.time_left + "s"));
+      setText("startingBid", money(s.starting_bid || 0));
+      setText("increment", money(s.bid_increment || 0));
+      setText("available", String(s.available == null ? "—" : s.available));
+      setText("grossSales", money(s.gross_sales || 0));
+      setText("estOrders", String(s.estimated_orders == null ? "—" : s.estimated_orders));
+      if (s.popup && s.popup.ts && s.popup.ts !== lastPopupTs) {
+        lastPopupTs = s.popup.ts;
+        if (statePrimed) playCue(s.popup.type || "next_item");
+      }
+      if (s.ticker) document.getElementById("ticker").value = s.ticker;
+      const liveInput = document.getElementById("liveUrl");
+      currentDashboardUrl = dashboardUrl(s);
+      const shown = lastInputUrl(s);
+      if (shown && document.activeElement !== liveInput) liveInput.value = shown;
+      if (shown) {
+        try { localStorage.setItem("fdcWhatnotLiveUrl", shown); } catch (e) {}
+      }
+      setText("liveId", s.live_id || "—");
+      setText("liveWatching", currentDashboardUrl ? currentDashboardUrl.replace("https://www.", "") : wt("not_attached"));
+      const ext = document.getElementById("extPill");
+      const fromExt = (s.source || "") === "extension";
+      if (ext) {
+        ext.textContent = fromExt ? wt("ext_live") : (s.source ? wt("from_source", { source: s.source }) : wt("waiting"));
+        ext.className = "pill " + (fromExt ? "on" : (s.source ? "need" : "off"));
+      }
+      setCamPill(s);
+      setShowPill(s);
+      syncSellerDash();
+    }
+    async function postJson(url, body) {
+      const res = await fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(body || {})
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data && typeof data === "object") data.http_status = res.status;
+      return data;
+    }
+    document.getElementById("btnLoad").onclick = async () => {
+      const sku = document.getElementById("skuInput").value.trim();
+      try {
+        const data = await postJson(LOAD_URL, { sku, reset_bid: false });
+        if (!data.ok) { alert(data.error || wt("sku_not_found")); return; }
+        applyState(data.state);
+      } catch (e) { alert(e.message || e); }
+    };
+    document.getElementById("skuInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btnLoad").click();
+    });
+    document.getElementById("btnAttachLive").onclick = async () => {
+      const live_url = document.getElementById("liveUrl").value.trim();
+      if (!live_url) { alert(wt("paste_first")); return; }
+      const data = await postJson(UPDATE_URL, { live_url });
+      if (!data.ok) {
+        if (data.status === 404 || data.http_status === 404) {
+          sellerDashForced = true;
+          try { localStorage.removeItem("fdcWhatnotLiveUrl"); } catch (e) {}
+        }
+        applyState(data.state || {});
+        alert(data.error || wt("attach_fail"));
+        return;
+      }
+      try { localStorage.setItem("fdcWhatnotLiveUrl", live_url); } catch (e) {}
+      sellerDashForced = false;
+      applyState(data.state);
+    };
+    document.getElementById("liveUrl").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("btnAttachLive").click();
+    });
+    document.getElementById("btnSave").onclick = async () => {
+      const data = await postJson(UPDATE_URL, {
+        ticker: document.getElementById("ticker").value
+      });
+      applyState(data.state);
+    };
+    document.getElementById("btnOpenDashboard").onclick = openWhatnotDashboard;
+    document.getElementById("btnOpenDashboardMini").onclick = openWhatnotDashboard;
+    document.getElementById("btnChangeShow").onclick = () => {
+      sellerDashForced = true;
+      syncSellerDash();
+      const input = document.getElementById("liveUrl");
+      if (input) input.focus();
+    };
+
+    const es = new EventSource(STREAM_URL);
+    es.onmessage = (ev) => {
+      try { applyState(JSON.parse(ev.data)); } catch (e) {}
+    };
+    applyState({{ state|tojson }});
+    statePrimed = true;
+    {% if dropped_live %}
+    try { localStorage.removeItem("fdcWhatnotLiveUrl"); } catch (e) {}
+    {% else %}
+    (function restoreLastLiveUrl() {
+      const input = document.getElementById("liveUrl");
+      if (!input || input.value.trim()) return;
+      let saved = "";
+      try { saved = (localStorage.getItem("fdcWhatnotLiveUrl") || "").trim(); } catch (e) {}
+      if (saved) input.value = saved;
+    })();
+    {% endif %}
+    askWhatnotSession();
+    setInterval(async () => {
+      try {
+        const res = await fetch(WEBRTC_URL, { credentials: "same-origin" });
+        const data = await res.json();
+        pubMic = !!(data.has_mic && (data.publisher || data.local_live));
+        overlayCamLive = !!data.local_live || !!(data.publisher && data.offer);
+        pubLevel = Number(data.audio_level || 0);
+        setCamPill();
+        setVolumeUI();
+      } catch (e) {}
+    }, 400);
+    setVolumeUI();
+  </script>
+</body>
+</html>

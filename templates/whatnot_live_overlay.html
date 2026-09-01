@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, initial-scale=1, maximum-scale=1">
+  <title>Whatnot Overlay</title>
+  {% set remote = remote|default(false) %}
+  <style>
+    :root {
+      --pink: #ff4eb8;
+      --pink-hot: #ff2fa0;
+      --black: #050505;
+      --white: #ffffff;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      {% if preview %}
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a0a;
+      {% elif with_camera %}
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #000;
+      {% else %}
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: transparent;
+      {% endif %}
+      font-family: "Segoe UI", "Arial Black", Impact, Arial, sans-serif;
+      color: var(--white);
+    }
+    .stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      box-sizing: border-box;
+      transform-origin: top left;
+    }
+    .bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: var(--black);
+      z-index: 5;
+    }
+    .top-bar {
+      top: 80px;
+      height: 92px;
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1fr;
+      align-items: center;
+      padding: 0 28px;
+      border-bottom: 3px solid var(--pink);
+    }
+    .live-wrap {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .live-dot {
+      color: var(--pink);
+      font-size: 42px;
+      line-height: 1;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    .live-label { font-size: 28px; }
+    .viewers { display: flex; align-items: center; gap: 8px; font-size: 26px; }
+    .brand {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      line-height: 1.05;
+    }
+    .crown { color: var(--pink); font-size: 22px; display: block; margin-bottom: 2px; }
+    .follow {
+      justify-self: end;
+      text-align: right;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+    }
+    .follow span { color: var(--pink); margin-left: 8px; font-size: 22px; }
+    .item-bar {
+      top: 172px;
+      height: 78px;
+      display: grid;
+      grid-template-columns: 0.9fr 1.2fr 0.9fr 1fr;
+      align-items: stretch;
+      border-bottom: 2px solid #222;
+    }
+    .item-cell {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 24px;
+      border-right: 1px solid #2a2a2a;
+      min-width: 0;
+    }
+    .item-cell:last-child { border-right: none; }
+    .cam-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 250px;
+      bottom: 110px;
+      background: #111;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .cam-fill video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+    .cam-wait {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9a9a9a;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-align: center;
+      padding: 48px;
+      font-size: 28px;
+      line-height: 1.35;
+      z-index: 2;
+    }
+    .cam-wait.hidden { display: none; }
+    .cam-wait .hint {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #cfcfcf;
+      margin-top: 18px;
+      line-height: 1.35;
+    }
+    .cam-wait select {
+      margin-top: 16px;
+      max-width: 86%;
+      background: #111;
+      color: #fff;
+      border: 2px solid var(--pink);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .lbl {
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      color: #cfcfcf;
+      font-weight: 700;
+    }
+    .val {
+      font-size: 30px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .val.pink { color: var(--pink); }
+    .bottom-bar {
+      bottom: 0;
+      height: 110px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 3px solid var(--pink);
+    }
+    .stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border-right: 1px solid #2a2a2a;
+      text-align: center;
+      padding: 6px 8px;
+    }
+    .stat:last-child { border-right: none; }
+    .stat .lbl { font-size: 14px; }
+    .stat .val { font-size: 36px; }
+    .ticker {
+      top: 0;
+      bottom: auto;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: var(--pink-hot);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      font-size: 32px;
+    }
+    .ticker-track {
+      white-space: nowrap;
+      animation: marquee 18s linear infinite;
+      padding-left: 100%;
+    }
+    .hud {
+      position: absolute;
+      left: 50%;
+      bottom: 140px;
+      transform: translateX(-50%);
+      min-width: 520px;
+      text-align: center;
+      z-index: 6;
+      pointer-events: none;
+    }
+    .hud.hidden { display: none; }
+    .hud-bid {
+      background: rgba(0,0,0,0.82);
+      border: 3px solid var(--pink);
+      border-radius: 18px;
+      padding: 14px 36px 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    }
+    .hud-bid .tiny { font-size: 16px; letter-spacing: 0.18em; color: #ddd; font-weight: 700; }
+    .hud-bid .amt { font-size: 72px; font-weight: 900; line-height: 1; color: #fff; }
+    .hud-bid .clock {
+      margin-top: 4px;
+      color: var(--pink);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .popup {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%) scale(0.7);
+      z-index: 20;
+      min-width: 520px;
+      text-align: center;
+      background: var(--pink-hot);
+      color: #fff;
+      border-radius: 22px;
+      padding: 28px 40px 24px;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 18px 50px rgba(255, 47, 160, 0.45);
+    }
+    .popup.show {
+      animation: popin 2.6s ease forwards;
+    }
+    .popup .ico { font-size: 42px; display: block; margin-bottom: 6px; }
+    .popup .pt { font-size: 64px; font-weight: 900; letter-spacing: 0.08em; line-height: 1; }
+    .milestone {
+      position: absolute;
+      right: 24px;
+      top: 280px;
+      z-index: 7;
+      width: 230px;
+      background: rgba(0,0,0,0.82);
+      border: 3px solid var(--pink);
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      text-align: center;
+      pointer-events: none;
+    }
+    .milestone .cap {
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      font-weight: 800;
+      color: #ffb3dc;
+      margin-bottom: 10px;
+    }
+    .milestone .row { margin: 10px 0 4px; }
+    .milestone .lbl { font-size: 13px; letter-spacing: 0.14em; color: #cfcfcf; }
+    .milestone .big {
+      font-size: 44px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: #fff;
+    }
+    .milestone .big.pink { color: var(--pink); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+    @keyframes popin {
+      0% { opacity: 0; transform: translate(-50%, -40%) scale(0.6); }
+      12% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      78% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -58%) scale(0.92); }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="bar ticker"><div class="ticker-track" id="ticker"></div></div>
+    <div class="bar top-bar">
+      <div class="live-wrap">
+        <span class="live-dot">●</span>
+        <span class="live-label" id="liveLabel">LIVE</span>
+        <span class="viewers">👁 <span id="viewers">0</span></span>
+      </div>
+      <div class="brand"><span class="crown">♛</span><span id="brand">CALYX FASHION</span></div>
+      <div class="follow">FOLLOW US <span>📷</span> <span>♪</span></div>
+    </div>
+    <div class="bar item-bar">
+      <div class="item-cell">
+        <span class="lbl">COLOR</span>
+        <span class="val pink" id="color">—</span>
+      </div>
+      <div class="item-cell">
+        <span class="lbl">CONDITION</span>
+        <span class="val pink" id="condition">NEW</span>
+      </div>
+      <div class="item-cell">
+        <span class="lbl">DIMENSIONS</span>
+        <span class="val" id="dimensions">—</span>
+      </div>
+      <div class="item-cell">
+        <span class="lbl">WEIGHT</span>
+        <span class="val" id="weight">—</span>
+      </div>
+    </div>
+
+    {% if with_camera %}
+    <div class="cam-fill" id="camFill">
+      <video id="camVideo" autoplay playsinline{% if preview %} muted{% endif %}></video>
+      <div class="cam-wait" id="camWait">
+        Waiting for phone camera…
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="milestone" id="milestone">
+      <div class="cap">TODAY</div>
+      <div class="row">
+        <div class="lbl">ORDERS</div>
+        <div class="big" id="msOrders">0</div>
+      </div>
+      <div class="row">
+        <div class="lbl">SALES</div>
+        <div class="big pink" id="msSales">$0</div>
+      </div>
+    </div>
+
+    <div class="hud hidden" id="hud">
+      <div class="hud-bid">
+        <div class="tiny">CURRENT BID</div>
+        <div class="amt" id="hudBid">$0</div>
+        <div class="clock" id="hudClock"></div>
+      </div>
+    </div>
+
+    <div class="popup" id="popup">
+      <span class="ico" id="popupIco">🛍</span>
+      <div class="pt" id="popupTitle">SOLD!</div>
+      <div class="ps" id="popupSub">THANK YOU!</div>
+    </div>
+
+    <div class="bar bottom-bar">
+      <div class="stat">
+        <span class="lbl">MSRP</span>
+        <span class="val" id="msrp">$0</span>
+      </div>
+      <div class="stat">
+        <span class="lbl">STARTING BID</span>
+        <span class="val" id="starting">$25</span>
+      </div>
+      <div class="stat">
+        <span class="lbl">BID INCREMENT</span>
+        <span class="val" id="increment">$5</span>
+      </div>
+      <div class="stat">
+        <span class="lbl">AVAILABLE</span>
+        <span class="val" id="available">1</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    const STREAM_URL = {{ stream_url|tojson }};
+    const STATE_URL = {{ state_url|tojson }};
+    const ICO = { sold: "🛍", high_bid: "✨", next_item: "»", special: "🏷" };
+    let lastPopupTs = 0;
+    let timeLeft = null;
+    let timeStamp = 0;
+    let lastBidAmt = 0;
+    let listingKey = "";
+    let soldForKey = "";
+
+    function money(n) {
+      const v = Number(n || 0);
+      return "$" + Math.round(v).toLocaleString("en-US");
+    }
+    function text(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function applyState(s) {
+      if (!s) return;
+      text("brand", s.brand || "CALYX FASHION");
+      text("color", s.color || "—");
+      text("condition", "NEW");
+      text("dimensions", s.dimensions || "—");
+      text("weight", s.weight || "—");
+      text("msrp", money(s.msrp_overlay || 0));
+      text("starting", money(s.starting_bid || 0));
+      text("increment", money(s.bid_increment || 0));
+      text("available", String(s.available == null ? 1 : s.available));
+      text("msOrders", String(s.estimated_orders || 0));
+      text("msSales", money(s.gross_sales || 0));
+      text("viewers", String(s.viewers || 0));
+      text("liveLabel", s.live === false ? "OFF" : "LIVE");
+      const ticker = (s.ticker || "").trim() || "100% AUTHENTIC  •  FAST SHIPPING  •  THANK YOU!";
+      text("ticker", ticker + "   •   " + ticker + "   •   " + ticker);
+      const bid = Number(s.bid || 0);
+      lastBidAmt = bid;
+      listingKey = String(s.listing_title || s.sku || "");
+      const hud = document.getElementById("hud");
+      if (bid > 0) {
+        hud.classList.remove("hidden");
+        text("hudBid", money(bid));
+      } else {
+        hud.classList.add("hidden");
+      }
+      if (s.time_left == null || s.time_left === "") {
+        timeLeft = null;
+        text("hudClock", s.bidder ? ("@" + s.bidder) : "");
+      } else {
+        timeLeft = Number(s.time_left);
+        timeStamp = Date.now();
+        tickClock();
+      }
+      if (s.popup && s.popup.ts && s.popup.ts !== lastPopupTs) {
+        lastPopupTs = s.popup.ts;
+        if (statePrimed) showPopup(s.popup);
+      }
+    }
+    function tickClock() {
+      const el = document.getElementById("hudClock");
+      if (timeLeft == null) return;
+      const left = Math.max(0, Math.round(timeLeft - (Date.now() - timeStamp) / 1000));
+      el.textContent = left + " SEC";
+      if (left <= 0 && listingKey && soldForKey !== listingKey && lastBidAmt > 0) {
+        soldForKey = listingKey;
+        showPopup({ type: "sold", title: "SOLD!", subtitle: "THANK YOU!" });
+      }
+    }
+    function playCue(type) {
+      {% if preview %}
+      return;
+      {% endif %}
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = ctx.currentTime;
+        function beep(freq, start, dur, wave, vol) {
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = wave || "triangle";
+          o.frequency.setValueAtTime(freq, now + start);
+          g.gain.setValueAtTime(0.0001, now + start);
+          g.gain.exponentialRampToValueAtTime(vol || 0.22, now + start + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.start(now + start);
+          o.stop(now + start + dur + 0.03);
+        }
+        if (type === "high_bid") { beep(880, 0, 0.11); beep(1175, 0.1, 0.18); }
+        else if (type === "sold") { beep(523, 0, 0.14, "sine", 0.24); beep(659, 0.13, 0.14, "sine", 0.24); beep(784, 0.26, 0.3, "sine", 0.26); }
+        else { beep(392, 0, 0.18, "sine", 0.18); beep(494, 0.16, 0.22, "sine", 0.16); }
+        setTimeout(() => ctx.close().catch(() => {}), 1400);
+      } catch (e) {}
+    }
+    function showPopup(popup) {
+      const box = document.getElementById("popup");
+      document.getElementById("popupIco").textContent = ICO[popup.type] || "✨";
+      document.getElementById("popupTitle").textContent = popup.title || "";
+      document.getElementById("popupSub").textContent = popup.subtitle || "";
+      box.classList.remove("show");
+      void box.offsetWidth;
+      box.classList.add("show");
+      playCue(popup.type);
+    }
+    function connectSSE() {
+      const es = new EventSource(STREAM_URL);
+      es.onmessage = (ev) => {
+        try { applyState(JSON.parse(ev.data)); } catch (e) {}
+      };
+      es.onerror = () => {
+        es.close();
+        setTimeout(connectSSE, 2000);
+      };
+    }
+    fetch(STATE_URL).then(r => r.json()).then(d => {
+      applyState(d.state);
+      statePrimed = true;
+    }).catch(() => { statePrimed = true; });
+    connectSSE();
+    clockTimer = setInterval(tickClock, 250);
+    {% if with_camera %}
+    const WEBRTC_URL = {{ webrtc_url|tojson }};
+    const PREVIEW_CAM = {{ preview|tojson }};
+    const SLOT = PREVIEW_CAM ? "preview" : "main";
+    const ICE_SERVERS = { iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" }
+    ]};
+    let pc = null;
+    let lastOfferKey = "";
+    let lastPubIce = 0;
+    let connecting = false;
+    let audioCtx = null;
+    let audioSrc = null;
+    let analyser = null;
+    let audioRaf = 0;
+    let lastRms = 0;
+    let lastHasTrack = false;
+    let iceFailTimer = 0;
+
+    function reportAudio(rms, hasTrack) {
+      lastRms = rms;
+      lastHasTrack = !!hasTrack;
+      if (window.parent === window) return;
+      window.parent.postMessage({ type: "fdc-overlay-audio", rms: rms, hasTrack: hasTrack }, "*");
+    }
+    function tapAudio(stream) {
+      const tracks = stream.getAudioTracks().filter((t) => t && t.readyState === "live");
+      if (!tracks.length) {
+        reportAudio(0, false);
+        return;
+      }
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+        if (audioSrc) try { audioSrc.disconnect(); } catch (e) {}
+        audioSrc = audioCtx.createMediaStreamSource(new MediaStream(tracks));
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 512;
+        audioSrc.connect(analyser);
+        const data = new Uint8Array(analyser.fftSize);
+        cancelAnimationFrame(audioRaf);
+        function loop() {
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          reportAudio(Math.sqrt(sum / data.length), true);
+          audioRaf = requestAnimationFrame(loop);
+        }
+        loop();
+      } catch (e) {
+        reportAudio(0, true);
+      }
+    }
+    function offerKey(offer) {
+      if (!offer) return "";
+      if (typeof offer === "string") return offer;
+      return String(offer.type || "") + "|" + String(offer.sdp || "");
+    }
+    function slotOffer(data) {
+      return SLOT === "preview" ? data.preview_offer : data.offer;
+    }
+    function slotPubIce(data) {
+      return SLOT === "preview" ? (data.preview_pub_ice || []) : (data.pub_ice || []);
+    }
+    function candJSON(c) {
+      if (!c) return null;
+      try {
+        if (typeof c.toJSON === "function") return c.toJSON();
+      } catch (e) {}
+      return {
+        candidate: c.candidate,
+        sdpMid: c.sdpMid,
+        sdpMLineIndex: c.sdpMLineIndex,
+        usernameFragment: c.usernameFragment
+      };
+    }
+    function setCamWait(text, show) {
+      const el = document.getElementById("camWait");
+      if (!el) return;
+      if (text) el.innerHTML = text;
+      el.classList.toggle("hidden", !show);
+    }
+    async function rtcPost(payload) {
+      payload.slot = SLOT;
+      const res = await fetch(WEBRTC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+    async function rtcGet() {
+      const res = await fetch(WEBRTC_URL);
+      return res.json();
+    }
+    function playVideo(v) {
+      v.setAttribute("playsinline", "true");
+      v.setAttribute("autoplay", "true");
+      v.playsInline = true;
+      v.muted = true;
+      const kick = () => {
+        const p = v.play();
+        if (p && p.catch) {
+          p.then(() => {
+            {% if not preview %}
+            v.muted = false;
+            v.volume = 1;
+            {% endif %}
+          }).catch(() => {});
+        }
+      };
+      if (v.readyState >= 2) kick();
+      else v.onloadedmetadata = kick;
+    }
+    function markCamLive() {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: "fdc-overlay-camera", live: true }, "*");
+      }
+    }
+    async function connectOffer(offer) {
+      if (pc) { try { pc.close(); } catch (e) {} pc = null; }
+      lastPubIce = 0;
+      pc = new RTCPeerConnection(ICE_SERVERS);
+      const remoteStream = new MediaStream();
+      pc.ontrack = (ev) => {
+        const v = document.getElementById("camVideo");
+        const src = (ev.streams && ev.streams[0]) ? ev.streams[0] : remoteStream;
+        if (src === remoteStream && !remoteStream.getTracks().includes(ev.track)) {
+          remoteStream.addTrack(ev.track);
+        }
+        v.srcObject = src;
+        playVideo(v);
+        tapAudio(src);
+        if (src.getVideoTracks().some((t) => t && t.readyState === "live")) {
+          setCamWait("", false);
+          markCamLive();
+        }
+      };
+      pc.oniceconnectionstatechange = () => {
+        const st = pc && pc.iceConnectionState;
+        if (st === "connected" || st === "completed") {
+          if (iceFailTimer) clearTimeout(iceFailTimer);
+          const v = document.getElementById("camVideo");
+          if (v && v.srcObject) setCamWait("", false);
+          markCamLive();
+        } else if (st === "failed") {
+          setCamWait("Reconnecting to phone…", true);
+          if (iceFailTimer) clearTimeout(iceFailTimer);
+          iceFailTimer = setTimeout(() => {
+            lastOfferKey = "";
+            rtcPost({ action: "viewer_hello" }).catch(() => {});
+          }, 800);
+        } else if (st === "disconnected") {
+          if (iceFailTimer) clearTimeout(iceFailTimer);
+          iceFailTimer = setTimeout(() => {
+            if (pc && pc.iceConnectionState === "disconnected") {
+              setCamWait("Reconnecting to phone…", true);
+              lastOfferKey = "";
+              rtcPost({ action: "viewer_hello" }).catch(() => {});
+            }
+          }, 4000);
+        }
+      };
+      pc.onicecandidate = (ev) => {
+        if (ev.candidate) rtcPost({ action: "ice", role: "view", candidate: candJSON(ev.candidate) }).catch(() => {});
+      };
+      await pc.setRemoteDescription(offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await rtcPost({ action: "answer", sdp: { type: pc.localDescription.type, sdp: pc.localDescription.sdp } });
+    }
+    async function pollCamera() {
+      if (connecting) return;
+      try {
+        const data = await rtcGet();
+        const offer = slotOffer(data);
+        if (!offer) {
+          setCamWait("Waiting for phone camera…", true);
+          return;
+        }
+        const key = offerKey(offer);
+        if (key !== lastOfferKey) {
+          connecting = true;
+          lastOfferKey = key;
+          setCamWait("Connecting to phone…", true);
+          try {
+            await connectOffer(offer);
+          } finally {
+            connecting = false;
+          }
+        }
+        if (pc && pc.remoteDescription) {
+          const ices = slotPubIce(data);
+          for (let i = lastPubIce; i < ices.length; i++) {
+            try { await pc.addIceCandidate(ices[i]); } catch (e) {}
+          }
+          lastPubIce = ices.length;
+        }
+      } catch (e) {
+        connecting = false;
+      }
+    }
+    rtcPost({ action: "viewer_hello" }).finally(() => {
+      setInterval(pollCamera, 700);
+      pollCamera();
+    });
+    {% endif %}
+    {% if preview %}
+    function fitPreview() {
+      const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+      document.getElementById("stage").style.transform = "scale(" + s + ")";
+    }
+    window.addEventListener("resize", fitPreview);
+    fitPreview();
+    {% endif %}
+  </script>
+</body>
+</html>

@@ -46,9 +46,4 @@
     var toggle = document.getElementById('fdcOnlineDropdown');
     if (toggle) toggle.addEventListener('click', refreshList);
   });
-
-  window.addEventListener('pagehide', function () {
-    try { navigator.sendBeacon('/api/presence/offline'); } catch (e) {}
-    fetch('/api/presence/offline', { method: 'POST', keepalive: true }).catch(function () {});
-  });
 })();

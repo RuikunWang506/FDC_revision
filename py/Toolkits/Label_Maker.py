@@ -1795,7 +1795,7 @@ def register_label_maker_routes(app):
             except Exception:
                 app.logger.exception("Failed to record ez label status")
 
-            filename = f"{order_number}_ez_{total_boxes}boxes.pdf"
+            filename = f"{order_number}_4x6_{total_boxes}boxes.pdf"
             return send_file(
                 io.BytesIO(pdf_data),
                 download_name=filename,

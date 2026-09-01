@@ -1244,6 +1244,20 @@
                 padding: 8px 10px;
                 margin: 0;
             }
+            /* Hide cost on mobile so customers are not prompted to tap it.
+               Staff reveal it by tapping MSRP 5 times. */
+            .si-field-cost {
+                display: none;
+            }
+            .si-field-cost.mobile-cost-visible {
+                display: block;
+            }
+            .si-field-msrp {
+                grid-column: 1 / -1;
+            }
+            .style-info-grid:has(.si-field-cost.mobile-cost-visible) .si-field-msrp {
+                grid-column: auto;
+            }
             .si-field-msrp .si-label,
             .si-field-cost .si-label {
                 margin-bottom: 4px;
@@ -1906,6 +1920,7 @@
                                         {% if style_group.parent_info.msrp %}
                                         <span
                                             class="sku-detail-badge cost-toggle hidden"
+                                            data-price-kind="msrp"
                                             data-hidden-text="Click"
                                             data-value="${{ "%.2f" | format(style_group.parent_info.msrp) }}"
                                             data-visible="false"
@@ -1923,6 +1938,7 @@
                                         {% if style_group.parent_info.cost %}
                                         <span
                                             class="sku-detail-badge cost-toggle hidden"
+                                            data-price-kind="cost"
                                             data-hidden-text="Click"
                                             data-value="${{ "%.2f" | format(style_group.parent_info.cost) }}"
                                             data-visible="false"
@@ -2545,7 +2561,62 @@
             popup.style.display = 'flex';
         }
 
+        var mobileMsrpClickCount = 0;
+        var mobileMsrpClickTimer = null;
+        var MOBILE_COST_REVEAL_CLICKS = 5;
+        var MOBILE_COST_REVEAL_IDLE_MS = 2500;
+
+        function isMobileProductDetail() {
+            return window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function setMobileCostVisible(visible) {
+            var costField = document.querySelector('.si-field-cost');
+            if (!costField) return;
+            costField.classList.toggle('mobile-cost-visible', !!visible);
+            var costToggle = costField.querySelector('.cost-toggle');
+            if (!costToggle) return;
+            if (visible) {
+                costToggle.textContent = costToggle.getAttribute('data-value') || 'N/A';
+                costToggle.setAttribute('data-visible', 'true');
+                costToggle.classList.remove('hidden');
+            } else {
+                costToggle.textContent = costToggle.getAttribute('data-hidden-text') || 'Click';
+                costToggle.setAttribute('data-visible', 'false');
+                costToggle.classList.add('hidden');
+            }
+        }
+
         function toggleCostDisplay(element) {
+            var priceKind = element.getAttribute('data-price-kind')
+                || (element.closest('.si-field-msrp') ? 'msrp'
+                    : element.closest('.si-field-cost') ? 'cost' : '');
+
+            if (isMobileProductDetail() && priceKind === 'cost') {
+                setMobileCostVisible(false);
+                mobileMsrpClickCount = 0;
+                if (mobileMsrpClickTimer) {
+                    clearTimeout(mobileMsrpClickTimer);
+                    mobileMsrpClickTimer = null;
+                }
+                return;
+            }
+
+            if (isMobileProductDetail() && priceKind === 'msrp') {
+                mobileMsrpClickCount += 1;
+                if (mobileMsrpClickTimer) clearTimeout(mobileMsrpClickTimer);
+                if (mobileMsrpClickCount >= MOBILE_COST_REVEAL_CLICKS) {
+                    mobileMsrpClickCount = 0;
+                    mobileMsrpClickTimer = null;
+                    setMobileCostVisible(true);
+                } else {
+                    mobileMsrpClickTimer = setTimeout(function() {
+                        mobileMsrpClickCount = 0;
+                        mobileMsrpClickTimer = null;
+                    }, MOBILE_COST_REVEAL_IDLE_MS);
+                }
+            }
+
             const isVisible = element.getAttribute('data-visible') === 'true';
             const value = element.getAttribute('data-value') || 'N/A';
             const hiddenText = element.getAttribute('data-hidden-text') || 'Click to show';

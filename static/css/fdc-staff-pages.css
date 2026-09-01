@@ -413,6 +413,177 @@ body.has-navbar.fdc-staff-page {
   margin-top: 12px;
 }
 
+.view-tabs { display: flex; gap: 6px; }
+.view-tab {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #d8e3ee;
+  color: #203246;
+  background: #fff;
+}
+.view-tab.is-active {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+.timeline-wrap { overflow-x: auto; }
+.timeline-canvas { min-width: 100%; }
+.timeline-canvas.is-range { min-width: max(100%, 720px); }
+.timeline-axis {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  color: #687b8f;
+}
+.timeline-axis-rail { position: relative; height: 22px; }
+.timeline-axis-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.7rem;
+}
+.timeline-axis-tick.is-edge-end { transform: translateX(-100%); }
+.timeline-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 36px;
+}
+.timeline-row .label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-track {
+  position: relative;
+  height: 28px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  border: 1px solid #d8e3ee;
+}
+.timeline-track.is-single-day {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent calc(12.5% - 1px),
+    rgba(0,0,0,.06) calc(12.5% - 1px),
+    rgba(0,0,0,.06) 12.5%
+  );
+}
+.timeline-day-sep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0,0,0,.08);
+  pointer-events: none;
+}
+.timeline-bar {
+  position: absolute;
+  top: 3px;
+  height: 22px;
+  border-radius: 4px;
+  min-width: 3px;
+  z-index: 1;
+}
+.timeline-range-note {
+  font-size: 0.82rem;
+  color: #687b8f;
+  margin: -4px 0 12px;
+}
+
+.session-row-expandable { cursor: pointer; }
+.session-row-expandable.is-open td { background: rgba(13, 110, 253, 0.06); }
+.activity-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #e7f1ff;
+  color: #0d6efd;
+}
+.activity-count.is-empty {
+  background: #f3f4f6;
+  color: #687b8f;
+  font-weight: 500;
+}
+.session-expand-hint {
+  font-size: 0.72rem;
+  color: #687b8f;
+  margin-left: 6px;
+}
+.badge-frag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #856404;
+  margin-left: 6px;
+}
+.session-activities-row td {
+  padding: 0 12px 14px;
+  background: #f8f9fa;
+}
+.session-activities-panel {
+  padding: 12px 14px;
+  border: 1px solid #d8e3ee;
+  border-radius: 8px;
+  background: #fff;
+}
+.fragment-block + .fragment-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #d8e3ee;
+}
+.fragment-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #687b8f;
+  margin-bottom: 8px;
+}
+.activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.activity-item {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.activity-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: #687b8f;
+  white-space: nowrap;
+}
+.activity-empty, .fragment-hidden-note {
+  font-size: 0.84rem;
+  color: #687b8f;
+  font-style: italic;
+}
+
 /* ——— Help center ——— */
 .help-center-page {
   --help-brand: #2f7db8;
@@ -677,3 +848,78 @@ body.has-navbar.fdc-staff-page {
     bottom: 10px;
   }
 }
+
+/* ——— Schema dictionary (yeti) ——— */
+.schema-dict-page .text-muted { color: #5b6f82; }
+.schema-dict-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.schema-dict-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0 18px;
+  position: sticky;
+  top: 4.75rem;
+  z-index: 4;
+  background: #f4f7fb;
+  padding: 8px 0;
+}
+.schema-dict-toolbar input[type="search"] {
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid #c9d6e5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+}
+.schema-dict-check { font-size: 0.9rem; color: #3d5266; }
+.schema-dict-meta { font-size: 0.85rem; color: #5b6f82; }
+.schema-db, .schema-table, .schema-dict-joins details {
+  background: #fff;
+  border: 1px solid #d7e1ec;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.schema-db > summary, .schema-table > summary, .schema-dict-joins summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-weight: 600;
+  list-style: none;
+}
+.schema-db > summary::-webkit-details-marker,
+.schema-table > summary::-webkit-details-marker,
+.schema-dict-joins summary::-webkit-details-marker { display: none; }
+.schema-db-body, .schema-table-body, .schema-dict-joins details > div { padding: 0 14px 14px; }
+.schema-table { background: #f8fbfd; }
+.schema-table-body { overflow-x: auto; }
+.schema-cols { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.schema-cols th, .schema-cols td { border-bottom: 1px solid #e4edf5; padding: 4px 8px; text-align: left; vertical-align: top; }
+.schema-cols th { color: #5b6f82; font-weight: 600; }
+.schema-core {
+  display: inline-block;
+  background: #e8f4ff;
+  color: #1d4f91;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.schema-kind {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #eef2f6;
+  color: #334;
+}
+.schema-kind-fk { background: #fde7d8; }
+.schema-kind-known { background: #d9f3e3; }
+.schema-kind-cross-db { background: #e6e0fb; }
+.schema-join-list, .schema-links ul { margin: 8px 0 0; padding-left: 18px; }
+.schema-join-list li, .schema-links li { margin: 4px 0; }
+.schema-join-list em, .schema-links em { color: #7a8da0; font-style: normal; font-size: 0.82rem; }
+.schema-err { color: #b42318; }
+.schema-pks, .schema-idx { font-size: 0.86rem; }
+.schema-dict-page code { font-size: 0.86em; }

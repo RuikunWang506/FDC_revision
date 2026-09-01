@@ -1,5 +1,5 @@
 from py.utilities.setting import login_required
-from flask import Blueprint, render_template, request, jsonify, current_app, send_file, send_from_directory, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, jsonify, current_app, send_file, send_from_directory, redirect, url_for, flash, session, Response
 from werkzeug.utils import secure_filename
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Border, Side
@@ -82,6 +82,31 @@ LISTCREATOR_JOB_OWNER_DISPLAY = {
     'xj': 'Elaine',
     'yeti': 'Tristen',
 }
+
+# Pinned GM Ting catalogs: skip 7-day prune and show in the Standard styles panel.
+LISTCREATOR_STANDARD_SNAPSHOT_IDS = (
+    'gm_ting_07eb3457f771',
+    'Gm_ting_ced673146c0f',
+)
+_LISTCREATOR_STANDARD_SNAPSHOT_IDS_LOWER = frozenset(
+    x.lower() for x in LISTCREATOR_STANDARD_SNAPSHOT_IDS
+)
+
+
+def _listcreator_job_is_standard(meta=None, job_id=None, snapshot_name=None):
+    """True for the pinned standard-style snapshots (flag on disk, or known job ids)."""
+    meta = meta or {}
+    if meta.get('standard') is True:
+        return True
+    rid = (job_id or meta.get('id') or '').strip().lower()
+    if rid in _LISTCREATOR_STANDARD_SNAPSHOT_IDS_LOWER:
+        return True
+    name_slug = _slug_for_job_id(snapshot_name or meta.get('snapshot_name') or '').lower()
+    if name_slug in ('gm_ting_07', 'gm_ting_ce'):
+        return True
+    if rid.startswith('gm_ting_07_') or rid.startswith('gm_ting_ce_'):
+        return True
+    return False
 
 
 def _listcreator_job_owner_display(job_username: str, storage_slug: str) -> str:
@@ -1205,9 +1230,13 @@ def _listcreator_html_prune_old(app, slug):
                         created = created.replace(tzinfo=None)
                 except ValueError:
                     created = datetime.datetime.utcfromtimestamp(os.path.getmtime(path))
+                rid = meta.get('id') or name.replace('.json', '')
+                if _listcreator_job_is_standard(
+                    meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')
+                ):
+                    continue
                 if created >= cutoff.replace(tzinfo=None):
                     continue
-                rid = meta.get('id') or name.replace('.json', '')
                 hn = os.path.join(html_dir, f'{rid}.html')
                 if os.path.isfile(hn):
                     try:
@@ -1268,6 +1297,9 @@ def _listcreator_html_list_all_jobs(app, slug):
                 'resolved_styles_full': meta.get('resolved_styles_full') or '',
                 'error': meta.get('error'),
                 'job_username': (meta.get('username') or '').strip(),
+                'standard': _listcreator_job_is_standard(
+                    meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')
+                ),
             })
         except (OSError, json.JSONDecodeError):
             continue
@@ -1907,19 +1939,59 @@ def index(user_input=None):
     )
 
 
-@v7_listcreator_bp.route('/v7_listcreator/quick_filter_styles', methods=['GET'])
+def _quick_filter_request_payload():
+    """Read descriptions/stock/color from JSON POST, form POST, or GET query."""
+    payload = {}
+    if request.method == 'POST':
+        payload = request.get_json(silent=True) or {}
+        if not payload:
+            payload = request.form.to_dict(flat=False)
+    descriptions = payload.get('descriptions') if isinstance(payload, dict) else None
+    if descriptions is None:
+        descriptions = payload.get('description') if isinstance(payload, dict) else None
+    if descriptions is None:
+        descriptions = request.args.getlist('description')
+    if isinstance(descriptions, str):
+        descriptions = _normalize_description_list(descriptions)
+    elif not descriptions:
+        descriptions = _normalize_description_list(request.args.get('description'))
+    else:
+        descriptions = _normalize_description_list(descriptions)
+
+    stock_filter = None
+    color_filter = None
+    if isinstance(payload, dict):
+        raw_stock = payload.get('stock_filter')
+        if isinstance(raw_stock, list):
+            raw_stock = raw_stock[0] if raw_stock else None
+        stock_filter = (raw_stock or '').strip() or None
+        raw_color = payload.get('color_filter')
+        if isinstance(raw_color, list):
+            raw_color = raw_color[0] if raw_color else None
+        color_filter = (raw_color or '').strip() or None
+    if stock_filter is None:
+        stock_filter = request.args.get('stock_filter') or None
+    if color_filter is None:
+        color_filter = request.args.get('color_filter') or None
+    return descriptions, stock_filter, color_filter
+
+
+@v7_listcreator_bp.route('/v7_listcreator/quick_filter_styles', methods=['GET', 'POST'])
 @login_required
 def quick_filter_styles():
     if 'username' not in session:
         return jsonify({'success': False, 'message': 'Login required'}), 401
-    descriptions = request.args.getlist('description')
-    if not descriptions:
-        descriptions = _normalize_description_list(request.args.get('description'))
-    stock_filter = request.args.get('stock_filter') or None
-    color_filter = request.args.get('color_filter') or None
+    descriptions, stock_filter, color_filter = _quick_filter_request_payload()
     if not descriptions:
         return jsonify({'success': False, 'message': 'Choose at least one description'}), 400
-    styles = fetch_style_codes_for_filters(descriptions, stock_filter, color_filter)
+    try:
+        styles = fetch_style_codes_for_filters(descriptions, stock_filter, color_filter)
+    except Exception:
+        current_app.logger.exception('quick_filter_styles failed')
+        return jsonify({
+            'success': False,
+            'message': 'Could not load styles. Try fewer descriptions or a narrower stock filter.',
+        }), 500
     return jsonify({
         'success': True,
         'styles': styles,
@@ -2157,6 +2229,11 @@ def html_job_delete(rid):
         meta = _listcreator_html_load_job(app, slug, rid)
         if not meta or meta.get('username') != current_user:
             return jsonify({'ok': False, 'error': 'Not found'}), 404
+        if _listcreator_job_is_standard(meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')):
+            return jsonify({
+                'ok': False,
+                'error': 'This is a standard styles snapshot and cannot be deleted.',
+            }), 400
         if not _listcreator_html_delete_job_disk(app, slug, rid, meta):
             return jsonify({'ok': False, 'error': 'Could not remove snapshot files'}), 500
         _listcreator_html_prune_old(app, slug)
@@ -2190,6 +2267,27 @@ def html_job_redo(rid):
     })
 
 
+LISTCREATOR_STYLE_TOOLS_JS = '/static/js/v7_listcreator_style_tools.js?v=3'
+
+
+def _inject_listcreator_style_tools_js(html):
+    """Ensure cached snapshots run the latest remove-styles toolkit."""
+    if not html:
+        return html
+    tag = f'<script src="{LISTCREATOR_STYLE_TOOLS_JS}"></script>\n'
+    existing = re.compile(
+        r'<script\b[^>]*\bsrc=["\'][^"\']*v7_listcreator_style_tools\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>',
+        re.IGNORECASE,
+    )
+    if existing.search(html):
+        return existing.sub(tag.rstrip('\n'), html, count=1)
+    lower = html.lower()
+    idx = lower.rfind('</body>')
+    if idx >= 0:
+        return html[:idx] + tag + html[idx:]
+    return html + tag
+
+
 @v7_listcreator_bp.route('/v7_listcreator/html_cached/<rid>', methods=['GET'])
 @login_required
 def listcreator_cached_html(rid):
@@ -2210,9 +2308,57 @@ def listcreator_cached_html(rid):
     if not os.path.isfile(path):
         return jsonify({'error': 'Expired or removed'}), 404
     _listcreator_html_prune_old(app, slug)
-    resp = send_file(path, mimetype='text/html', max_age=0, conditional=False)
-    resp.headers.setdefault('Cache-Control', 'private, max-age=0, must-revalidate')
+    try:
+        with open(path, 'r', encoding='utf-8', errors='replace') as fh:
+            html = _inject_listcreator_style_tools_js(fh.read())
+    except OSError:
+        return jsonify({'error': 'Expired or removed'}), 404
+    resp = Response(html, mimetype='text/html')
+    resp.headers['Cache-Control'] = 'private, max-age=0, must-revalidate'
     return resp
+
+
+def _listcreator_serialize_html_job(j, current_user, me_slug):
+    rid = j['id']
+    st = j.get('status')
+    storage_slug = j.get('storage_slug') or me_slug
+    vu = _listcreator_cached_html_public_url(rid, storage_slug) if st == 'ready' else None
+    li_full = j.get('list_input') or ''
+    resolved = j.get('resolved_styles_full') or ''
+    job_user = (j.get('job_username') or '').strip()
+    can_manage = job_user == (current_user or '').strip() or (
+        not job_user and storage_slug == me_slug
+    )
+    owner_display = _listcreator_job_owner_display(job_user, storage_slug)
+    if not owner_display:
+        owner_display = '(no username)'
+    owner_tooltip = _listcreator_job_owner_tooltip(job_user, storage_slug)
+    is_standard = _listcreator_job_is_standard(
+        meta=j, job_id=rid, snapshot_name=j.get('snapshot_name')
+    )
+    return {
+        'id': rid,
+        'status': st,
+        'created_at': j.get('created_at'),
+        'created_at_pt_display': j.get('created_at_pt_display'),
+        'snapshot_generated_at_pt': j.get('snapshot_generated_at_pt'),
+        'snapshot_generated_at_iso': j.get('snapshot_generated_at_iso'),
+        'snapshot_name': j.get('snapshot_name'),
+        'list_input': li_full,
+        'list_input_preview': li_full,
+        'resolved_styles': resolved,
+        'resolved_styles_full': resolved,
+        'source_is_path': _listcreator_input_source_looks_like_dropbox_path(li_full),
+        'view_url': vu,
+        'wait_url': _listcreator_html_job_wait_public_url(rid, storage_slug),
+        'error': j.get('error'),
+        'job_username': job_user,
+        'storage_slug': storage_slug,
+        'owner_display': owner_display,
+        'owner_tooltip': owner_tooltip,
+        'can_manage': can_manage,
+        'is_standard': is_standard,
+    }
 
 
 @v7_listcreator_bp.route('/v7_listcreator/html_jobs', methods=['GET'])
@@ -2260,47 +2406,20 @@ def listcreator_html_jobs_api():
     else:
         rows = [j for j in merged if (j.get('job_username') or '').strip() == filter_user]
 
-    jobs = []
-    for j in rows:
-        rid = j['id']
-        st = j.get('status')
-        storage_slug = j.get('storage_slug') or me_slug
-        vu = _listcreator_cached_html_public_url(rid, storage_slug) if st == 'ready' else None
-        li_full = j.get('list_input') or ''
-        resolved = j.get('resolved_styles_full') or ''
-        job_user = (j.get('job_username') or '').strip()
-        can_manage = job_user == (current_user or '').strip() or (
-            not job_user and storage_slug == me_slug
-        )
-        owner_display = _listcreator_job_owner_display(job_user, storage_slug)
-        if not owner_display:
-            owner_display = '(no username)'
-        owner_tooltip = _listcreator_job_owner_tooltip(job_user, storage_slug)
-        jobs.append({
-            'id': rid,
-            'status': st,
-            'created_at': j.get('created_at'),
-            'created_at_pt_display': j.get('created_at_pt_display'),
-            'snapshot_generated_at_pt': j.get('snapshot_generated_at_pt'),
-            'snapshot_generated_at_iso': j.get('snapshot_generated_at_iso'),
-            'snapshot_name': j.get('snapshot_name'),
-            'list_input': li_full,
-            'list_input_preview': li_full,
-            'resolved_styles': resolved,
-            'resolved_styles_full': resolved,
-            'source_is_path': _listcreator_input_source_looks_like_dropbox_path(li_full),
-            'view_url': vu,
-            'wait_url': _listcreator_html_job_wait_public_url(rid, storage_slug),
-            'error': j.get('error'),
-            'job_username': job_user,
-            'storage_slug': storage_slug,
-            'owner_display': owner_display,
-            'owner_tooltip': owner_tooltip,
-            'can_manage': can_manage,
-        })
+    standard_order = {jid.lower(): i for i, jid in enumerate(LISTCREATOR_STANDARD_SNAPSHOT_IDS)}
+    standard_src = [j for j in merged if _listcreator_job_is_standard(meta=j, job_id=j.get('id'), snapshot_name=j.get('snapshot_name'))]
+    standard_src.sort(key=lambda j: standard_order.get((j.get('id') or '').lower(), 99))
+    rows = [
+        j for j in rows
+        if not _listcreator_job_is_standard(meta=j, job_id=j.get('id'), snapshot_name=j.get('snapshot_name'))
+    ]
+
+    jobs = [_listcreator_serialize_html_job(j, current_user, me_slug) for j in rows]
+    standard_jobs = [_listcreator_serialize_html_job(j, current_user, me_slug) for j in standard_src]
     return jsonify({
         'ok': True,
         'jobs': jobs,
+        'standard_jobs': standard_jobs,
         'filter_options': filter_options,
         'filter_user': filter_user,
         'me_slug': me_slug,
@@ -2637,6 +2756,36 @@ def create_pivot_table(data):
     return style_cards
 
 
+def _reorder_pivot_ocr_colors(style_cards, ocr_color_map):
+    """Keep catalog-OCR color order (hero first, then right-column variants)."""
+    if not style_cards or not ocr_color_map:
+        return style_cards
+    out = []
+    for group in style_cards:
+        if not group:
+            out.append(group)
+            continue
+        display_style = str(group[0].get('style') or '')
+        wanted = ocr_color_map.get(normalize_style(display_style)) or ocr_color_map.get(display_style.upper())
+        if not wanted:
+            out.append(group)
+            continue
+        by_color = {}
+        for row in group:
+            key = str(row.get('color') or '').strip().upper()
+            if key and key not in by_color:
+                by_color[key] = row
+        ordered = [by_color[c] for c in wanted if c in by_color]
+        used = set(wanted)
+        for row in group:
+            key = str(row.get('color') or '').strip().upper()
+            if key not in used:
+                ordered.append(row)
+                used.add(key)
+        out.append(ordered or group)
+    return out
+
+
 def _build_listcreator_inventory_context(
     list_input,
     current_user,
@@ -2658,6 +2807,8 @@ def _build_listcreator_inventory_context(
 
     if data:
         for row in data:
+            if len(row) >= 18 and str(row[17] or '').strip() == 'Not in OMS':
+                continue
             exact_style = row[2].upper() if row[2] else ''
             if exact_style:
                 db_styles.add(exact_style)
@@ -2668,16 +2819,33 @@ def _build_listcreator_inventory_context(
                     db_styles.add(base_sku)
                     session[f'verified_{base_sku}'] = True
 
+    from py.utilities.listcreator_ocr_colors import (
+        delete_temp_ocr_colors,
+        resolve_not_in_oms_colors,
+    )
+
     normalized_db_styles = {normalize_style(s) for s in db_styles}
+    ocr_color_map = {}
+    ocr_color_styles = []
     for style in style_list:
-        if normalize_style(style) not in normalized_db_styles:
-            if style not in missing_styles:
-                missing_styles.append(style)
-            placeholder_data = [('N/A', f'{style}BK', style, 0, 0, 0, 0, 999.0, 0, 0, 0, 'BK', 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')]
-            if data:
-                data.extend(placeholder_data)
-            else:
-                data = placeholder_data
+        if normalize_style(style) in normalized_db_styles:
+            delete_temp_ocr_colors(style)
+            continue
+        if style not in missing_styles:
+            missing_styles.append(style)
+        ocr_colors = resolve_not_in_oms_colors(style, dropbox_images=dropbox_images)
+        colors = ocr_colors if ocr_colors else ['BK']
+        if ocr_colors:
+            ocr_color_map[normalize_style(style)] = list(ocr_colors)
+            ocr_color_styles.append(style)
+        placeholder_data = [
+            ('N/A', f'{style}{color}', style, 0, 0, 0, 0, 999.0, 0, 0, 0, color, 0, 0, 0, 'N/A', 'N/A', 'Not in OMS')
+            for color in colors
+        ]
+        if data:
+            data.extend(placeholder_data)
+        else:
+            data = placeholder_data
 
     seen_missing_desc = set()
     missing_descriptions = []
@@ -2705,6 +2873,8 @@ def _build_listcreator_inventory_context(
         return None
 
     pivot_data = create_pivot_table(data)
+    if ocr_color_map:
+        pivot_data = _reorder_pivot_ocr_colors(pivot_data, ocr_color_map)
     return {
         'current_user': current_user,
         'data': data,
@@ -2714,6 +2884,7 @@ def _build_listcreator_inventory_context(
         'descriptions': descriptions,
         'error_message': error_message,
         'missing_styles': missing_styles,
+        'ocr_color_styles': ocr_color_styles,
         'duplicate_styles': duplicate_styles_list,
         'your_input_was': list_input,
         'clean_list_for_memo': clean_list_for_memo,

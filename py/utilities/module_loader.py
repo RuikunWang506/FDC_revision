@@ -294,6 +294,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "tool_ids": ("print_center",),
     },
     {
+        "name": "whatnot_live",
+        "import_path": "py.other.whatnot_live",
+        "attr": "whatnot_live_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/whatnot_live", "/overlay"),
+        "tool_ids": ("whatnot_live",),
+    },
+    {
         "name": "tradeshowtool",
         "import_path": "py.other.tradeshowtool",
         "attr": "tradeshowtool_bp",
@@ -347,6 +355,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "attr": "fdc_ai_bp",
         "kind": "blueprint",
         "path_prefixes": ("/api/fdc-ai",),
+        "tool_ids": (),
+    },
+    {
+        "name": "ai_sql",
+        "import_path": "py.ai.ai_routes",
+        "attr": "ai_query_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/api/ai", "/user_settings/schema-dictionary"),
         "tool_ids": (),
     },
 ]

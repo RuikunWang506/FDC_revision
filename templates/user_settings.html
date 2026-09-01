@@ -23,6 +23,19 @@
         {% if error_message %}
             <div class="alert alert-danger">{{ error_message }}</div>
         {% endif %}
+
+        {% if is_yeti %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Yeti · Database dictionary</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Collapsible map of OMS FDC, OMS EF, and MySQL onlinedb — every table, column, and the joins used by live FDC SQL. Also hooked into the AI SQL helper.</p>
+                <a class="btn btn-dark" href="{{ url_for('ai_sql.schema_dictionary_page') }}">Open schema dictionary</a>
+                <a class="btn btn-outline-secondary ml-2" href="{{ url_for('help.article', slug='db-dictionary') }}">Help article</a>
+            </div>
+        </div>
+        {% endif %}
         
         <div class="row">
             <div class="col-md-6">

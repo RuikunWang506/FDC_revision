@@ -3,9 +3,7 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import time
-from datetime import datetime
 
 from flask import (
     Blueprint,
@@ -23,52 +21,6 @@ from py.utilities.logging_setup import format_logs, is_log_record_start, read_lo
 from py.utilities.setting import login_required
 
 log_center_bp = Blueprint('log_center', __name__, url_prefix='/log')
-
-_ONLINE_LINE = re.compile(
-    r'^(?P<stamp>.+?)\s+-\s+\w+\s+-\s+(?P<user>.+?)\s+--\s+在线(?P<dur>[^，,]+)'
-    r'[，,]\s*from\s+(?P<start>.+?)\s+to\s+(?P<end>.+)\s*$'
-)
-_DUR_PARTS = re.compile(r'(?:(?P<h>\d+)\s*小时)?(?:(?P<m>\d+)\s*分钟)?(?:(?P<s>\d+)\s*秒)?')
-_USER_COLORS = (
-    '#0d6efd',
-    '#198754',
-    '#dc3545',
-    '#6f42c1',
-    '#fd7e14',
-    '#20c997',
-    '#d63384',
-    '#0dcaf0',
-)
-
-
-def _user_color(name: str) -> str:
-    h = 0
-    for ch in (name or '').lower():
-        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
-    return _USER_COLORS[h % len(_USER_COLORS)]
-
-
-def _duration_seconds(text: str) -> int:
-    m = _DUR_PARTS.search(text or '')
-    if not m:
-        return 0
-    hours = int(m.group('h') or 0)
-    minutes = int(m.group('m') or 0)
-    seconds = int(m.group('s') or 0)
-    return hours * 3600 + minutes * 60 + seconds
-
-
-def _fmt_seconds(total: int) -> str:
-    total = max(0, int(total or 0))
-    hours, rem = divmod(total, 3600)
-    minutes, secs = divmod(rem, 60)
-    if hours and minutes:
-        return f'{hours}小时{minutes}分钟'
-    if hours:
-        return f'{hours}小时'
-    if minutes:
-        return f'{minutes}分钟'
-    return f'{secs}秒'
 
 
 def _denied():
@@ -95,6 +47,7 @@ def _render_file_log(
     live=False,
     group_records=False,
     per_page=100,
+    skip_line=None,
 ):
     denied = _denied()
     if denied:
@@ -107,6 +60,7 @@ def _render_file_log(
         per_page=per_page,
         search_term=search_term,
         group_records=group_records,
+        skip_line=skip_line,
     )
     stream_url = url_for('log_center.stream_log', kind=active_log) if live else ''
     return render_template(
@@ -171,14 +125,17 @@ def display_error():
 @log_center_bp.route('/user')
 @login_required
 def display_user():
+    from py.utilities.user_log_parser import is_user_nav_noise
+
     return _render_file_log(
         path=_cfg_path('USER_LOG_FILE', 'user.log'),
         active_log='user',
         log_title='👤 User Activity',
         log_endpoint='log_center.display_user',
         search_endpoint='log_center.search_user',
-        empty_message='用户活动日志为空或搜索无结果',
+        empty_message='用户活动日志为空或搜索无结果（仅显示搜 SKU、查订单等操作）',
         live=True,
+        skip_line=is_user_nav_noise,
     )
 
 
@@ -196,94 +153,113 @@ def display_visitor():
     )
 
 
-def _parse_online_sessions(path, search_term='', date_from='', date_to=''):
-    sessions = []
-    if not os.path.isfile(path):
-        return sessions
-    needle = (search_term or '').strip().lower()
-    with open(path, 'r', encoding='utf-8', errors='replace') as fh:
-        for line in fh:
-            raw = line.rstrip('\n')
-            if needle and needle not in raw.lower():
-                continue
-            m = _ONLINE_LINE.match(raw)
-            if not m:
-                continue
-            stamp = (m.group('stamp') or '').strip()
-            day = ''
-            try:
-                day = datetime.strptime(stamp[:19], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
-            except ValueError:
-                pass
-            if date_from and day and day < date_from:
-                continue
-            if date_to and day and day > date_to:
-                continue
-            sessions.append(
-                {
-                    'username': m.group('user').strip(),
-                    'duration': m.group('dur').strip(),
-                    'duration_sec': _duration_seconds(m.group('dur')),
-                    'start': m.group('start').strip(),
-                    'end': m.group('end').strip(),
-                    'stamp': stamp,
-                    'day': day,
-                    'raw': raw,
-                    'color': _user_color(m.group('user').strip()),
-                }
-            )
-    sessions.reverse()
-    return sessions
-
-
 @log_center_bp.route('/online')
 @login_required
 def display_online():
     denied = _denied()
     if denied:
         return denied
+    from py.utilities.online_log_parser import (
+        available_date_bounds,
+        available_usernames,
+        clamp_date_range_to_bounds,
+        enrich_session_displays,
+        filter_by_min_duration,
+        load_online_sessions,
+        merge_sessions,
+        normalize_date_range,
+        summarize_users,
+        timeline_layout_range,
+        today_pst,
+    )
+    from py.utilities.user_log_parser import attach_activities_to_sessions, load_user_activities
+
     search_term = request.args.get('search', '').strip()
-    date_from = request.args.get('date_from', '').strip()
-    date_to = request.args.get('date_to', '').strip()
+    view = request.args.get('view', 'dashboard')
+    legacy_date = request.args.get('date', '').strip()
+    date_from = request.args.get('date_from', '').strip() or legacy_date or today_pst()
+    date_to = request.args.get('date_to', '').strip() or legacy_date or date_from
+    date_from, date_to = normalize_date_range(date_from, date_to)
     selected_user = request.args.get('user', '').strip()
+    min_duration = request.args.get('min_sec', 30, type=int)
+    merge_gap = request.args.get('merge_gap', 180, type=int)
+    merge_enabled = request.args.get('merge', '1') != '0'
+
     path = _cfg_path('ONLINE_LOG_FILE', 'online.log')
-    sessions = _parse_online_sessions(path, search_term=search_term, date_from=date_from, date_to=date_to)
-    usernames = sorted({s['username'] for s in sessions}, key=str.lower)
-    if selected_user:
-        sessions = [s for s in sessions if s['username'].lower() == selected_user.lower()]
-    per_page = 100
-    total = len(sessions)
-    total_pages = max(1, (total + per_page - 1) // per_page)
+    log_earliest, log_latest = available_date_bounds(path)
+    date_min = log_earliest
+    date_max = today_pst()
+    if log_latest and log_latest > date_max:
+        date_max = log_latest
+    date_from, date_to = clamp_date_range_to_bounds(
+        date_from, date_to, min_date=date_min, max_date=date_max
+    )
+    multi_day = date_from != date_to
+
+    raw_sessions = load_online_sessions(
+        path,
+        date_from=date_from if view != 'raw' else None,
+        date_to=date_to if view != 'raw' else None,
+        username=selected_user or None,
+        search_term=search_term,
+    )
+    display_sessions = (
+        merge_sessions(raw_sessions, gap_sec=merge_gap)
+        if merge_enabled
+        else sorted(raw_sessions, key=lambda s: s['start'], reverse=True)
+    )
+    display_sessions = filter_by_min_duration(display_sessions, min_duration)
+    display_sessions = enrich_session_displays(display_sessions, multi_day=multi_day)
+
+    user_log_path = _cfg_path('USER_LOG_FILE', 'user.log')
+    session_activities = load_user_activities(
+        user_log_path,
+        date_from=date_from if view != 'raw' else None,
+        date_to=date_to if view != 'raw' else None,
+        username=selected_user or None,
+    )
+    display_sessions = attach_activities_to_sessions(
+        display_sessions,
+        session_activities,
+        multi_day=multi_day,
+    )
+
+    user_summary = summarize_users(display_sessions, multi_day=multi_day)
+    timeline = timeline_layout_range(display_sessions, date_from=date_from, date_to=date_to)
+    usernames = available_usernames(path, date_from=date_from, date_to=date_to)
+
     page = request.args.get('page', 1, type=int) or 1
-    page = max(1, min(page, total_pages))
-    start = (page - 1) * per_page
-    page_sessions = sessions[start : start + per_page]
-    summaries = {}
-    for s in sessions:
-        row = summaries.setdefault(
-            s['username'],
-            {'username': s['username'], 'session_count': 0, 'total_sec': 0, 'color': s.get('color')},
-        )
-        row['session_count'] += 1
-        row['total_sec'] += int(s.get('duration_sec') or 0)
-    user_summary = sorted(summaries.values(), key=lambda r: (-r['total_sec'], -r['session_count'], r['username'].lower()))
-    for row in user_summary:
-        row['total_display'] = _fmt_seconds(row['total_sec'])
+    log_lines, current_page, total_pages, total = read_log_page(
+        path, page=page, per_page=50, search_term=search_term
+    )
+
     return render_template(
         'log_online.html',
-        sessions=page_sessions,
+        sessions=display_sessions,
         user_summary=user_summary,
         usernames=usernames,
         selected_user=selected_user,
         date_from=date_from,
         date_to=date_to,
-        today_pst=datetime.now().strftime('%Y-%m-%d'),
-        page=page,
+        date_min=date_min,
+        date_max=date_max,
+        multi_day=multi_day,
+        today_pst=today_pst(),
+        page=current_page,
         total_pages=total_pages,
         search_term=search_term,
         active_log='online',
         current_user=session.get('username'),
-        total_count=total,
+        total_count=len(display_sessions),
+        view=view,
+        min_duration=min_duration,
+        merge_gap=merge_gap,
+        merge_enabled=merge_enabled,
+        timeline=timeline,
+        raw_session_count=len(raw_sessions),
+        filtered_session_count=len(display_sessions),
+        log_lines=log_lines,
+        total_raw_count=total,
     )
 
 
@@ -328,7 +304,7 @@ def search_online():
     if denied:
         return denied
     search_term = request.form.get('search_term', '').strip()
-    return redirect(url_for('log_center.display_online', search=search_term))
+    return redirect(url_for('log_center.display_online', search=search_term, view='raw'))
 
 
 @log_center_bp.route('/stream')
@@ -352,6 +328,11 @@ def stream_log():
     keepalive_every_s = 25.0
     group_records = kind == 'error'
     flush_idle_s = 0.55
+    skip_fn = None
+    if kind == 'user':
+        from py.utilities.user_log_parser import is_user_nav_noise
+
+        skip_fn = is_user_nav_noise
 
     def generate():
         last_keepalive = time.monotonic()
@@ -390,6 +371,8 @@ def stream_log():
                     last_keepalive = time.monotonic()
                     last_line_at = last_keepalive
                     raw = line.rstrip('\n')
+                    if skip_fn and skip_fn(raw):
+                        continue
                     if group_records:
                         if is_log_record_start(raw) and pending:
                             flushed = flush_pending()

@@ -1390,6 +1390,40 @@ def bol_from_order_lookup():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@order_lookup_bp.route("/order_lookup/<string:order_number>/ucl_bol", methods=["GET"])
+@login_required
+def ucl_bol_from_order_lookup(order_number):
+    """Prefill the official UCL fillable cargo-receipt PDF for the order."""
+    current_user = session.get("username", "unknown")
+    order_number = str(order_number or "").strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order number."}), 400
+
+    try:
+        from py.other.bol_pdf import fetch_order_bol_context, fill_ucl_bol_pdf
+
+        ctx, err = fetch_order_bol_context(order_number)
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
+
+        current_app.logger.info(
+            "***%s***__@@@create UCL BOL@@@__ %s",
+            current_user,
+            order_number,
+        )
+        pdf_data = fill_ucl_bol_pdf(ctx)
+        filename = f"{order_number}_UCL_BOL.pdf"
+        return send_file(
+            io.BytesIO(pdf_data),
+            download_name=filename,
+            as_attachment=False,
+            mimetype="application/pdf",
+        )
+    except Exception as e:
+        current_app.logger.exception("UCL BOL PDF failed for order %s", order_number)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 @order_lookup_bp.route("/eta_fashion_label_from_order_lookup", methods=["POST"])
 @login_required
 def eta_fashion_label_from_order_lookup():

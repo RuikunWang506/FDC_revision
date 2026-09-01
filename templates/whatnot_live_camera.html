@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Whatnot Camera</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+    .wrap { position: relative; height: 100%; width: 100%; }
+    video#cam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+      transform-origin: center center;
+    }
+    .hud {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(transparent, rgba(0,0,0,0.78));
+      z-index: 4;
+    }
+    .hud.tools-collapsed { display: none; }
+    .top {
+      position: absolute;
+      top: env(safe-area-inset-top, 8px);
+      left: 10px; right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      z-index: 4;
+      font-weight: 700;
+      text-shadow: 0 1px 6px #000;
+    }
+    .pill { background: rgba(0,0,0,0.55); border: 1px solid rgba(255,78,184,0.5); border-radius: 999px; padding: 6px 12px; font-size: 13px; max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pill.live { border-color: #22c55e; }
+    .tools-toggle {
+      border: 1px solid rgba(255,78,184,0.7);
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: rgba(0,0,0,0.62);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    }
+    .tools-toggle.ready { border-color: #22c55e; background: #16a34a; color: #fff; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    button {
+      flex: 1;
+      min-width: 72px;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 8px;
+      font-weight: 800;
+      font-size: 14px;
+      background: #ff4eb8;
+      color: #fff;
+    }
+    button.ghost { background: rgba(255,255,255,0.16); }
+    button:disabled { opacity: 0.45; }
+    label.slider { display: flex; align-items: center; gap: 8px; width: 100%; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    input[type=range], select {
+      flex: 1;
+      min-width: 0;
+    }
+    select {
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #ff4eb8;
+      border-radius: 10px;
+      padding: 10px 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .msg { font-size: 12px; color: #ddd; min-height: 1.2em; }
+    .tap-hint {
+      position: absolute; inset: 0; z-index: 5;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.45); font-weight: 800; font-size: 18px;
+      text-align: center; padding: 24px;
+    }
+    .tap-hint.show { display: flex; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <video id="cam" autoplay playsinline muted webkit-playsinline></video>
+    <div class="tap-hint" id="tapHint">Tap to allow camera</div>
+    <div class="top">
+      <button type="button" class="tools-toggle" id="btnToolsToggle">Tools</button>
+      <span class="pill" id="status">Camera off</span>
+    </div>
+    <div class="hud tools-collapsed" id="toolsPanel">
+      <label class="slider">Camera
+        <select id="camPick">
+          <option value="">Allow camera to list lenses</option>
+        </select>
+      </label>
+      <div class="row">
+        <button type="button" class="ghost" id="btnFront">Front</button>
+        <button type="button" class="ghost" id="btnBack">Back</button>
+        <button type="button" class="ghost" id="btnTorch">Torch</button>
+      </div>
+      <label class="slider">Zoom <input id="zoom" type="range" min="1" max="8" step="0.1" value="1"></label>
+      <div class="msg" id="msg">Pick a camera. Picture and sound go to the overlay.</div>
+    </div>
+  </div>
+  <script>
+    const video = document.getElementById("cam");
+    const statusEl = document.getElementById("status");
+    const msg = document.getElementById("msg");
+    const zoomEl = document.getElementById("zoom");
+    const camPick = document.getElementById("camPick");
+    const RTC_URL = {{ url_for('whatnot_live.webrtc_signal')|tojson }};
+    const audioConstraints = {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    };
+    let stream = null;
+    let cameras = [];
+    let pcs = { main: null, preview: null };
+    let iceCursors = { main: 0, preview: 0 };
+    let pubBusy = { main: false, preview: false };
+    let pollTimer = null;
+    let torchOn = false;
+    let focusMode = "continuous";
+    let cssZoom = 1;
+    let autoPicked = false;
+    let switching = false;
+    let micCtx = null;
+    let micTimer = null;
+    let overlayReady = false;
+    const toolsPanel = document.getElementById("toolsPanel");
+    const toolsToggle = document.getElementById("btnToolsToggle");
+
+    function setToolsOpen(open) {
+      if (!toolsPanel || !toolsToggle) return;
+      toolsPanel.classList.toggle("tools-collapsed", !open);
+      toolsToggle.textContent = open ? (overlayReady ? "Hide tools" : "Close tools") : "Tools";
+      toolsToggle.classList.toggle("ready", overlayReady);
+      toolsToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    function markOverlayReady() {
+      if (overlayReady) return;
+      overlayReady = true;
+      setToolsOpen(false);
+      say("Overlay connected. Tap the green button to show tools.");
+    }
+    toolsToggle.onclick = () => setToolsOpen(toolsPanel.classList.contains("tools-collapsed"));
+
+    function startMicMeter() {
+      const track = stream && stream.getAudioTracks()[0];
+      if (!track) return;
+      try {
+        if (!micCtx) micCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (micCtx.state === "suspended") micCtx.resume().catch(() => {});
+        const src = micCtx.createMediaStreamSource(new MediaStream([track]));
+        const an = micCtx.createAnalyser();
+        an.fftSize = 512;
+        src.connect(an);
+        const data = new Uint8Array(an.fftSize);
+        if (micTimer) clearInterval(micTimer);
+        micTimer = setInterval(() => {
+          if (!publisherLive()) return;
+          an.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          postRtc({ action: "audio", level: Math.sqrt(sum / data.length), has_mic: true }).catch(() => {});
+        }, 350);
+      } catch (e) {}
+    }
+
+    function say(text) { msg.textContent = text; }
+    function showTapHint(on) {
+      const el = document.getElementById("tapHint");
+      if (el) el.classList.toggle("show", !!on);
+    }
+    function publisherLive() {
+      return Object.values(pcs).some((p) => p && (p.iceConnectionState === "connected" || p.iceConnectionState === "completed"));
+    }
+    function publisherSending() {
+      return Object.values(pcs).some((p) => p && p.signalingState !== "closed" && p.connectionState !== "closed");
+    }
+    function setStatus(text, live) {
+      statusEl.textContent = text;
+      statusEl.classList.toggle("live", !!live);
+    }
+    function videoTrack() {
+      return stream && stream.getVideoTracks()[0];
+    }
+    function friendlyName(label, facingMode) {
+      const l = String(label || "").toLowerCase();
+      if (/ultra\s*wide/.test(l)) return "Ultra Wide — often blurry";
+      if (/dual wide/.test(l)) return "Dual Wide — often blurry";
+      if (/tele/.test(l)) return "Telephoto";
+      if (/triple/.test(l)) return "Back Triple (main)";
+      if (/desk/.test(l)) return "Desk View";
+      if (/front|face|user/.test(l) && !/back/.test(l)) return "Front camera";
+      if (/^back camera$/.test(l) || l === "back camera") return "Back camera (main)";
+      if (/back camera/.test(l)) return "Back camera";
+      if (facingMode === "user") return "Front camera";
+      if (facingMode === "environment") return "Back camera";
+      return label || "Camera";
+    }
+    function isSoftLens(label) {
+      return /ultra\s*wide|dual wide/i.test(label || "");
+    }
+    function camScore(device) {
+      const l = String(device.label || "").toLowerCase();
+      if (/ultra\s*wide/.test(l)) return 1;
+      if (/dual wide/.test(l)) return 2;
+      if (/desk/.test(l)) return 3;
+      if (/front|face/.test(l) && !/back/.test(l)) return 10;
+      if (/tele/.test(l)) return 20;
+      if (/back/.test(l) && /wide/.test(l) && !/ultra|dual/.test(l)) return 35;
+      if (/triple/.test(l)) return 45;
+      if (l === "back camera") return 50;
+      if (/back camera/.test(l)) return 40;
+      if (/back|rear/.test(l)) return 30;
+      return 5;
+    }
+    function currentDeviceId() {
+      const t = videoTrack();
+      const s = t && t.getSettings ? t.getSettings() : {};
+      return s.deviceId || camPick.value || "";
+    }
+    function pickSharpRear() {
+      const rears = cameras.filter((d) => /back|rear|environment/i.test(d.label) && !/front|face/i.test(d.label));
+      const pool = rears.length ? rears : cameras;
+      return pool.slice().sort((a, b) => camScore(b) - camScore(a))[0] || null;
+    }
+    function pickFront() {
+      return cameras.find((d) => /front|face/i.test(d.label) && !/back/i.test(d.label)) || null;
+    }
+    async function listCameras() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      cameras = devices.filter((d) => d.kind === "videoinput" && d.deviceId);
+      const current = currentDeviceId();
+      camPick.innerHTML = "";
+      if (!cameras.length) {
+        camPick.innerHTML = "<option value=\"\">No cameras found</option>";
+        return;
+      }
+      cameras.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d.deviceId;
+        opt.textContent = friendlyName(d.label);
+        camPick.appendChild(opt);
+      });
+      if (current && cameras.some((d) => d.deviceId === current)) camPick.value = current;
+    }
+    function describeTrack() {
+      const t = videoTrack();
+      if (!t) return "Camera off";
+      const s = t.getSettings ? t.getSettings() : {};
+      const w = s.width || 0;
+      const h = s.height || 0;
+      const name = friendlyName(t.label, s.facingMode);
+      const hasMic = !!(stream.getAudioTracks() || []).length;
+      const size = w && h ? (" · " + w + "×" + h) : "";
+      const live = publisherLive();
+      return name + size + (hasMic ? " + mic" : "") + (live ? " · LIVE" : (publisherSending() ? " · sending" : ""));
+    }
+    async function applyCam() {
+      const t = videoTrack();
+      if (!t) return;
+      const caps = t.getCapabilities ? t.getCapabilities() : {};
+      const advanced = [];
+      if (caps.zoom) {
+        const min = caps.zoom.min || 1;
+        const max = caps.zoom.max || 1;
+        zoomEl.min = min;
+        zoomEl.max = max;
+        const z = Math.min(max, Math.max(min, Number(zoomEl.value)));
+        advanced.push({ zoom: z });
+        cssZoom = 1;
+      } else {
+        cssZoom = Number(zoomEl.value) || 1;
+      }
+      video.style.transform = cssZoom > 1 ? ("scale(" + cssZoom + ")") : "";
+      if (caps.torch) advanced.push({ torch: torchOn });
+      if (caps.focusMode && caps.focusMode.includes(focusMode)) {
+        advanced.push({ focusMode });
+      }
+      try {
+        const c = { advanced };
+        if (caps.focusMode && caps.focusMode.includes(focusMode)) c.focusMode = focusMode;
+        await t.applyConstraints(c);
+      } catch (e) { /* iOS may ignore some constraints */ }
+    }
+    async function getVideoTrack(constraints) {
+      const tries = [
+        constraints,
+        { ...constraints, width: { ideal: 1280 }, height: { ideal: 720 } },
+        constraints.deviceId ? { deviceId: constraints.deviceId } : { facingMode: constraints.facingMode || { ideal: "environment" } }
+      ];
+      let lastErr = null;
+      for (const video of tries) {
+        try {
+          const vs = await navigator.mediaDevices.getUserMedia({ audio: false, video });
+          const track = vs.getVideoTracks()[0];
+          vs.getTracks().forEach((t) => { if (t !== track) t.stop(); });
+          return track;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("Could not open camera");
+    }
+    async function ensureMic() {
+      if (stream && stream.getAudioTracks().length) return;
+      try {
+        const mic = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
+        if (!stream) stream = new MediaStream();
+        mic.getAudioTracks().forEach((t) => stream.addTrack(t));
+      } catch (e) {
+        say("Camera on, but the microphone was blocked. Allow mic so overlay gets sound.");
+      }
+    }
+    async function useVideoTrack(newTrack, opts) {
+      if (!stream) stream = new MediaStream();
+      const old = videoTrack();
+      if (old && old !== newTrack) {
+        stream.removeTrack(old);
+        old.stop();
+      }
+      if (!stream.getVideoTracks().includes(newTrack)) stream.addTrack(newTrack);
+      for (const peer of Object.values(pcs)) {
+        if (!peer) continue;
+        const sender = peer.getSenders().find((s) => s.track && s.track.kind === "video");
+        if (sender) await sender.replaceTrack(newTrack);
+      }
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play().catch(() => {});
+      zoomEl.value = "1";
+      cssZoom = 1;
+      video.style.transform = "";
+      await applyCam();
+      await listCameras();
+      const live = publisherLive();
+      setStatus(describeTrack(), live);
+      const label = newTrack.label || "";
+      if (isSoftLens(label)) {
+        say("This lens looks soft. Use the Camera list and pick Back camera (main), not Ultra Wide / Dual Wide.");
+      } else if (opts && opts.note) {
+        say(opts.note);
+      } else {
+        const hasMic = !!(stream.getAudioTracks() || []).length;
+        say(hasMic
+          ? (live ? "This lens is live on overlay." : "Camera + mic ready.")
+          : (live ? "This lens is live. Allow mic for sound." : "Camera ready."));
+      }
+    }
+    async function startCamera(opts) {
+      if (switching) return;
+      switching = true;
+      try {
+        const deviceId = opts && opts.deviceId;
+        const facing = opts && opts.facing;
+        const constraints = deviceId
+          ? { deviceId: { exact: deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
+          : { facingMode: { ideal: facing || "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
+        const newTrack = await getVideoTrack(constraints);
+        await ensureMic();
+        await useVideoTrack(newTrack, opts);
+        showTapHint(false);
+        if (!autoPicked && !deviceId && isSoftLens(newTrack.label)) {
+          await listCameras();
+          const best = pickSharpRear();
+          const cur = newTrack.getSettings ? newTrack.getSettings().deviceId : "";
+          if (best && best.deviceId && best.deviceId !== cur) {
+            autoPicked = true;
+            switching = false;
+            await startCamera({ deviceId: best.deviceId, note: "Switched off the wide/soft lens. Now using " + friendlyName(best.label) + "." });
+            return;
+          }
+        }
+        autoPicked = true;
+        if (!pcs.main || !pcs.preview) await goLive();
+      } finally {
+        switching = false;
+      }
+    }
+    async function postRtc(payload) {
+      const res = await fetch(RTC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+    async function getRtc() {
+      const res = await fetch(RTC_URL, { credentials: "same-origin" });
+      return res.json();
+    }
+    function candJSON(c) {
+      if (!c) return null;
+      try {
+        if (typeof c.toJSON === "function") return c.toJSON();
+      } catch (e) {}
+      return {
+        candidate: c.candidate,
+        sdpMid: c.sdpMid,
+        sdpMLineIndex: c.sdpMLineIndex,
+        usernameFragment: c.usernameFragment
+      };
+    }
+    function waitIce(pc, ms) {
+      return new Promise((resolve) => {
+        if (!pc || pc.iceGatheringState === "complete") return resolve();
+        const t = setTimeout(resolve, ms || 2200);
+        pc.addEventListener("icegatheringstatechange", () => {
+          if (pc.iceGatheringState === "complete") {
+            clearTimeout(t);
+            resolve();
+          }
+        });
+      });
+    }
+    function slotAnswer(data, slot) {
+      return slot === "preview" ? data.preview_answer : data.answer;
+    }
+    function slotViewIce(data, slot) {
+      return slot === "preview" ? (data.preview_view_ice || []) : (data.view_ice || []);
+    }
+    function slotNeedOffer(data, slot) {
+      return slot === "preview" ? data.preview_need_offer : data.need_offer;
+    }
+    function iceConnected(pc) {
+      const st = pc && pc.iceConnectionState;
+      return st === "connected" || st === "completed";
+    }
+    async function startPublisher(slot) {
+      if (pubBusy[slot]) return;
+      if (!stream || !videoTrack()) return;
+      pubBusy[slot] = true;
+      try {
+        if (pcs[slot]) { try { pcs[slot].close(); } catch (e) {} pcs[slot] = null; }
+        iceCursors[slot] = 0;
+        await postRtc({ action: "reset", slot: slot });
+        const pc = new RTCPeerConnection({
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" }
+          ]
+        });
+        pcs[slot] = pc;
+        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+        pc.onicecandidate = (ev) => {
+          if (ev.candidate) postRtc({ action: "ice", role: "pub", slot: slot, candidate: candJSON(ev.candidate) }).catch(() => {});
+        };
+        pc.oniceconnectionstatechange = () => {
+          setStatus(describeTrack(), publisherLive());
+          if (iceConnected(pc)) {
+            markOverlayReady();
+          }
+        };
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        await waitIce(pc, 800);
+        const sdp = pc.localDescription || offer;
+        await postRtc({ action: "offer", slot: slot, sdp: { type: sdp.type, sdp: sdp.sdp } });
+        setStatus(describeTrack(), publisherLive());
+        say("Sending to overlay…");
+        startMicMeter();
+      } finally {
+        pubBusy[slot] = false;
+      }
+    }
+    async function pollPublishers() {
+      const data = await getRtc();
+      for (const slot of ["main", "preview"]) {
+        if (slotNeedOffer(data, slot) && stream && videoTrack() && !pubBusy[slot]) {
+          startPublisher(slot).catch((e) => say(e.message || String(e)));
+          continue;
+        }
+        const pc = pcs[slot];
+        if (!pc) continue;
+        const answer = slotAnswer(data, slot);
+        const canApply = answer && (pc.signalingState === "have-local-offer" || !pc.remoteDescription);
+        if (canApply && pc.signalingState === "have-local-offer") {
+          try {
+            await pc.setRemoteDescription(answer.type ? answer : new RTCSessionDescription(answer));
+            iceCursors[slot] = 0;
+            markOverlayReady();
+          } catch (e) {
+            try {
+              await pc.setRemoteDescription(answer);
+              iceCursors[slot] = 0;
+              markOverlayReady();
+            } catch (e2) {}
+          }
+        }
+        if (pc.remoteDescription) {
+          const ices = slotViewIce(data, slot);
+          for (let i = iceCursors[slot]; i < ices.length; i++) {
+            try { await pc.addIceCandidate(ices[i]); } catch (e) {}
+          }
+          iceCursors[slot] = ices.length;
+        }
+      }
+    }
+    async function goLive() {
+      if (!stream || !videoTrack()) await startCamera();
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(() => pollPublishers().catch(() => {}), 700);
+      await startPublisher("main");
+      await startPublisher("preview");
+    }
+    camPick.onchange = () => {
+      if (!camPick.value) return;
+      startCamera({ deviceId: camPick.value }).catch((e) => say(e.message || String(e)));
+    };
+    document.getElementById("btnFront").onclick = async () => {
+      if (!cameras.length) await startCamera({ facing: "user" });
+      const front = pickFront();
+      if (front) await startCamera({ deviceId: front.deviceId, note: "Front camera." });
+      else await startCamera({ facing: "user" });
+    };
+    document.getElementById("btnBack").onclick = async () => {
+      if (!cameras.length) await startCamera({ facing: "environment" });
+      const back = pickSharpRear();
+      if (back) await startCamera({ deviceId: back.deviceId, note: "Back camera: " + friendlyName(back.label) });
+      else await startCamera({ facing: "environment" });
+    };
+    document.getElementById("btnTorch").onclick = async () => {
+      torchOn = !torchOn;
+      await applyCam();
+      say(torchOn ? "Torch on (rear camera only on most phones)." : "Torch off.");
+    };
+    video.addEventListener("click", async (ev) => {
+      const t = videoTrack();
+      if (!t || !t.getCapabilities) return;
+      const caps = t.getCapabilities();
+      if (!caps.pointsOfInterest) return;
+      const rect = video.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) / rect.width;
+      const y = (ev.clientY - rect.top) / rect.height;
+      try {
+        await t.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] }] });
+        say("Focus set. Tap another spot if needed.");
+      } catch (e) {}
+    });
+    zoomEl.oninput = applyCam;
+    startCamera().catch((e) => {
+      showTapHint(true);
+      say(e.message || "Tap to allow camera.");
+    });
+    document.body.addEventListener("click", () => {
+      if (stream && videoTrack()) return;
+      showTapHint(false);
+      startCamera().catch((e) => say(e.message || String(e)));
+    });
+  </script>
+</body>
+</html>

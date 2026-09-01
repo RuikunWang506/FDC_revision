@@ -25,6 +25,10 @@ _SKIP_EXACT = frozenset(
         "/health",
         "/get_favorites",
         "/save_favorites",
+        "/save_dashboard_background",
+        "/user_dashboard_background",
+        "/dashboard_background_from_url",
+        "/upload_dashboard_background",
     }
 )
 
@@ -229,40 +233,38 @@ def register_navigation_audit(app: Flask) -> None:
             return response
 
         uid = _username()
+        if uid:
+            try:
+                from py.utilities.presence import touch_from_request
+
+                touch_from_request()
+            except Exception:
+                pass
+            # Page visits belong in online duration, not User Activity.
+            return response
+
         status = getattr(response, "status_code", 0) or 0
         ip = _client_ip()
-        label = _action_label(method, path, status)
-        from_home = ""
-        if method == "GET" and label.startswith("opened"):
-            ref = request.referrer or ""
-            try:
-                ref_path = urlparse(ref).path or ""
-            except Exception:
-                ref_path = ""
-            from_home = " from_home=1" if ref_path in ("", "/") else " from_home=0"
+        if not _should_log_visitor(status, method, path, response):
+            return response
+        if _is_local_ip(ip):
+            return response
+        if _throttled("anonymous", method, path):
+            return response
 
+        label = _action_label(method, path, status)
         ua = (request.headers.get("User-Agent") or "")[:180]
         line = (
-            f"***{uid or 'anonymous'}***__@@@{label}@@@ "
+            f"***anonymous***__@@@{label}@@@ "
             f"{method} path={path} endpoint={endpoint or '-'} "
-            f"status={status} ip={ip}{from_home}{_qs_part()}"
+            f"status={status} ip={ip}{_qs_part()}"
         )
-        if not uid and ua:
+        if ua:
             line += f" ua={ua}"
-
         try:
-            from py.utilities.logging_setup import log_user_action, log_visitor_action
+            from py.utilities.logging_setup import log_visitor_action
 
-            if uid:
-                if _throttled(uid, method, path):
-                    return response
-                log_user_action(line, uid)
-            elif _should_log_visitor(status, method, path, response):
-                if _is_local_ip(ip):
-                    return response
-                if _throttled("anonymous", method, path):
-                    return response
-                log_visitor_action(line)
+            log_visitor_action(line)
         except Exception:
             pass
         return response

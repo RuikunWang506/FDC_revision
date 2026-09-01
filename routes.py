@@ -67,6 +67,10 @@ def register_routes(app):
         """Jinja: {% if tool_allowed('item_lookup') %} for home dashboard cards."""
         from flask import session
         from py.utilities.auth import get_user_permissions
+        from py.utilities.dashboard_backgrounds import (
+            get_dashboard_background,
+            list_dashboard_backgrounds,
+        )
         from py.utilities.dashboard_permissions import (
             get_dashboard_favorites,
             navbar_items_from_favorites,
@@ -116,6 +120,25 @@ def register_routes(app):
         if uname and not hide_staff_nav_links():
             navbar_favorite_items = navbar_items_from_favorites(dashboard_favorites, tool_allowed)
 
+        master_mode = False
+        master_username = ""
+        master_impersonating = False
+        master_user_choices = []
+        try:
+            from py.utilities.master_mode import (
+                is_impersonating,
+                is_master_operator,
+                list_switchable_users,
+            )
+
+            master_mode = is_master_operator()
+            master_username = (session.get("master_username") or "") if master_mode else ""
+            master_impersonating = is_impersonating()
+            if master_mode:
+                master_user_choices = list_switchable_users()
+        except Exception:
+            pass
+
         return {
             "current_user": uname,
             "tool_allowed": tool_allowed,
@@ -124,6 +147,12 @@ def register_routes(app):
             "product_detail_search_url": product_detail_search_url_safe,
             "dashboard_favorites": dashboard_favorites,
             "navbar_favorite_items": navbar_favorite_items,
+            "dashboard_bg": get_dashboard_background(uname),
+            "dashboard_backgrounds": list_dashboard_backgrounds(uname),
+            "master_mode": master_mode,
+            "master_username": master_username,
+            "master_impersonating": master_impersonating,
+            "master_user_choices": master_user_choices,
         }
 
     @app.route('/delete_system_restarted', methods=['POST'])
@@ -285,6 +314,67 @@ def register_routes(app):
                 cursor.close()
             if 'conn' in locals():
                 conn.close()
+
+    @app.route('/save_dashboard_background', methods=['POST'])
+    @login_required
+    def save_dashboard_background():
+        from py.utilities.dashboard_backgrounds import save_dashboard_background as persist_bg
+
+        data = request.get_json(silent=True) or {}
+        result = persist_bg(session.get('username') or '', data.get('id') or '')
+        status = 200 if result.get('success') else 400
+        return jsonify(result), status
+
+    @app.route('/user_dashboard_background')
+    @login_required
+    def user_dashboard_background():
+        from flask import send_file
+        from py.utilities.dashboard_backgrounds import (
+            custom_background_exists,
+            custom_background_path,
+        )
+
+        username = session.get('username') or ''
+        if not custom_background_exists(username):
+            return ('', 404)
+        return send_file(
+            custom_background_path(username),
+            mimetype='image/jpeg',
+            max_age=0,
+            download_name='dashboard-background.jpg',
+        )
+
+    @app.route('/dashboard_background_from_url', methods=['POST'])
+    @login_required
+    def dashboard_background_from_url():
+        from py.utilities.dashboard_backgrounds import fetch_public_image_jpeg, jpeg_data_url
+
+        data = request.get_json(silent=True) or {}
+        url = (data.get('url') or '').strip()
+        try:
+            jpeg = fetch_public_image_jpeg(url)
+            return jsonify({'success': True, 'data_url': jpeg_data_url(jpeg)})
+        except Exception as exc:
+            return jsonify({'success': False, 'error': str(exc) or 'Could not load that URL.'}), 400
+
+    @app.route('/upload_dashboard_background', methods=['POST'])
+    @login_required
+    def upload_dashboard_background():
+        from py.utilities.dashboard_backgrounds import save_custom_background
+
+        upload = request.files.get('image')
+        raw = upload.read() if upload else b''
+        result = save_custom_background(session.get('username') or '', raw)
+        status = 200 if result.get('success') else 400
+        return jsonify(result), status
+
+    @app.before_request
+    def _ensure_yetimaster_session():
+        from py.utilities.master_mode import enable_master_session
+
+        uname = (session.get('username') or '').strip().lower()
+        if uname == 'yetimaster' and not session.get('master_username'):
+            enable_master_session()
 
     @app.before_request
     def _enforce_dashboard_tool_permissions():

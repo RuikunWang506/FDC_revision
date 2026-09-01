@@ -168,7 +168,7 @@
                                     <i class="fas fa-folder-open"></i>
                                 </div>
                                 <h5>Drop catalog images or archives here / 拖放目录图或压缩包到此处</h5>
-                                <p class="text-muted">Multiple files, folders, ZIP/RAR archives supported / 支持多个文件、文件夹、ZIP/RAR压缩包</p>
+                                <p class="text-muted">Drop files one at a time to add them (does not replace). Folders and ZIP/RAR also supported. / 可多次拖放追加，不会覆盖已选文件。也支持文件夹和 ZIP/RAR。</p>
                                 <input type="file" id="bulkCatalogFiles" name="catalog_files" 
                                        multiple webkitdirectory directory accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp,.zip,.rar" style="display: none;">
                                 <input type="file" id="bulkCatalogFilesOnly" name="catalog_files" 
@@ -237,7 +237,7 @@
                                     <i class="fas fa-layer-group"></i>
                                 </div>
                                 <h5>Drop folders with style names / 拖放按款式命名的文件夹</h5>
-                                <p class="text-muted">Folders, multiple files, or archives / 文件夹、多个文件或压缩包</p>
+                                <p class="text-muted">Drop files one at a time to add them (does not replace). / 可多次拖放追加，不会覆盖已选文件。</p>
                                 <input type="file" id="bulkDetailFiles" name="detail_files" 
                                        multiple webkitdirectory directory style="display: none;">
                                 <input type="file" id="bulkDetailFilesOnly" name="detail_files" 
@@ -901,6 +901,77 @@
         let bulkCatalogImageData = [];
         let currentBulkDetailSession = null;
         let bulkDetailStyleData = {};
+        const bulkFileBags = {
+            catalog: new DataTransfer(),
+            detail: new DataTransfer()
+        };
+
+        function fileIdentity(file) {
+            return (file.webkitRelativePath || file.name) + '\0' + file.size + '\0' + file.lastModified;
+        }
+
+        function mergeFilesIntoBag(bagKey, incomingFiles) {
+            const dt = new DataTransfer();
+            const seen = new Set();
+            function add(file) {
+                if (!file) return;
+                const key = fileIdentity(file);
+                if (seen.has(key)) return;
+                seen.add(key);
+                dt.items.add(file);
+            }
+            Array.from(bulkFileBags[bagKey].files || []).forEach(add);
+            Array.from(incomingFiles || []).forEach(add);
+            bulkFileBags[bagKey] = dt;
+            return dt;
+        }
+
+        function clearBulkFileBag(bagKey) {
+            bulkFileBags[bagKey] = new DataTransfer();
+        }
+
+        function bindAccumulatingFileInputs({ bagKey, fileInputFolder, fileInputOnly, dropzone, preview, statsType }) {
+            let applying = false;
+
+            function addIncoming(incoming) {
+                mergeFilesIntoBag(bagKey, incoming);
+                applying = true;
+                try { fileInputOnly.files = bulkFileBags[bagKey].files; } catch (e) {}
+                try { fileInputFolder.value = ''; } catch (e) {}
+                applying = false;
+                updatePreview(bulkFileBags[bagKey].files, preview);
+                showFileSelectionStats(bulkFileBags[bagKey].files, statsType);
+            }
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                addIncoming(e.dataTransfer.files);
+            }, false);
+
+            fileInputFolder.addEventListener('change', function() {
+                if (applying) return;
+                addIncoming(this.files);
+            });
+
+            fileInputOnly.addEventListener('change', function() {
+                if (applying) return;
+                addIncoming(this.files);
+            });
+        }
         
         // Setup bulk catalog upload
         function setupBulkCatalogUpload() {
@@ -909,45 +980,20 @@
             const fileInputOnly = document.getElementById('bulkCatalogFilesOnly');
             const dropzone = document.getElementById('bulkCatalogDropzone');
             const preview = document.getElementById('bulkCatalogPreview');
-            
-            // Drag and drop
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-            });
-            
-            dropzone.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                fileInputOnly.files = files;
-                updatePreview(files, preview);
-                showFileSelectionStats(files, 'catalog');
-            }, false);
-            
-            fileInputFolder.addEventListener('change', function() {
-                updatePreview(this.files, preview);
-                showFileSelectionStats(this.files, 'catalog');
-            });
-            
-            fileInputOnly.addEventListener('change', function() {
-                updatePreview(this.files, preview);
-                showFileSelectionStats(this.files, 'catalog');
+
+            bindAccumulatingFileInputs({
+                bagKey: 'catalog',
+                fileInputFolder,
+                fileInputOnly,
+                dropzone,
+                preview,
+                statsType: 'catalog'
             });
             
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const files = fileInputFolder.files.length > 0 ? fileInputFolder.files : fileInputOnly.files;
+                const files = bulkFileBags.catalog.files;
                 if (files.length === 0) {
                     showSystemAction('Please select files or folders to upload', 'error');
                     return;
@@ -1093,6 +1139,7 @@
                     document.getElementById('bulkCatalogReviewSection').style.display = 'none';
                     currentBulkCatalogSession = null;
                     bulkCatalogImageData = [];
+                    clearBulkFileBag('catalog');
                 } else {
                     showResult(resultContainer, result.message, 'error');
                 }
@@ -1108,45 +1155,20 @@
             const fileInputOnly = document.getElementById('bulkDetailFilesOnly');
             const dropzone = document.getElementById('bulkDetailDropzone');
             const preview = document.getElementById('bulkDetailPreview');
-            
-            // Drag and drop
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, false);
-            });
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropzone.addEventListener(eventName, () => dropzone.classList.add('dragover'), false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropzone.addEventListener(eventName, () => dropzone.classList.remove('dragover'), false);
-            });
-            
-            dropzone.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                fileInputOnly.files = files;
-                updatePreview(files, preview);
-                showFileSelectionStats(files, 'detail');
-            }, false);
-            
-            fileInputFolder.addEventListener('change', function() {
-                updatePreview(this.files, preview);
-                showFileSelectionStats(this.files, 'detail');
-            });
-            
-            fileInputOnly.addEventListener('change', function() {
-                updatePreview(this.files, preview);
-                showFileSelectionStats(this.files, 'detail');
+
+            bindAccumulatingFileInputs({
+                bagKey: 'detail',
+                fileInputFolder,
+                fileInputOnly,
+                dropzone,
+                preview,
+                statsType: 'detail'
             });
             
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                const files = fileInputFolder.files.length > 0 ? fileInputFolder.files : fileInputOnly.files;
+                const files = bulkFileBags.detail.files;
                 if (files.length === 0) {
                     showSystemAction('Please select files or folders to upload', 'error');
                     return;
@@ -1331,6 +1353,7 @@
                     document.getElementById('bulkDetailReviewSection').style.display = 'none';
                     currentBulkDetailSession = null;
                     bulkDetailStyleData = {};
+                    clearBulkFileBag('detail');
                 } else {
                     showResult(resultContainer, result.message, 'error');
                 }

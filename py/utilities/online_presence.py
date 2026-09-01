@@ -1,4 +1,8 @@
-"""In-memory online presence + session-length logging."""
+"""In-memory online presence + session-length logging.
+
+Online time is driven by real Flask requests, not the JS heartbeat.
+An idle tab that only pings /api/presence/heartbeat will time out.
+"""
 from __future__ import annotations
 
 import logging
@@ -6,18 +10,23 @@ import os
 import threading
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
+
+_PST = ZoneInfo('America/Los_Angeles')
 _LOCK = threading.RLock()
 _SESSIONS: dict[str, dict[str, Any]] = {}
-_HEARTBEAT_TIMEOUT_SEC = int(os.getenv('FDC_ONLINE_TIMEOUT_SEC', '120'))
+# Idle tabs keep sending heartbeats; only real requests refresh last_seen.
+_IDLE_TIMEOUT_SEC = int(os.getenv('FDC_ONLINE_TIMEOUT_SEC', '180'))
 _online_logger: logging.Logger | None = None
 
 
 def _now() -> datetime:
-    return datetime.now()
+    return datetime.now(_PST)
 
 
 def _fmt_stamp(dt: datetime) -> str:
-    return dt.strftime('%H:%M:%S %m/%d/%y')
+    local = dt.astimezone(_PST) if getattr(dt, 'tzinfo', None) else dt.replace(tzinfo=_PST)
+    return local.strftime('%H:%M:%S %m/%d/%y')
 
 
 def _fmt_duration(start: datetime, end: datetime) -> str:
@@ -60,18 +69,22 @@ def _write_session_log(username: str, started: datetime, ended: datetime) -> Non
         f.write(f'{ended.strftime("%Y-%m-%d %H:%M:%S")},{0:03d} - INFO - {line}\n')
 
 
-def _end_session_locked(session_id: str) -> None:
+def _end_session_locked(session_id: str, *, use_last_seen: bool = False) -> None:
     entry = _SESSIONS.pop(session_id, None)
     if not entry:
         return
     started = entry.get('started_at')
     username = entry.get('username') or 'unknown'
-    if isinstance(started, datetime):
-        _write_session_log(username, started, _now())
+    if not isinstance(started, datetime):
+        return
+    ended = entry.get('last_seen') if use_last_seen else _now()
+    if not isinstance(ended, datetime):
+        ended = _now()
+    _write_session_log(username, started, ended)
 
 
 def sweep_stale_sessions() -> None:
-    cutoff = _now().timestamp() - _HEARTBEAT_TIMEOUT_SEC
+    cutoff = _now().timestamp() - _IDLE_TIMEOUT_SEC
     with _LOCK:
         stale = [
             sid
@@ -79,7 +92,7 @@ def sweep_stale_sessions() -> None:
             if float(entry.get('last_seen_ts', 0)) < cutoff
         ]
         for sid in stale:
-            _end_session_locked(sid)
+            _end_session_locked(sid, use_last_seen=True)
 
 
 def mark_online(session_id: str, username: str, *, wake_ai: bool = True) -> bool:
@@ -116,12 +129,13 @@ def mark_offline(session_id: str) -> None:
     if not session_id:
         return
     with _LOCK:
-        _end_session_locked(session_id)
+        _end_session_locked(session_id, use_last_seen=False)
 
 
 def heartbeat(session_id: str, username: str) -> dict[str, Any]:
-    is_new = mark_online(session_id, username, wake_ai=True)
-    return {'ok': True, 'session_new': is_new}
+    """Keepalive ping only — does not extend online duration."""
+    sweep_stale_sessions()
+    return {'ok': True, 'session_new': False, 'idle_timeout_sec': _IDLE_TIMEOUT_SEC}
 
 
 def list_online_users() -> list[dict[str, Any]]:

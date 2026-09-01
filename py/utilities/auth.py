@@ -13,6 +13,7 @@ from flask import (
     has_request_context,
 )
 import os
+import ipaddress
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -83,10 +84,21 @@ def log_response(response):
         else:
             log_event('INFO' if status_code < 400 else 'WARNING', log_message)
     return response
+def _login_popup_requested() -> bool:
+    raw = (request.args.get("popup") or request.form.get("popup") or "").strip().lower()
+    return raw in {"1", "true", "yes"}
+
+
+def _login_popup_done(username: str):
+    session.pop("next", None)
+    return render_template("login_popup_done.html", username=username)
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    # If user is already logged in, redirect to home
-    if 'username' in session:
+    popup = _login_popup_requested()
+    # Popup logins stay in the child window so the opener can grab this origin's session cookie.
+    if 'username' in session and not popup:
         return redirect(url_for("home"))
     
     # Get the next page from query parameters or referrer
@@ -104,6 +116,7 @@ def login():
             "client_ip": client_ip,
             "location": location_data,
             "turnstile_site_key": Config.TURNSTILE_SITE_KEY or None,
+            "login_popup": popup,
         }
         ctx.update(extra)
         return render_template("login.html", **ctx)
@@ -147,6 +160,13 @@ def login():
                         # Store the next page in session before redirecting
                         session['next'] = next_page
                         session['username'] = username
+                        session['logged_in'] = True
+                        if (username or '').strip().lower() == 'yetimaster':
+                            from py.utilities.master_mode import enable_master_session
+
+                            enable_master_session()
+                        if popup:
+                            return _login_popup_done(username)
                         return redirect(url_for('auth.update_email'))
                 except Error as e:
                     print(f"Error checking email: {e}")
@@ -160,6 +180,12 @@ def login():
             session['username'] = username
             session['logged_in'] = True  # Add this for login_required decorator compatibility
             session['user_permissions'] = get_user_permissions(username)
+            if (username or '').strip().lower() == 'yetimaster':
+                from py.utilities.master_mode import enable_master_session
+
+                enable_master_session()
+            else:
+                session.pop('master_username', None)
             
             if remember:
                 session.permanent = True
@@ -168,6 +194,8 @@ def login():
             
             flash(f"Logged in as {username}")
             log_user_activity(username)
+            if popup:
+                return _login_popup_done(username)
             
             # Redirect TMX users to gpginvoice page
             if username == 'tmx':
@@ -195,14 +223,74 @@ def login():
 
 @auth_bp.route("/logout")
 def logout():
+    try:
+        from py.utilities.online_presence import mark_offline
+
+        mark_offline(session.get('presence_session_id') or '')
+        session.pop('presence_session_id', None)
+    except Exception:
+        pass
     session.pop('username', None)
     session.pop('logged_in', None)  # Clear logged_in flag too
+    session.pop('master_username', None)
+    session.pop('user_permissions', None)
     flash("Logged out")
     return redirect(url_for("auth.login"))
+
+def _redirect_after_master_switch(username: str):
+    from py.other.clientview import client_portal_home_url, is_client_portal_only_user
+
+    if is_client_portal_only_user(username):
+        return redirect(client_portal_home_url())
+    return redirect(url_for('home'))
+
+
+@auth_bp.route('/master/switch', methods=['POST'])
+@login_required
+def master_switch():
+    from py.utilities.master_mode import apply_view_as, is_master_operator
+    from py.utilities.logging_setup import log_user_action
+
+    if not is_master_operator():
+        flash('Master mode only.', 'warning')
+        return redirect(url_for('home'))
+    target = (request.form.get('username') or '').strip()
+    ok, detail = apply_view_as(target)
+    if not ok:
+        flash(detail or 'Could not switch user.', 'warning')
+        return redirect(request.referrer or url_for('home'))
+    log_user_action(
+        f'***yetimaster***__@@@master view as@@@__ {detail}',
+        'yetimaster',
+    )
+    flash(f'Master mode: viewing as {detail}')
+    return _redirect_after_master_switch(detail)
+
+
+@auth_bp.route('/master/stop', methods=['GET', 'POST'])
+@login_required
+def master_stop():
+    from py.utilities.master_mode import MASTER_USERNAME, apply_view_as, is_master_operator
+    from py.utilities.logging_setup import log_user_action
+
+    if not is_master_operator():
+        return redirect(url_for('home'))
+    ok, detail = apply_view_as(MASTER_USERNAME)
+    if ok:
+        log_user_action('***yetimaster***__@@@master view as@@@__ yetimaster', 'yetimaster')
+        flash('Master mode: back to yetimaster')
+        return _redirect_after_master_switch(detail)
+    return redirect(url_for('home'))
+
 
 @auth_bp.route("/update_email", methods=["GET", "POST"])
 @login_required
 def update_email():
+    from py.utilities.master_mode import is_impersonating
+
+    if is_impersonating() and request.method == 'POST':
+        flash('Master mode: cannot change another account. Switch back to yetimaster first.', 'warning')
+        return redirect(url_for('home'))
     username = session['username']
     connection = get_db_connection()
     
@@ -1289,11 +1377,22 @@ def log_user_activity(username):
     except Exception:
         pass
 
+def _is_unroutable_ip(ip):
+    """True for loopback, private, link-local, and other non-public addresses."""
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_reserved
+
+
 def get_location(ip):
     # X-Forwarded-For may contain a CSV list; use the first client IP.
     if not ip:
         return {}
     ip = ip.split(',')[0].strip()
+    if _is_unroutable_ip(ip):
+        return {}
 
     try:
         response = requests.get(f'https://ipinfo.io/{ip}/json', timeout=2)
@@ -1311,9 +1410,6 @@ def get_location(ip):
 
         payload = response.json() or {}
         if payload.get('bogon'):
-            current_app.logger.warning(
-                f"Location lookup rejected for IP {ip}: bogon/private address"
-            )
             return {}
 
         lat = 'N/A'
@@ -1561,6 +1657,18 @@ def user_settings():
             return redirect(url_for("home"))
         
         if request.method == "POST":
+            from py.utilities.master_mode import is_impersonating
+
+            if is_impersonating():
+                error_message = "Master mode: cannot change another account. Switch back to yetimaster first."
+                return render_template(
+                    "user_settings.html",
+                    username=username,
+                    email=user_data['email'],
+                    success_message=success_message,
+                    error_message=error_message,
+                    is_yeti=False,
+                )
             action = request.form.get("action")
             
             if action == "update_email":
@@ -1607,7 +1715,8 @@ def user_settings():
                               username=username, 
                               email=user_data['email'],
                               success_message=success_message,
-                              error_message=error_message)
+                              error_message=error_message,
+                              is_yeti=(username or '').strip().lower() == 'yeti')
     
     except Error as e:
         flash(f"Database error: {e}")

@@ -63,6 +63,38 @@
             background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
         }
         .lc-jobs-list .lc-job-row:last-child { margin-bottom: 0; }
+        .lc-jobs-list .lc-job-row.lc-job-gm {
+            background: linear-gradient(180deg, #fffbeb 0%, #fefce8 100%);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+        }
+        .lc-jobs-list .lc-job-row.lc-job-gm .lc-job-title-line strong {
+            background: #facc15;
+            color: #1c1917;
+            padding: 0.12rem 0.45rem;
+            border-radius: 6px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        }
+        .lc-standard-panel {
+            margin-bottom: 1rem;
+            padding: 0.85rem 1rem;
+            background: linear-gradient(180deg, #fffbeb 0%, #fff 70%);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 12px;
+        }
+        .lc-standard-panel .lc-jobs-head h6 { color: #92400e; }
+        .lc-job-standard-badge {
+            background: #f59e0b !important;
+            color: #1c1917 !important;
+            border: 1px solid #d97706 !important;
+            font-weight: 800 !important;
+        }
+        .lc-jobs-list .lc-job-row.lc-job-standard {
+            background: linear-gradient(180deg, #fffbeb 0%, #fefce8 100%);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+        }
         .lc-job-headline-wrap {
             display: flex;
             flex-wrap: wrap;
@@ -155,6 +187,21 @@
         }
         .lc-job-elapsed strong { color: #0f172a; font-weight: 800; }
         .lc-job-elapsed-running strong { color: #b45309; }
+        .lc-ocr-color-note {
+            display: inline-block;
+            margin-left: 0.45rem;
+            padding: 0.12rem 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            line-height: 1.3;
+            vertical-align: middle;
+            color: #9a3412;
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
         .lc-label-muted { color: var(--lc-muted); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.35rem; }
         .lc-bilingual-label { display: block; line-height: 1.35; margin-bottom: 0.35rem; }
         .lc-bilingual-label .lc-zh { display: block; font-weight: 600; color: #0f172a; font-size: 0.875rem; }
@@ -174,6 +221,12 @@
             padding: 0.85rem 1rem;
         }
         .lc-quick-filters .lc-filter-hint { font-size: 0.82rem; color: var(--lc-muted); margin-top: 0.35rem; margin-bottom: 0; }
+        #list_input {
+            min-height: 3.25rem;
+            word-break: break-all;
+            font-size: 0.95rem;
+            line-height: 1.35;
+        }
         .lc-desc-filter-panel {
             border: 1px solid #ced4da;
             border-radius: 0.2rem;
@@ -249,25 +302,6 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
         }
-        .lc-job-src-preview.lc-job-preview-trigger {
-            cursor: pointer;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-        }
-        .lc-job-src-preview.lc-job-preview-trigger:hover {
-            border-color: #94a3b8;
-            box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
-        }
-        .lc-job-src-preview.lc-job-preview-trigger:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.35);
-        }
-        .lc-job-src-preview.lc-job-src-preview--oneline {
-            max-height: 1.65rem;
-            overflow: hidden;
-            white-space: nowrap;
-            word-break: normal;
-            text-overflow: ellipsis;
-        }
         .lc-job-times-preview-row {
             margin-top: 0.65rem;
         }
@@ -295,6 +329,50 @@
         }
         .lc-your-input-lines .lc-your-input-row {
             word-break: break-word;
+        }
+        .lc-fold {
+            padding: 0.65rem 0.9rem;
+        }
+        .lc-fold > summary {
+            cursor: pointer;
+            outline: none;
+            list-style: none;
+        }
+        .lc-fold > summary::-webkit-details-marker { display: none; }
+        .lc-fold > summary::before {
+            content: '▶ ';
+            font-size: 0.75em;
+        }
+        .lc-fold[open] > summary::before { content: '▼ '; }
+        .action-sidebar .lc-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+        }
+        .action-sidebar .lc-filter-row .form-control {
+            min-width: 0;
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+        }
+        .action-sidebar .lc-filter-col {
+            flex: 1.4 1 0;
+        }
+        .action-sidebar .lc-filter-cmp {
+            flex: 0 0 2.4rem;
+            width: 2.4rem;
+            max-width: 2.4rem;
+            text-align: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .action-sidebar .lc-filter-num {
+            flex: 1 1 0;
+        }
+        .action-sidebar .lc-filter-enable {
+            position: static;
+            margin: 0 0.4rem 0 0;
+            flex-shrink: 0;
         }
 
         /* Image popup and navigation */
@@ -427,9 +505,16 @@
     
         .action-sidebar {
             left: 0;
-            top: 20%;
-            width: 200px;
+            top: 70px;
+            width: 220px;
+            max-height: calc(100vh - 78px);
+            overflow-y: auto;
             border-right: 1px solid #dee2e6;
+        }
+        .action-sidebar #skipOcrColorRows + label,
+        .action-sidebar #removeStylesNotInOms + label {
+            line-height: 1.25;
+            padding-left: 0.15rem;
         }
     
         /* Style list */
@@ -782,7 +867,7 @@
         
         <div class="action-sidebar">
             <div class="d-flex flex-column">
-                <button type="button" class="btn btn-success mb-4" data-toggle="modal" data-target="#imageSizeModal">{{ te('Export List') }}</button>
+                <button type="button" class="btn btn-success mb-2" data-toggle="modal" data-target="#imageSizeModal">{{ te('Export List') }}</button>
                 <button type="button" class="btn btn-primary mb-2" data-toggle="modal" data-target="#editDescriptionModal">{{ te('Edit Desc') }}</button>
                 <button type="button" class="btn btn-warning mb-2" id="togglePcsBox" onclick="togglePcsBox()">{{ te('Hide PCS/BOX') }}</button>
                 <button type="button" class="btn btn-warning mb-2" id="toggleDimensions" onclick="toggleDimensions()">{{ te('Hide Dimensions') }}</button>
@@ -791,21 +876,51 @@
                 <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
                     <div class="form-group mb-1">
                         <label for="removeColumnSelect" style="font-size:0.95em;">{{ te('Remove rows where:') }}</label>
-                        <select id="removeColumnSelect" class="form-control form-control-sm">
-                            <option value="quantity">{{ te('Quantity') }}</option>
+                    </div>
+                    <div class="lc-filter-row mb-1">
+                        <select id="removeColumnSelect" class="form-control form-control-sm lc-filter-col" title="{{ te('Quantity') }} / {{ te('Ocean') }} / {{ te('Total') }}">
+                            <option value="quantity" selected>{{ te('Qty') }}</option>
                             <option value="ocean">{{ te('Ocean') }}</option>
                             <option value="total">{{ te('Total') }}</option>
                         </select>
-                    </div>
-                    <div class="form-group mb-1">
-                        <select id="removeComparisonSelect" class="form-control form-control-sm" style="width:120px; display:inline-block;">
-                            <option value="lt">{{ te('Less than') }}</option>
-                            <option value="eq">{{ te('Equal to') }}</option>
-                            <option value="gt">{{ te('Greater than') }}</option>
+                        <select id="removeComparisonSelect" class="form-control form-control-sm lc-filter-cmp" title="{{ te('Comparison') }}">
+                            <option value="lt">&lt;</option>
+                            <option value="eq">=</option>
+                            <option value="gt">&gt;</option>
                         </select>
-                        <input type="number" id="removeColumnThreshold" class="form-control form-control-sm" placeholder="{{ te('Number') }}" min="0" style="width:100px; display:inline-block; margin-left:5px;">
+                        <input type="number" id="removeColumnThreshold" class="form-control form-control-sm lc-filter-num" placeholder="#" min="0">
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="skipOcrColorRows" checked>
+                        <label class="form-check-label" for="skipOcrColorRows" style="font-size:0.85em;">{{ te('skip auto rows') }}</label>
                     </div>
                     <button type="button" class="btn btn-danger btn-sm btn-block" onclick="removeRowsByColumnThreshold()">{{ te('Delete') }}</button>
+                </div>
+                <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
+                    <div class="form-group mb-1">
+                        <label style="font-size:0.95em;">{{ te('Remove styles where:') }}</label>
+                    </div>
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" id="removeStylesNotInOms">
+                        <label class="form-check-label" for="removeStylesNotInOms" style="font-size:0.85em;">{{ te('Not in OMS') }}</label>
+                    </div>
+                    <div class="d-flex align-items-center mb-1">
+                        <input class="lc-filter-enable" type="checkbox" id="removeStylesByQty" onchange="syncRemoveStylesQtyControls()" title="{{ te('Quantity') }} / {{ te('Ocean') }} / {{ te('Total') }}">
+                        <div class="lc-filter-row">
+                            <select id="removeStylesColumnSelect" class="form-control form-control-sm lc-filter-col" disabled title="{{ te('Quantity') }} / {{ te('Ocean') }} / {{ te('Total') }}">
+                                <option value="quantity" selected>{{ te('Qty') }}</option>
+                                <option value="ocean">{{ te('Ocean') }}</option>
+                                <option value="total">{{ te('Total') }}</option>
+                            </select>
+                            <select id="removeStylesComparisonSelect" class="form-control form-control-sm lc-filter-cmp" disabled title="{{ te('Comparison') }}">
+                                <option value="lt">&lt;</option>
+                                <option value="eq">=</option>
+                                <option value="gt">&gt;</option>
+                            </select>
+                            <input type="number" id="removeStylesQtyThreshold" class="form-control form-control-sm lc-filter-num" placeholder="#" min="0" disabled>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm btn-block" id="btnRemoveStylesWhere" onclick="removeStylesWhere()">{{ te('Delete') }}</button>
                 </div>
                 <div class="card p-2 mb-2" style="background:#f7f7f7; border:1px solid #ddd;">
                     <a href="{{ url_for('v7_listcreator.index') }}" class="btn btn-outline-secondary btn-sm btn-block">Reset 重置</a>
@@ -816,7 +931,7 @@
 
         <div class="bookmark-sidebar">
             <div class="section-header" onclick="toggleSection('styles-section')">
-                <h5>Styles ({{ pivot_data|length }} styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
+                <h5>Styles (<span id="styleCardCount">{{ pivot_data|length }}</span> styles / {{ list_input|count_dropbox_files if list_input else 0 }} pics)</h5>
                 <span class="collapse-icon">▼</span>
                 <div class="dropdown mb-2">
                     <button class="btn btn-danger dropdown-toggle" type="button" id="sortDropdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -887,7 +1002,7 @@
                     <span class="lc-zh">款式、货柜或 Dropbox 路径（可混合货柜与款式；Dropbox 链接请单独使用）</span>
                     <span class="lc-en">{{ te('Styles, container, or Dropbox path, you can mix container and style, but dropbox link by itself') }}</span>
                 </label>
-                <input type="text" class="form-control form-control-lg" id="list_input" name="list_input" placeholder="{{ te('e.g. T3305, T4401,F26193 · dropbox&#92;folder') }}" value="{{ list_input or '' }}" autocomplete="off">
+                <textarea class="form-control form-control-lg" id="list_input" name="list_input" rows="3" placeholder="{{ te('e.g. T3305, T4401,F26193 · dropbox&#92;folder') }}" autocomplete="off">{{ list_input or '' }}</textarea>
                 <small class="form-text text-muted lc-bilingual-hint">
                     <span class="lc-zh">逗号分隔的款式、货柜 PO（如 F26193）、货柜搜索链接，或一个 <code>{{ te('dropbox\\folder') }}</code> 路径（文件夹名可含空格）。</span>
                     <span class="lc-en">Comma-separated styles, container PO numbers (e.g. F26193), container search links, or one <code>{{ te('dropbox\\folder') }}</code> path (spaces in folder names are OK).</span>
@@ -1006,6 +1121,16 @@
         </form>
         </div>
         <div class="lc-panel lc-jobs-panel" id="listcreatorHtmlJobsPanel">
+            <div class="lc-standard-panel" id="listcreatorStandardJobsPanel">
+                <div class="lc-jobs-head">
+                    <div>
+                        <h6 class="font-weight-bold mb-1">{{ te('Standard styles') }} <span class="font-weight-normal">标准款式</span></h6>
+                        <p class="small text-muted mb-0">GM Ting catalogs · pinned (not 7-day expiry) · Use list fills the style box above</p>
+                    </div>
+                </div>
+                <ul id="listcreatorStandardJobsHistory" class="lc-jobs-list list-unstyled small mb-0 mt-3"></ul>
+                <p id="listcreatorStandardJobsEmptyHint" class="small text-muted mb-0 mt-2">Loading standard styles…</p>
+            </div>
             <div class="lc-jobs-head">
                 <div>
                     <h6 class="font-weight-bold text-dark">{{ te('HTML snapshot jobs') }}</h6>
@@ -1023,8 +1148,8 @@
         {% endif %}
 
         {% if your_input_was %}
-        <div class="alert alert-info">
-            <strong>{{ te('Your input was:') }}</strong>
+        <details class="alert alert-info lc-fold mb-2">
+            <summary><strong>{{ te('Your input was:') }}</strong></summary>
             <div class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="{{ te('Submitted list') }}">
                 {% for raw in your_input_was.split(',') %}
                     {% set part = raw.strip() %}
@@ -1034,36 +1159,49 @@
 
     {% if clean_list_for_memo %}
     <div class="mt-2">
-        <strong>{{ te('Your item list is:') }}</strong> 
+        <strong>{{ te('Your item list is:') }}</strong>
         <div style="word-wrap: break-word; white-space: normal; max-width: 100%;">
             {{ clean_list_for_memo }}
         </div>
     </div>
     {% endif %}
-    
+
 {% if duplicate_items %}
 <div class="mt-2">
-    <strong>{{ te('Your duplicate items:') }}</strong> 
+    <strong>{{ te('Your duplicate items:') }}</strong>
     {% for item in duplicate_items %}
         <span class="badge badge-danger">{{ item.base_sku }} ({{ item.files|join(', ') }})</span>
     {% endfor %}
 </div>
 <div class="mt-2">
-    <strong>{{ te('New Total Pic count:') }}</strong> 
+    <strong>{{ te('New Total Pic count:') }}</strong>
     <span class="badge badge-success">{{ list_input|count_dropbox_files if list_input else 0 }} Minus {{ total_duplicates }} duplicate(s) = {{ (list_input|count_dropbox_files if list_input else 0) - total_duplicates }} style(s)</span>
 </div>
 {% endif %}
-    
+
 
     {% if duplicate_styles %}
     <div class="mt-2">
-        <strong>{{ te('Duplicate styles:') }}</strong> 
+        <strong>{{ te('Duplicate styles:') }}</strong>
         {% for style in duplicate_styles %}
             <span class="badge badge-danger">{{ style }}</span>
         {% endfor %}
     </div>
     {% endif %}
-        </div>
+        </details>
+        {% endif %}
+        {% if pivot_data and not missing_descriptions %}
+        <details class="alert alert-light border lc-fold mb-2">
+            <summary>
+                <strong>{{ te('Current style list') }}</strong>
+                <span id="lcCurrentStyleCount" class="text-muted font-weight-normal">({{ pivot_data|length }})</span>
+            </summary>
+            <div id="lcCurrentStyleListLines" class="lc-your-input-lines mt-2 mb-0" role="region" aria-label="{{ te('Current style list') }}">
+                {% for style_group in pivot_data %}
+                    <div class="lc-your-input-row" translate="no">{{ style_group[0].style }}</div>
+                {% endfor %}
+            </div>
+        </details>
         {% endif %}
         {% if not your_input_was %}
         <div class="container-fluid px-0 px-md-2 mt-4 mb-3 border rounded p-3 bg-light">
@@ -1105,11 +1243,11 @@
     {% for description, style_groups in description_groups.items() %}
         {% for style_group in style_groups %}
         
-            <div class="card mb-3" id="{{ style_group[0].style|replace(' ', '_') }}">
+            <div class="card mb-3 style-product-card" id="{{ style_group[0].style|replace(' ', '_') }}" data-style-card="1" data-in-oms="{% if session.get('verified_' + style_group[0].style) or session.get('verified_' + style_group[0].style|replace('-', '')) or session.get('verified_' + style_group[0].style[:6] + '-' + style_group[0].style[6:]) %}1{% else %}0{% endif %}">
                 {# Rest of your existing card body code #}
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
-                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 150px; font-size: 130%;">
+                        <div class="card-title mb-0 mr-4 font-weight-bold" style="min-width: 220px; font-size: 130%;">
                             {{ style_group[0].style }}
                             {% if session.get('verified_' + style_group[0].style) or 
                                   session.get('verified_' + style_group[0].style|replace('-', '')) or 
@@ -1117,6 +1255,9 @@
                                 <span class="badge badge-success px-2">IN_OMS <span class="row-count" style="background:#fff;color:#007bff;border-radius:4px;padding:2px 6px;font-size:90%">[<span class="row-count-value">{{ style_group|length }}</span>]</span></span>
                             {% else %}
                                 <span class="badge badge-warning px-2">{{ te('NOT_IN_OMS') }}</span>
+                                {% if style_group[0].style in (ocr_color_styles|default([])) %}
+                                <span class="lc-ocr-color-note" title="{{ te('Colors were auto-filled from the catalog image') }}">{{ te('please double check color') }}</span>
+                                {% endif %}
                             {% endif %}
                         </div>
                         <textarea class="description-input mx-3 form-control" placeholder="{{ te('Enter description') }}"
@@ -1143,7 +1284,7 @@
                                 </thead>
                                 <tbody>
                                     {% for row in style_group %}
-                                    <tr>
+                                    <tr{% if style_group[0].style in (ocr_color_styles|default([])) %} class="ocr-color-row"{% endif %}>
                                         <td>{{ row.color }}</td>
                                         <td contenteditable="true" class="quantity-cell">{{ row.quantity }}</td>
                                         <td class="ocean-cell">{{ row.ocean }}</td>
@@ -2283,50 +2424,43 @@ function escapeListcreatorJobsHtml(s) {
     return d.innerHTML;
 }
 
-var LC_PREVIEW_JOB_LS_PREFIX = 'v7LcPreviewResolved:';
+function lcAttrEscapePreviewId(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
 
-function lcGetPreferResolvedForJob(rid) {
-    if (!rid) return false;
+function lcCopyTextLegacy(text) {
     try {
-        return localStorage.getItem(LC_PREVIEW_JOB_LS_PREFIX + rid) === '1';
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok === true;
     } catch (e) {
         return false;
     }
 }
 
-function lcTogglePreferResolvedForJob(rid) {
-    if (!rid) return;
-    try {
-        var next = lcGetPreferResolvedForJob(rid) ? '0' : '1';
-        localStorage.setItem(LC_PREVIEW_JOB_LS_PREFIX + rid, next);
-    } catch (e) {}
-}
-
-function lcAttrEscapePreviewId(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-}
-
-function wireListcreatorPreviewBoxToggle() {
-    var ul = document.getElementById('listcreatorHtmlJobsHistory');
-    if (!ul || ul.dataset.lcPreviewTriggerBound === '1') return;
-    ul.dataset.lcPreviewTriggerBound = '1';
-    function handleToggle(ev, trg) {
-        if (!trg || trg.getAttribute('data-action') !== 'toggle-job-preview') return;
-        ev.preventDefault();
-        var rid = (trg.getAttribute('data-rid') || '').trim();
-        if (!rid) return;
-        lcTogglePreferResolvedForJob(rid);
-        renderListcreatorHtmlJobsHistory(window.lastListcreatorHtmlJobs || []);
+function lcCopyTextToClipboard(text) {
+    if (!text) return Promise.resolve(false);
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(function() { return true; }).catch(function() {
+            return lcCopyTextLegacy(text);
+        });
     }
-    ul.addEventListener('click', function(ev) {
-        handleToggle(ev, ev.target.closest('[data-action="toggle-job-preview"]'));
-    });
-    ul.addEventListener('keydown', function(ev) {
-        if (ev.key !== 'Enter' && ev.key !== ' ') return;
-        var trg = ev.target.closest('[data-action="toggle-job-preview"]');
-        if (!trg) return;
-        handleToggle(ev, trg);
-    });
+    return Promise.resolve(lcCopyTextLegacy(text));
+}
+
+function lcJobResolvedListText(j) {
+    if (!j) return '';
+    var resolved = ((j.resolved_styles_full || j.resolved_styles) || '').trim();
+    return resolved;
 }
 
 function listcreatorRenameJobUrl(rid, ownerSlug) {
@@ -2366,23 +2500,19 @@ function listcreatorFetchDelete(url) {
         });
 }
 
-function lcPreviewPayload(j, preferResolved) {
-    var resolved = ((j.resolved_styles_full || j.resolved_styles) || '').trim();
+function lcPreviewPayload(j) {
+    var resolved = lcJobResolvedListText(j);
     var src = ((j.list_input || j.list_input_preview) || '').trim();
-    var isPath = !!j.source_is_path;
-    if (preferResolved) {
-        if (resolved) {
-            var parts = resolved.split(',').filter(function(x) { return !!x.trim(); });
-            var n = parts.length;
-            var cap = 'Resolved style list' + (n ? (' (' + n + ')') : '');
-            return { body: resolved, caption: cap };
-        }
+    if (resolved) {
+        var parts = resolved.split(',').filter(function(x) { return !!x.trim(); });
+        var n = parts.length;
+        var cap = 'Resolved style list' + (n ? (' (' + n + ')') : '');
+        return { body: resolved, caption: cap };
+    }
+    if (src) {
         return { body: src, caption: 'Still processing — resolved list fills in when rendering completes' };
     }
-        if (isPath) {
-        return { body: src, caption: 'Dropbox / folder path you submitted , click below to switch' };
-    }
-    return { body: src, caption: 'Source line submitted' };
+    return { body: '', caption: '' };
 }
 
 function lcPopulateHtmlJobsUserFilter(options, serverFilterUser) {
@@ -2399,11 +2529,79 @@ function lcPopulateHtmlJobsUserFilter(options, serverFilterUser) {
     }
 }
 
+function lcJobByRid(rid) {
+    var job = null;
+    (window.lastListcreatorHtmlJobs || []).forEach(function(row) {
+        if (row && row.id === rid) job = row;
+    });
+    return job;
+}
+
+function lcFillListInputFromJob(job) {
+    var text = lcJobResolvedListText(job);
+    if (!text) {
+        alert('No resolved style list to use yet.');
+        return false;
+    }
+    var ta = document.getElementById('list_input');
+    if (!ta) {
+        alert('Style list box is not on this page.');
+        return false;
+    }
+    ta.value = text;
+    if (ta.tagName === 'TEXTAREA' || ta.type === 'text' || ta.type === 'hidden') {
+        try { ta.focus(); } catch (e) {}
+        try { ta.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e2) {}
+    }
+    return true;
+}
+
 function wireListcreatorSnapshotJobsActions() {
-    var ul = document.getElementById('listcreatorHtmlJobsHistory');
-    if (!ul || ul.dataset.lcSnapActionsBound === '1') return;
-    ul.dataset.lcSnapActionsBound = '1';
-    ul.addEventListener('click', function(ev) {
+    var panel = document.getElementById('listcreatorHtmlJobsPanel');
+    if (!panel || panel.dataset.lcSnapActionsBound === '1') return;
+    panel.dataset.lcSnapActionsBound = '1';
+    panel.addEventListener('click', function(ev) {
+        var useBtn = ev.target.closest('[data-action="use-snapshot-list"]');
+        if (useBtn) {
+            var urid = (useBtn.getAttribute('data-rid') || '').trim();
+            if (!urid) return;
+            if (!lcFillListInputFromJob(lcJobByRid(urid))) return;
+            var origUse = useBtn.getAttribute('data-orig-label') || useBtn.textContent || 'Use list';
+            useBtn.setAttribute('data-orig-label', origUse);
+            useBtn.textContent = 'Filled';
+            useBtn.disabled = true;
+            setTimeout(function() {
+                useBtn.textContent = origUse;
+                useBtn.disabled = false;
+            }, 1600);
+            return;
+        }
+        var copyBtn = ev.target.closest('[data-action="copy-snapshot-list"]');
+        if (copyBtn) {
+            var crid = (copyBtn.getAttribute('data-rid') || '').trim();
+            if (!crid) return;
+            var job = lcJobByRid(crid);
+            var text = lcJobResolvedListText(job);
+            if (!text) {
+                alert('No resolved style list to copy yet.');
+                return;
+            }
+            lcCopyTextToClipboard(text).then(function(ok) {
+                if (!ok) {
+                    alert('Could not copy to clipboard.');
+                    return;
+                }
+                var orig = copyBtn.getAttribute('data-orig-label') || copyBtn.textContent || 'Copy list';
+                copyBtn.setAttribute('data-orig-label', orig);
+                copyBtn.textContent = 'Copied';
+                copyBtn.disabled = true;
+                setTimeout(function() {
+                    copyBtn.textContent = orig;
+                    copyBtn.disabled = false;
+                }, 1600);
+            });
+            return;
+        }
         var redoBtn = ev.target.closest('[data-action="redo-snapshot-job"]');
         if (redoBtn) {
             var rawRid = redoBtn.getAttribute('data-rid');
@@ -2506,23 +2704,29 @@ function wireListcreatorSnapshotJobsActions() {
     });
 }
 
-function renderListcreatorHtmlJobsHistory(jobs) {
-    var el = document.getElementById('listcreatorHtmlJobsHistory');
-    var emptyHint = document.getElementById('listcreatorHtmlJobsEmptyHint');
+function renderListcreatorStandardJobs(jobs) {
+    var el = document.getElementById('listcreatorStandardJobsHistory');
+    var emptyHint = document.getElementById('listcreatorStandardJobsEmptyHint');
     if (!el) return;
-    wireListcreatorPreviewBoxToggle();
-    wireListcreatorSnapshotJobsActions();
-    window.lastListcreatorHtmlJobs = jobs || [];
     if (!jobs || !jobs.length) {
         el.innerHTML = '';
-        if (emptyHint) emptyHint.classList.remove('d-none');
+        if (emptyHint) {
+            emptyHint.classList.remove('d-none');
+            emptyHint.textContent = 'Standard snapshots were not found on this server.';
+        }
         return;
     }
     if (emptyHint) emptyHint.classList.add('d-none');
-    el.innerHTML = jobs.map(function(j) {
+    el.innerHTML = jobs.map(function(j) { return renderListcreatorJobRowHtml(j); }).join('');
+}
+
+function renderListcreatorJobRowHtml(j) {
         var status = (j.status || '');
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
-        var title = escapeListcreatorJobsHtml((j.snapshot_name || '').trim());
+        var rawName = (j.snapshot_name || '').trim();
+        var isStandard = !!j.is_standard;
+        var isGmJob = isStandard || /^gm(\b|_|-|\s|$)/i.test(rawName);
+        var title = escapeListcreatorJobsHtml(rawName);
         var subId = j.id ? (j.id.length > 14 ? (j.id.substring(0, 10) + '…') : j.id) : '';
         var headline = '<span class="lc-job-title-line">' + (title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>'));
         if (title && subId) headline += ' <span class="text-muted lc-job-subid">· ' + escapeListcreatorJobsHtml(subId) + '</span>';
@@ -2563,36 +2767,37 @@ function renderListcreatorHtmlJobsHistory(jobs) {
         var ownTipAttr = ownTip ? (' title="' + lcAttrEscapePreviewId(ownTip) + '"') : '';
         var whoBadge = ' <span class="badge lc-job-owner-badge lc-job-pill"' + ownTipAttr + '>'
             + escapeListcreatorJobsHtml(ownDisp) + '</span>';
+        var stdBadge = isStandard ? ' <span class="badge lc-job-standard-badge lc-job-pill">Standard</span>' : '';
         var metaLine = '<div class="lc-job-headline-wrap">' + line + ' <span class="badge badge-' + badge + ' lc-job-status-badge">'
-            + escapeListcreatorJobsHtml(status) + '</span>' + whoBadge + '</div>';
+            + escapeListcreatorJobsHtml(status) + '</span>' + stdBadge + whoBadge + '</div>';
         var delSnapBtn = '<button type="button" class="btn btn-outline-danger lc-job-action-btn mr-2 mb-1" data-action="delete-snapshot-job" data-rid="'
             + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>{{ te('Delete') }}</button>';
         var actions = '';
         var canM = !!j.can_manage;
         if (status === 'ready' && j.view_url) {
+            actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="use-snapshot-list" data-rid="'
+                + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Use list</button>';
+            actions += '<button type="button" class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" data-action="copy-snapshot-list" data-rid="'
+                + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Copy list</button>';
             actions += '<a class="btn btn-outline-success lc-job-action-btn mr-2 mb-1" href="' + j.view_url + '" target="_blank" rel="noopener">Open snapshot</a>';
             if (canM) {
                 actions += '<button type="button" class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Redo snapshot</button>';
                 actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
-                actions += delSnapBtn;
+                if (!isStandard) actions += delSnapBtn;
             }
         } else if (status === 'running' || status === 'failed') {
             if (j.wait_url) actions += '<a class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
             if (canM) {
                 actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
-                actions += delSnapBtn;
+                if (!isStandard) actions += delSnapBtn;
             }
         }
         var err = (status === 'failed' && j.error) ? (' <span class="text-danger d-block mt-1 small">' + escapeListcreatorJobsHtml(j.error) + '</span>') : '';
-        var jobRid = (j.id || '').trim();
-        var preferThis = lcGetPreferResolvedForJob(jobRid);
-        var pr = lcPreviewPayload(j, preferThis);
+        var pr = lcPreviewPayload(j);
         var previewHtml = '';
         if (pr.body) {
             var capHtml = pr.caption ? ('<span class="d-block small text-muted mb-1">' + escapeListcreatorJobsHtml(pr.caption) + '</span>') : '';
-            var prevBoxClass = 'lc-job-src-preview lc-job-preview-trigger' + (!preferThis ? ' lc-job-src-preview--oneline' : '');
-            var ridAttr = jobRid ? (' data-rid="' + lcAttrEscapePreviewId(jobRid) + '"') : '';
-            previewHtml = '<div class="lc-job-preview-wrap">' + capHtml + '<div class="' + prevBoxClass + '"' + ridAttr + ' data-action="toggle-job-preview" role="button" tabindex="0" title="Click to switch between Dropbox path and resolved styles">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
+            previewHtml = '<div class="lc-job-preview-wrap">' + capHtml + '<div class="lc-job-src-preview">' + escapeListcreatorJobsHtml(pr.body) + '</div></div>';
         }
         var timesPreviewRow = '';
         if (timeBlock || previewHtml) {
@@ -2601,12 +2806,30 @@ function renderListcreatorHtmlJobsHistory(jobs) {
                 previewHtml +
                 '</div>';
         }
-        return '<li class="lc-job-row">' +
+        var rowClass = 'lc-job-row';
+        if (isStandard) rowClass += ' lc-job-standard';
+        if (isGmJob) rowClass += ' lc-job-gm';
+        return '<li class="' + rowClass + '">' +
             '<div class="d-flex flex-column flex-lg-row flex-lg-wrap align-items-lg-center justify-content-lg-between">' +
             '<div class="lc-job-main pr-lg-3 mb-2 mb-lg-0" style="min-width: 0;">' + metaLine + '</div>' +
             '<div class="lc-job-actions d-flex flex-wrap align-items-center flex-shrink-0">' + actions + '</div></div>' +
             timesPreviewRow + err + '</li>';
-    }).join('');
+}
+
+function renderListcreatorHtmlJobsHistory(jobs, standardJobs) {
+    var el = document.getElementById('listcreatorHtmlJobsHistory');
+    var emptyHint = document.getElementById('listcreatorHtmlJobsEmptyHint');
+    if (!el) return;
+    wireListcreatorSnapshotJobsActions();
+    window.lastListcreatorHtmlJobs = (standardJobs || []).concat(jobs || []);
+    renderListcreatorStandardJobs(standardJobs || []);
+    if (!jobs || !jobs.length) {
+        el.innerHTML = '';
+        if (emptyHint) emptyHint.classList.remove('d-none');
+        return;
+    }
+    if (emptyHint) emptyHint.classList.add('d-none');
+    el.innerHTML = jobs.map(renderListcreatorJobRowHtml).join('');
 }
 
 function refreshListcreatorHtmlJobs() {
@@ -2622,8 +2845,8 @@ function refreshListcreatorHtmlJobs() {
         })
         .then(function(data) {
             lcPopulateHtmlJobsUserFilter(data.filter_options || [], data.filter_user || '');
-            renderListcreatorHtmlJobsHistory(data.jobs || []);
-            var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
+            renderListcreatorHtmlJobsHistory(data.jobs || [], data.standard_jobs || []);
+            var running = (data.jobs || []).concat(data.standard_jobs || []).some(function(j) { return j.status === 'running'; });
             if (running && !listcreatorHtmlJobsPoll) {
                 listcreatorHtmlJobsPoll = setInterval(refreshListcreatorHtmlJobs, 4000);
             }
@@ -3064,49 +3287,56 @@ function exportWithSelectedSize() {
         }
         </script>
 <script>
-    function deleteCard(button) {
-        // Get the parent card using the specific class combination we have in the template
-        const card = button.closest('div.card.mb-3');
-        if (card) {
-            // Get style and description before removal
-            const style = getCardStyle(card);
-            if (!style) return;
-            const description = card.querySelector('.description-input').value.trim();
-            
-            // Remove style from style list
+    function updateStyleCardCount() {
+        const countEl = document.getElementById('styleCardCount');
+        if (!countEl) return;
+        countEl.textContent = document.querySelectorAll('[data-style-card="1"]').length;
+    }
+
+    function removeStyleCard(card) {
+        if (!card) return;
+        const style = typeof getCardStyle === 'function' ? getCardStyle(card) : '';
+        const descInput = card.querySelector('.description-input');
+        const description = descInput ? descInput.value.trim() : '';
+
+        if (style) {
             const styleLink = document.querySelector(`#style-list a[href="#${style.replace(' ', '_')}"]`);
-            if (styleLink) {
+            if (styleLink && styleLink.parentElement) {
                 styleLink.parentElement.remove();
             }
-            
-            // Check if this description exists in other cards
+
             const otherCardsWithDescription = Array.from(document.querySelectorAll('.description-input'))
-                .filter(textarea => 
-                    textarea !== card.querySelector('.description-input') && 
+                .filter(textarea =>
+                    textarea !== descInput &&
                     textarea.value.trim() === description
                 );
-                
-            // If this was the only card with this description, remove from unique descriptions
-            if (otherCardsWithDescription.length === 0) {
+
+            if (otherCardsWithDescription.length === 0 && description) {
                 const descriptionItem = Array.from(document.querySelectorAll('#sortableDescriptions li'))
                     .find(li => li.textContent.trim() === description);
                 if (descriptionItem) {
                     descriptionItem.remove();
                 }
             }
-            
-            // Remove the corresponding row from edit description modal
+
             const modalTable = document.querySelector('#editDescriptionModal table tbody');
-            const modalRows = modalTable.querySelectorAll('tr');
-            modalRows.forEach(row => {
-                if (row.cells[0].textContent.trim() === style) {
-                    row.remove();
-                }
-            });
-            
-            // Remove the card
-            card.remove();
+            if (modalTable) {
+                modalTable.querySelectorAll('tr').forEach(row => {
+                    if (row.cells[0] && row.cells[0].textContent.trim() === style) {
+                        row.remove();
+                    }
+                });
+            }
         }
+
+        card.remove();
+        updateStyleCardCount();
+        if (typeof updateCurrentStyleList === 'function') updateCurrentStyleList();
+    }
+
+    function deleteCard(button) {
+        const card = button.closest('[data-style-card="1"]') || button.closest('div.card.mb-3');
+        removeStyleCard(card);
     }
     </script>
     <script>
@@ -3284,33 +3514,47 @@ function exportWithSelectedSize() {
                     listBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     return;
                 }
-                var params = new URLSearchParams();
-                descriptions.forEach(function(d) { params.append('description', d); });
-                if (stockEl && stockEl.value) params.set('stock_filter', stockEl.value);
-                if (colorEl && colorEl.value.trim()) params.set('color_filter', colorEl.value.trim());
                 if (hintEl) {
                     lcSetBilingualHint(hintEl, '正在加载款式…', 'Loading styles…');
                     hintEl.dataset.lcApplied = '1';
                 }
                 var applyBtn = document.getElementById('lcApplyFiltersBtn');
                 if (applyBtn) applyBtn.disabled = true;
-                fetch(window.V7_QUICK_FILTER_STYLES_URL + '?' + params.toString(), { credentials: 'same-origin' })
-                    .then(function(r) { return r.json(); })
+                fetch(window.V7_QUICK_FILTER_STYLES_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        descriptions: descriptions,
+                        stock_filter: stockEl && stockEl.value ? stockEl.value : '',
+                        color_filter: colorEl ? colorEl.value.trim() : ''
+                    })
+                })
+                    .then(function(r) {
+                        return r.text().then(function(text) {
+                            var data = null;
+                            try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+                            if (!r.ok) {
+                                var msg = (data && data.message) || ('HTTP ' + r.status);
+                                throw new Error(msg);
+                            }
+                            if (!data || !data.success) {
+                                throw new Error((data && data.message) || 'Filter failed');
+                            }
+                            return data;
+                        });
+                    })
                     .then(function(data) {
-                        if (!data.success) {
-                            throw new Error(data.message || 'Filter failed');
-                        }
                         listInp.value = data.list_input || '';
                         updateItemCount(listInp.value);
                         if (hintEl) {
-                            var label = (data.descriptions || descriptions).map(function(d) {
-                                return String(d || '').toLowerCase();
-                            }).join(', ');
+                            var n = typeof data.count === 'number' ? data.count : (data.styles || []).length;
+                            var descN = (data.descriptions || descriptions).length;
                             if (data.list_input && data.list_input.trim()) {
                                 lcSetBilingualHint(
                                     hintEl,
-                                    '已加载：' + label + '。',
-                                    'Loaded: ' + label + '.'
+                                    '已加载 ' + n + ' 个款式（' + descN + ' 个描述）。',
+                                    'Loaded ' + n + ' styles from ' + descN + ' description(s).'
                                 );
                             } else {
                                 lcSetBilingualHint(hintEl, '没有符合这些筛选条件的款式。', 'No styles matched these filters.');
@@ -3318,8 +3562,9 @@ function exportWithSelectedSize() {
                         }
                     })
                     .catch(function(err) {
-                        if (hintEl) lcSetBilingualHint(hintEl, '无法加载款式。', 'Could not load styles.');
-                        alert('无法加载款式。\nCould not load styles.');
+                        var detail = (err && err.message) ? String(err.message) : '';
+                        if (hintEl) lcSetBilingualHint(hintEl, '无法加载款式。' + (detail ? ' ' + detail : ''), 'Could not load styles.' + (detail ? ' ' + detail : ''));
+                        alert('无法加载款式。\nCould not load styles.' + (detail ? '\n' + detail : ''));
                     })
                     .finally(function() {
                         var btn = document.getElementById('lcApplyFiltersBtn');
@@ -3877,6 +4122,9 @@ function removeRowsByColumnThreshold() {
     var column = document.getElementById('removeColumnSelect').value;
     var comparison = document.getElementById('removeComparisonSelect').value;
     var threshold = parseInt(document.getElementById('removeColumnThreshold').value);
+    var skipOcr = document.getElementById('skipOcrColorRows')
+        ? document.getElementById('skipOcrColorRows').checked
+        : true;
     if (isNaN(threshold)) {
         alert('Please enter a valid number.');
         return;
@@ -3886,6 +4134,9 @@ function removeRowsByColumnThreshold() {
         if (!table) return;
         var rows = table.querySelectorAll('tbody tr');
         rows.forEach(function(row) {
+            if (skipOcr && row.classList.contains('ocr-color-row')) {
+                return;
+            }
             var value = 0;
             if (column === 'quantity') {
                 var cell = row.querySelector('.quantity-cell');
@@ -3912,12 +4163,16 @@ function removeRowsByColumnThreshold() {
     });
     updateRowCounts();
 }
-// Also update counts after manual row removal
+
 function removeRow(button) {
     button.closest('tr').remove();
     updateRowCounts();
 }
-document.addEventListener('DOMContentLoaded', updateRowCounts);
+document.addEventListener('DOMContentLoaded', function() {
+    updateRowCounts();
+    if (typeof syncRemoveStylesQtyControls === 'function') syncRemoveStylesQtyControls();
+});
 </script>
+<script src="{{ url_for('static', filename='js/v7_listcreator_style_tools.js') }}?v=3"></script>
 </body>
 </html>

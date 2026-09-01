@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Segoe UI, sans-serif; width: 320px; margin: 0; padding: 12px; background: #111; color: #eee; }
+    h1 { font-size: 14px; margin: 0 0 8px; }
+    label { font-size: 11px; color: #aaa; display: block; margin: 6px 0 3px; }
+    input { width: 100%; box-sizing: border-box; padding: 6px; border-radius: 6px; border: 1px solid #333; background: #1b1b1b; color: #fff; }
+    button { margin-top: 10px; width: 100%; padding: 8px; border: 0; border-radius: 6px; background: #ff4eb8; color: #fff; font-weight: 700; cursor: pointer; }
+    button.secondary { background: #334155; }
+    .button-row { display: flex; gap: 6px; }
+    .button-row button { flex: 1; }
+    .check { display: flex; align-items: center; gap: 7px; color: #ddd; font-size: 12px; margin-top: 12px; }
+    .check input { width: auto; }
+    .debug-count { color: #aaa; font-size: 11px; margin-top: 5px; }
+    .ok { color: #86efac; font-size: 12px; margin-top: 8px; }
+    .err { color: #fca5a5; font-size: 12px; margin-top: 8px; }
+    p { font-size: 11px; color: #bbb; line-height: 1.35; }
+  </style>
+</head>
+<body>
+  <h1>FDC Whatnot Live</h1>
+  <p>Uses your <strong>Whatnot</strong> login cookie in this Chrome profile. Open the seller dashboard; if Whatnot asks you to sign in, do it in that tab and the session stays on whatnot.com.</p>
+  <label>Flask ingest URL</label>
+  <input id="endpoint" placeholder="https://www.fdcef.com/whatnot_live/ingest">
+  <label>Ingest token (optional)</label>
+  <input id="token" placeholder="leave blank unless set on server">
+  <button id="save" type="button">Save</button>
+  <button id="test" type="button">Send test bid $25</button>
+  <label class="check"><input id="debugEnabled" type="checkbox"> Save Whatnot diagnostic log locally</label>
+  <div id="debugCount" class="debug-count">No diagnostic log</div>
+  <div class="button-row">
+    <button id="exportDebug" class="secondary" type="button">Export log</button>
+    <button id="clearDebug" class="secondary" type="button">Clear log</button>
+  </div>
+  <div id="msg"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
