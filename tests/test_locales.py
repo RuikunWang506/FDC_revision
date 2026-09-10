@@ -21,6 +21,11 @@ class LocaleTests(unittest.TestCase):
             "error.404.title",
             "error.500.title",
             "page.manage_users.title",
+            "dashboard.quick_access",
+            "dashboard.search_tools",
+            "dashboard.no_match",
+            "tool.smart_search.title",
+            "page.smart_search.title",
         ):
             self.assertIn(key, en)
             self.assertTrue(en[key])

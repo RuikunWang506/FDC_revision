@@ -305,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% include '_i18n_client.html' %}
+{% include '_toasts.html' %}
 {% if current_user and not hide_staff_nav_links() %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-ai-assistant.css') }}">
 <script src="{{ url_for('static', filename='js/fdc-presence.js') }}?v=online-vis1" defer></script>

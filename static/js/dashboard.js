@@ -64,7 +64,8 @@
     function updateFavorites() {
       if (PORTAL_MINIMAL) return;
       document.querySelectorAll('.favorite-star').forEach(star => {
-        const tool = star.parentElement.parentElement.getAttribute('data-tool');
+        const card = star.closest('.tool-card');
+        const tool = card ? card.getAttribute('data-tool') : null;
         if (userFavorites.includes(tool)) {
           star.classList.add('favorited');
           star.classList.remove('far');
@@ -79,7 +80,8 @@
       const visibleFavorites = Array.from(document.querySelectorAll('.tool-card'))
         .filter(card => userFavorites.includes(card.getAttribute('data-tool')))
         .length;
-      document.getElementById('favoritesCount').textContent = visibleFavorites;
+      const favCountEl = document.getElementById('favoritesCount');
+      if (favCountEl) favCountEl.textContent = visibleFavorites;
     }
     
     function getDashboardSearchTerm() {
@@ -135,6 +137,13 @@
         updateCategoryCounts();
         syncDashSections();
         fitCardTitles();
+        var emptyEl = document.getElementById('dashboardEmptySearch');
+        if (emptyEl) {
+          var anyVisible = Array.prototype.some.call(cards, function(card) {
+            return card.style.display !== 'none';
+          });
+          emptyEl.hidden = anyVisible || !term;
+        }
       }
 
       if (animate) {
@@ -180,7 +189,8 @@
     function updateCategoryCounts() {
       if (PORTAL_MINIMAL) return;
       const cards = document.querySelectorAll('.tool-card');
-      document.getElementById('allToolsCount').textContent = cards.length;
+      const allCountEl = document.getElementById('allToolsCount');
+      if (allCountEl) allCountEl.textContent = cards.length;
       const slugs = ['catalog', 'sales', 'inventory', 'warehouse', 'admin'];
       const counts = Object.fromEntries(slugs.map(s => [s, 0]));
       cards.forEach(card => {
@@ -203,9 +213,12 @@
         el.style.overflowWrap = 'normal';
         el.style.wordBreak = 'keep-all';
         el.style.hyphens = 'none';
+        el.style.whiteSpace = 'normal';
         el.style.transition = 'none';
 
-        const min = 11;
+        // Shrink only when a single word is wider than the title box.
+        // Short titles stay full size; two words can share one row.
+        const min = 12;
         let size = parseFloat(getComputedStyle(el).fontSize);
         while (el.scrollWidth > el.clientWidth + 1 && size > min) {
           size -= 0.5;
@@ -221,16 +234,11 @@
       fitTitlesDebounce = setTimeout(fitCardTitles, 120);
     }
 
-    const DASHBOARD_BACKGROUNDS = {{ dashboard_backgrounds|default([
-      {"id": "rocker-sta", "file": "rocker-sta-qr8Ci2tzyR8.jpg", "label": "City high-rises", "photographer": "Rocker Sta", "photographer_url": "https://unsplash.com/@starocker?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/birds-eye-view-photography-of-concrete-high-rise-buildings-qr8Ci2tzyR8?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "August 25, 2026"},
-      {"id": "josh-williams", "file": "josh-williams-bg.jpg", "label": "Night desert", "photographer": "Josh Williams", "photographer_url": "https://unsplash.com/@joshwi?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "June 3, 2026"},
-      {"id": "luca-bravo", "file": "luca-bravo-zAjdgNXsMeg-unsplash.jpg", "label": "Mountain lake", "photographer": "Luca Bravo", "photographer_url": "https://unsplash.com/@lucabravo?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/scenic-view-of-mountains-during-dawn-zAjdgNXsMeg?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "May 1, 2026"}
-    ])|tojson }};
-    let currentDashboardBgId = {{ (dashboard_bg.id if dashboard_bg is defined else 'rocker-sta')|tojson }};
     const fdcBgCrop = { img: null, scale: 1, panX: 0, panY: 0, minScale: 0.1, maxScale: 8, fillScale: 1, fitScale: 1, dragging: false, lastX: 0, lastY: 0 };
 
     function dashboardBgUrl(file) {
-      return "{{ url_for('static', filename='__BG__') }}".replace('__BG__', file);
+      const base = window.DASHBOARD_STATIC_BG_BASE || '/static/__BG__';
+      return String(base).replace('__BG__', file);
     }
 
     function dashboardBgCssUrl(bg) {
@@ -596,14 +604,17 @@
         frame.addEventListener('pointercancel', stopDrag);
       }
 
-      {% if dashboard_bg is not defined %}
-      try {
-        const savedId = localStorage.getItem('fdcDashboardBg');
-        const savedBg = DASHBOARD_BACKGROUNDS.find(function(item) { return item.id === savedId; });
-        if (savedBg) applyDashboardBackground(savedBg);
-      } catch (err) {}
-      {% endif %}
+      if (!window.DASHBOARD_BG_FROM_SERVER) {
+        try {
+          const savedId = localStorage.getItem('fdcDashboardBg');
+          const savedBg = (typeof DASHBOARD_BACKGROUNDS !== 'undefined' ? DASHBOARD_BACKGROUNDS : []).find(function(item) { return item.id === savedId; });
+          if (savedBg) applyDashboardBackground(savedBg);
+        } catch (err) {}
+      }
     }
+
+    window.toggleFavorite = toggleFavorite;
+    window.filterCategory = filterCategory;
     
     document.addEventListener('DOMContentLoaded', function() {
       initDashboardBackgroundPicker();

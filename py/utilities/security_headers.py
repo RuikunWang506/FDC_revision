@@ -20,7 +20,7 @@ def register_security_headers(app: Flask) -> None:
                 "Strict-Transport-Security",
                 "max-age=31536000; includeSubDomains",
             )
-        # Allow existing inline scripts/styles and CDNs used by templates.
+        # 'unsafe-inline' is a known follow-up: templates still use inline JS/CSS.
         response.headers.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; "

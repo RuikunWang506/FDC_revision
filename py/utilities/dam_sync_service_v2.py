@@ -32,7 +32,8 @@ except Exception:
     pass
 
 class DAMSyncServiceV2:
-    def __init__(self):
+    def __init__(self, log=None):
+        self._log = log
         self.catalog_dir = r"D:\Catalog_pictures\catalog_original"
         self.big_picture_dir = r"D:\Individual_big_picture"
         self.dropbox_dir = r"Dropbox\Pictures-China (1)\container catalog"
@@ -53,6 +54,20 @@ class DAMSyncServiceV2:
         }
         self.recent_added: List[Dict[str, str]] = []
         self._recent_added_cap = 500
+
+    def _emit(self, *args, **kwargs):
+        """Local logger — never patch builtins.print."""
+        message = " ".join(str(arg) for arg in args)
+        if self._log:
+            try:
+                self._log(message)
+                return
+            except Exception:
+                pass
+        try:
+            print(message)
+        except Exception:
+            pass
 
     def _note_added(self, filename: str, sku: str, source: str, path: str) -> None:
         if len(self.recent_added) >= self._recent_added_cap:
@@ -88,13 +103,13 @@ class DAMSyncServiceV2:
                     'size_bytes': os.path.getsize(file_path)
                 }
         except Exception as e:
-            print(f"Error reading image {file_path}: {e}", file=sys.stderr)
-            print(f"Removing corrupted image: {file_path}")
+            self._emit(f"Error reading image {file_path}: {e}", file=sys.stderr)
+            self._emit(f"Removing corrupted image: {file_path}")
             try:
                 os.remove(file_path)
-                print(f"Successfully removed corrupted image: {file_path}")
+                self._emit(f"Successfully removed corrupted image: {file_path}")
             except Exception as remove_error:
-                print(f"Error removing corrupted image {file_path}: {remove_error}", file=sys.stderr)
+                self._emit(f"Error removing corrupted image {file_path}: {remove_error}", file=sys.stderr)
             return None
     
     def extract_sku_from_filename(self, filename):
@@ -121,11 +136,11 @@ class DAMSyncServiceV2:
     
     def collect_jpg_paths_relative(self, root_dir: str, pattern: str = "*.jpg") -> List[str]:
         """Recursively list matching image paths relative to root_dir (no JSON cache)."""
-        print(f"Scanning {root_dir} for {pattern}...")
+        self._emit(f"Scanning {root_dir} for {pattern}...")
         root_path = Path(root_dir)
 
         if not root_path.exists():
-            print(f"Directory not found: {root_dir}")
+            self._emit(f"Directory not found: {root_dir}")
             return []
 
         file_list = []
@@ -135,10 +150,10 @@ class DAMSyncServiceV2:
                     relative_path = file_path.relative_to(root_path)
                     file_list.append(str(relative_path).replace('\\', '/'))
                 except Exception as e:
-                    print(f"Error processing {file_path}: {e}")
+                    self._emit(f"Error processing {file_path}: {e}")
 
         file_list.sort()
-        print(f"Found {len(file_list)} files under {root_dir}")
+        self._emit(f"Found {len(file_list)} files under {root_dir}")
         return file_list
 
     def print_progress(self, current: int, total: int, prefix: str = "Progress"):
@@ -153,7 +168,7 @@ class DAMSyncServiceV2:
         rate = current / elapsed if elapsed > 0 else 0
         eta = (total - current) / rate if rate > 0 else 0
         
-        print(f"{prefix}: {current}/{total} ({percent:.1f}%) | "
+        self._emit(f"{prefix}: {current}/{total} ({percent:.1f}%) | "
               f"Added: {self.stats['total_added']} | "
               f"Updated: {self.stats['total_updated']} | "
               f"Skipped: {self.stats['total_skipped']} | "
@@ -163,20 +178,20 @@ class DAMSyncServiceV2:
     
     def sync_catalog_images_batch(self):
         """Sync catalog_original folder with DAM database using batch processing"""
-        print("\n=== Syncing Catalog Images (Batch Mode) ===")
+        self._emit("\n=== Syncing Catalog Images (Batch Mode) ===")
         
         if not os.path.exists(self.catalog_dir):
-            print(f"Catalog directory not found: {self.catalog_dir}")
+            self._emit(f"Catalog directory not found: {self.catalog_dir}")
             return
         
         file_list = self.collect_jpg_paths_relative(self.catalog_dir)
         
         if not file_list:
-            print("No files to process")
+            self._emit("No files to process")
             return
         
         total_files = len(file_list)
-        print(f"Processing {total_files} catalog images...")
+        self._emit(f"Processing {total_files} catalog images...")
         
         connection = get_mysql_connection()
         # Buffered cursor: SELECT ... fetchone() must not leave unread rows or the next
@@ -221,7 +236,7 @@ class DAMSyncServiceV2:
                     
                     # If existing source is dropbox or lower priority, update to catalog
                     if existing_source in ['dropbox', 'big_picture']:
-                        print(f"  → Updating {filename}: {existing_source} → catalog_original")
+                        self._emit(f"  → Updating {filename}: {existing_source} → catalog_original")
                         
                         # Determine version
                         import re
@@ -332,7 +347,7 @@ class DAMSyncServiceV2:
                     self.print_progress(idx, total_files, "Catalog Progress")
                 
             except Exception as e:
-                print(f"Error processing {relative_path}: {e}")
+                self._emit(f"Error processing {relative_path}: {e}")
                 self.stats['total_errors'] += 1
         
         # Final commit for remaining records
@@ -346,20 +361,20 @@ class DAMSyncServiceV2:
     
     def sync_big_picture_images_batch(self):
         """Sync Individual_big_picture folder with DAM database using batch processing"""
-        print("\n=== Syncing Big Picture Images (Batch Mode) ===")
+        self._emit("\n=== Syncing Big Picture Images (Batch Mode) ===")
         
         if not os.path.exists(self.big_picture_dir):
-            print(f"Big picture directory not found: {self.big_picture_dir}")
+            self._emit(f"Big picture directory not found: {self.big_picture_dir}")
             return
         
         file_list = self.collect_jpg_paths_relative(self.big_picture_dir)
         
         if not file_list:
-            print("No files to process")
+            self._emit("No files to process")
             return
         
         total_files = len(file_list)
-        print(f"Processing {total_files} big picture images...")
+        self._emit(f"Processing {total_files} big picture images...")
         
         connection = get_mysql_connection()
         cursor = connection.cursor(buffered=True)
@@ -444,7 +459,7 @@ class DAMSyncServiceV2:
                     self.print_progress(idx, total_files, "Big Picture Progress")
                 
             except Exception as e:
-                print(f"Error processing {relative_path}: {e}")
+                self._emit(f"Error processing {relative_path}: {e}")
                 self.stats['total_errors'] += 1
         
         # Final commit
@@ -458,7 +473,7 @@ class DAMSyncServiceV2:
     
     def update_canonical_flags(self):
         """Update canonical image flags for each SKU"""
-        print("\n=== Updating Canonical Flags ===")
+        self._emit("\n=== Updating Canonical Flags ===")
         
         connection = get_mysql_connection()
         cursor = connection.cursor()
@@ -467,7 +482,7 @@ class DAMSyncServiceV2:
         cursor.execute("SELECT DISTINCT sku FROM image_assets WHERE is_active = TRUE")
         skus = [row[0] for row in cursor.fetchall()]
         
-        print(f"Updating canonical flags for {len(skus)} SKUs...")
+        self._emit(f"Updating canonical flags for {len(skus)} SKUs...")
         
         for idx, sku in enumerate(skus, 1):
             # Find best catalog image (highest resolution)
@@ -496,52 +511,52 @@ class DAMSyncServiceV2:
             
             if idx % 100 == 0:
                 connection.commit()
-                print(f"Canonical flags updated: {idx}/{len(skus)}")
+                self._emit(f"Canonical flags updated: {idx}/{len(skus)}")
         
         connection.commit()
         cursor.close()
         connection.close()
         
-        print(f"Canonical flags updated for {len(skus)} SKUs")
+        self._emit(f"Canonical flags updated for {len(skus)} SKUs")
     
     def print_final_stats(self):
         """Print final synchronization statistics"""
         elapsed = self.stats['end_time'] - self.stats['start_time']
         
-        print("\n" + "="*60)
-        print("DAM RECONCILIATION SUMMARY")
-        print("="*60)
+        self._emit("\n" + "="*60)
+        self._emit("DAM RECONCILIATION SUMMARY")
+        self._emit("="*60)
         # Persistent log of final stats
         try:
             log_event('info', f"DAM RECONCILIATION - Checked: {self.stats['total_processed']}, MissingRecordsCreated: {self.stats['total_added']}, Repaired: {self.stats['total_updated']}, Unchanged: {self.stats['total_skipped']}, Errors: {self.stats['total_errors']}, Elapsed(min): {elapsed/60:.2f}")
         except Exception:
             pass
-        print(f"Files checked:                  {self.stats['total_processed']}")
-        print(f"  - Missing DB records created: {self.stats['total_added']}")
-        print(f"  - Existing records repaired:  {self.stats['total_updated']}")
-        print(f"  - Unchanged:                  {self.stats['total_skipped']}")
-        print(f"  - Errors:                     {self.stats['total_errors']}")
-        print(f"Time Elapsed:    {elapsed/60:.2f} minutes")
-        print(f"Processing Rate: {self.stats['total_processed']/elapsed:.2f} files/sec")
-        print("="*60)
+        self._emit(f"Files checked:                  {self.stats['total_processed']}")
+        self._emit(f"  - Missing DB records created: {self.stats['total_added']}")
+        self._emit(f"  - Existing records repaired:  {self.stats['total_updated']}")
+        self._emit(f"  - Unchanged:                  {self.stats['total_skipped']}")
+        self._emit(f"  - Errors:                     {self.stats['total_errors']}")
+        self._emit(f"Time Elapsed:    {elapsed/60:.2f} minutes")
+        self._emit(f"Processing Rate: {self.stats['total_processed']/elapsed:.2f} files/sec")
+        self._emit("="*60)
     
     def run_full_sync(self, force_rebuild_index: bool = False):
         """Run complete synchronization"""
-        print("\n" + "="*60)
-        print("STARTING FULL DAM SYNCHRONIZATION (V2)")
-        print("="*60)
+        self._emit("\n" + "="*60)
+        self._emit("STARTING FULL DAM SYNCHRONIZATION (V2)")
+        self._emit("="*60)
         try:
             from flask import current_app, session
             username = session.get('username', 'Unknown')
             current_app.logger.info(f"***{username}***___@@@Accessed@@@__DAM Sync Service (full sync started, force_rebuild_index={force_rebuild_index})")
         except Exception:
             pass 
-        print(f"Batch Size: {self.batch_size}")
-        print(f"Progress Interval: {self.progress_interval}")
+        self._emit(f"Batch Size: {self.batch_size}")
+        self._emit(f"Progress Interval: {self.progress_interval}")
         if force_rebuild_index:
-            print("(Note: force_rebuild_index is legacy; every sync scans disk fully.)")
-        print(f"Start Time: {datetime.now()}")
-        print("="*60)
+            self._emit("(Note: force_rebuild_index is legacy; every sync scans disk fully.)")
+        self._emit(f"Start Time: {datetime.now()}")
+        self._emit("="*60)
         
         self.stats['start_time'] = time.time()
         
@@ -559,7 +574,7 @@ class DAMSyncServiceV2:
         # Print final statistics
         self.print_final_stats()
         
-        print("\nDAM synchronization completed!")
+        self._emit("\nDAM synchronization completed!")
     
     def should_run_scheduled_sync(self) -> bool:
         """Check if scheduled sync should run (every 3 days)"""
@@ -576,7 +591,7 @@ class DAMSyncServiceV2:
             days_since_sync = (datetime.now() - last_sync).days
             return days_since_sync >= 3
         except Exception as e:
-            print(f"Error reading sync marker: {e}")
+            self._emit(f"Error reading sync marker: {e}")
             return True
     
     def update_sync_marker(self):
@@ -587,13 +602,13 @@ class DAMSyncServiceV2:
             with open(sync_marker_file, 'w') as f:
                 f.write(datetime.now().isoformat())
         except Exception as e:
-            print(f"Error updating sync marker: {e}")
+            self._emit(f"Error updating sync marker: {e}")
     
     def run_scheduled_sync(self):
         """Run sync if scheduled (every 3 days)"""
         try:
             if self.should_run_scheduled_sync():
-                print("Running scheduled sync (3-day interval)...")
+                self._emit("Running scheduled sync (3-day interval)...")
                 try:
                     log_event('info', 'Scheduled DAM sync starting (3-day interval)')
                 except Exception:
@@ -607,7 +622,7 @@ class DAMSyncServiceV2:
                 except Exception:
                     pass
             else:
-                print("Sync not needed yet (last sync was less than 3 days ago)")
+                self._emit("Sync not needed yet (last sync was less than 3 days ago)")
                 try:
                     log_event('info', 'Scheduled DAM sync skipped (less than 3 days since last)')
                 except Exception:

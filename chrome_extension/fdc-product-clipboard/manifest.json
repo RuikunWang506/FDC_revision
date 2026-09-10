@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "FDC Clipboard Product Helper",
+  "version": "1.0.0",
+  "description": "Detects style/SKU-like clipboard text and opens FDC product details quickly.",
+  "permissions": ["clipboardRead"],
+  "host_permissions": ["https://www.fdcef.com/*", "http://*/*", "https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -19,6 +19,16 @@ class RateLimitTests(unittest.TestCase):
         self.assertFalse(limiter.too_many("ip:login", 3, 60))
         self.assertTrue(limiter.too_many("ip:login", 3, 60))
 
+    def test_is_limited_does_not_record(self):
+        limiter = rate_limit.SlidingWindowLimiter()
+        self.assertFalse(limiter.is_limited("ip:login", 1, 60))
+        self.assertFalse(limiter.is_limited("ip:login", 1, 60))
+        limiter.record("ip:login")
+        self.assertTrue(limiter.is_limited("ip:login", 1, 60))
+
+    def test_client_limit_key_strips_xff_list(self):
+        self.assertEqual(rate_limit.client_limit_key("1.2.3.4, 5.6.7.8", "login"), "1.2.3.4:login")
+
 
 if __name__ == "__main__":
     unittest.main()

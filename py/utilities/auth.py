@@ -29,7 +29,8 @@ from py.utilities.logging_setup import log_event
 from datetime import datetime, timedelta
 import json
 from py.utilities.passwords import hash_password, needs_rehash, verify_password
-from py.utilities.rate_limit import auth_limiter, client_limit_key
+from py.utilities.rate_limit import auth_limiter, client_limit_key, request_client_ip
+from py.utilities.reset_tokens import hash_reset_token
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
@@ -135,7 +136,7 @@ def login():
     if next_page:
         session["next"] = next_page
     
-    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    client_ip = request_client_ip()
     location_data = get_location(client_ip)
 
     def login_page(**extra):
@@ -150,10 +151,7 @@ def login():
     
     if request.method == "POST":
         turnstile_token = request.form.get("cf-turnstile-response")
-        client_ip_for_turnstile = (
-            client_ip.split(",")[0].strip() if client_ip else None
-        )
-        if not verify_turnstile_response(turnstile_token, client_ip_for_turnstile):
+        if not verify_turnstile_response(turnstile_token, client_ip if client_ip != "unknown" else None):
             flash("Please complete the security check (CAPTCHA) and try again.")
             log_event(
                 "WARNING",
@@ -172,7 +170,9 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         remember = request.form.get("remember")
-        if auth_limiter.too_many(client_limit_key(client_ip, "login"), 8, 600):
+        login_user_key = client_limit_key(client_ip, f"login:{(username or '').strip().lower() or 'unknown'}")
+        login_ip_key = client_limit_key(client_ip, "login")
+        if auth_limiter.is_limited(login_user_key, 8, 600) or auth_limiter.is_limited(login_ip_key, 30, 600):
             flash("Too many login attempts. Please wait a few minutes and try again.")
             return login_page()
 
@@ -242,6 +242,8 @@ def login():
             redirect_url = _safe_next_url(session.pop("next", None), url_for("home"))
             return redirect(redirect_url)
         else:
+            auth_limiter.record(login_user_key)
+            auth_limiter.record(login_ip_key)
             flash("Invalid username or password")
             log_event('WARNING', f'🔴 FAILED_LOGIN: Username: "{username}", Password: "[REDACTED]", IP: {client_ip}, Location: {location_data.get("city", "Unknown")}, User-Agent: {request.headers.get("User-Agent", "Unknown")}')
             try:
@@ -925,12 +927,17 @@ def external_service_log():
     )
 
 
+_RESET_GENERIC_MESSAGE = (
+    "If an account exists for that username or email, a reset link has been sent."
+)
+
+
 @auth_bp.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
     try:
         data = request.get_json() or {}
-        identifier = data.get('identifier')
-        reset_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        identifier = (data.get('identifier') or '').strip()
+        reset_ip = request_client_ip()
         if auth_limiter.too_many(client_limit_key(reset_ip, "reset"), 5, 900):
             return jsonify({"error": "Too many reset attempts. Please wait and try again."}), 429
         
@@ -955,18 +962,14 @@ def request_password_reset():
             if result:
                 username = result[0]
                 email = result[1]
-                
-                if not email:
-                    return jsonify({"error": "No email address associated with this account. Please contact support."}), 400
-                
-                token = generate_reset_token(username)
-                reset_path = url_for("auth.reset_password", token=token)
-                pub = getattr(Config, "PUBLIC_APP_ORIGIN", "https://www.fdcef.com").rstrip("/")
-                reset_url = pub + reset_path
-                
-                # Send email with reset link
-                subject = "Password Reset Request"
-                body = f"""
+                if email:
+                    token = generate_reset_token(username)
+                    if token:
+                        reset_path = url_for("auth.reset_password", token=token)
+                        pub = getattr(Config, "PUBLIC_APP_ORIGIN", "https://www.fdcef.com").rstrip("/")
+                        reset_url = pub + reset_path
+                        subject = "Password Reset Request"
+                        body = f"""
                 Hello {username},
                 
                 You recently requested to reset your password for your FDC Toolkit account.
@@ -978,25 +981,27 @@ def request_password_reset():
                 
                 This link will expire in 1 hour.
                 """
-                
-                if send_email(email, subject, body):
-                    current_app.logger.info(f"Password reset email sent to {email} for user {username}")
-                    return jsonify({"message": f"Password reset link sent to {email}"}), 200
+                        if send_email(email, subject, body):
+                            current_app.logger.info(f"Password reset email sent for user {username}")
+                        else:
+                            current_app.logger.error(f"Password reset email failed for user {username}")
+                    else:
+                        current_app.logger.error(f"Password reset token store failed for user {username}")
                 else:
-                    return jsonify({"error": "Error sending reset email"}), 500
+                    current_app.logger.info(f"Password reset skipped (no email) for user {username}")
             else:
-                current_app.logger.info(f"Password reset request for non-existent user: {identifier}")
-                return jsonify({"error": "No account found with that username or email"}), 404
+                current_app.logger.info("Password reset request for unknown identifier")
+            return jsonify({"message": _RESET_GENERIC_MESSAGE}), 200
         except Error as e:
-            return jsonify({"error": f"Database error: {str(e)}"}), 500
+            current_app.logger.error(f"Password reset database error: {e}")
+            return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
         finally:
             if 'cursor' in locals():
                 cursor.close()
             if connection and connection.is_connected():
                 connection.close()
     except Exception as e:
-        # Log the exception for debugging
-        print(f"Unhandled exception in request_password_reset: {str(e)}")
+        current_app.logger.error(f"Unhandled exception in request_password_reset: {e}")
         return jsonify({"error": "An unexpected error occurred. Please try again later."}), 500
 
 @auth_bp.route("/reset_password/<token>", methods=["GET", "POST"])
@@ -1028,8 +1033,11 @@ def reset_password(token):
             cursor.execute("UPDATE users SET password = %s WHERE username = %s", (hash_password(password), username))
             connection.commit()
             
-            # Delete the used token
-            cursor.execute("DELETE FROM password_resets WHERE token = %s", (token,))
+            # Delete the used token (hashed, plus any leftover plaintext row)
+            cursor.execute(
+                "DELETE FROM password_resets WHERE token IN (%s, %s)",
+                (hash_reset_token(token), token),
+            )
             connection.commit()
             
             flash("Password updated successfully. You can now log in with your new password.")
@@ -1059,7 +1067,7 @@ def generate_reset_token(username):
             expires = datetime.now() + timedelta(hours=1)
             cursor.execute(
                 "INSERT INTO password_resets (username, token, expires) VALUES (%s, %s, %s)",
-                (username, token, expires)
+                (username, hash_reset_token(token), expires)
             )
             connection.commit()
             return token
@@ -1079,6 +1087,14 @@ def verify_reset_token(token):
     if connection:
         try:
             cursor = connection.cursor()
+            cursor.execute(
+                "SELECT username FROM password_resets WHERE token = %s AND expires > NOW()",
+                (hash_reset_token(token),)
+            )
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            # Legacy plaintext rows from before hashing (expire within an hour)
             cursor.execute(
                 "SELECT username FROM password_resets WHERE token = %s AND expires > NOW()",
                 (token,)

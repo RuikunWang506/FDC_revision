@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   {% endif %}
   {% include '_csrf.html' %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=card-layout-1">
   <style>
     .dashboard-wrapper {
       --fdc-dashboard-bg: url("{% if dashboard_bg is defined and dashboard_bg.url %}{{ dashboard_bg.url }}{% else %}{{ url_for('static', filename=dashboard_bg.file if dashboard_bg is defined else 'rocker-sta-qr8Ci2tzyR8.jpg') }}{% endif %}");
@@ -23,6 +23,7 @@
 </head>
 <body class="{% if portal_minimal %}portal-minimal{% else %}has-navbar{% endif %}">
   {% if portal_minimal %}
+  {% include '_toasts.html' %}
   {% include '_master_mode_bar.html' %}
   <div class="portal-top-bar">
     <span class="portal-brand">{% if portal_company_name %}{{ portal_company_name }}{% else %}{{ _('portal.client') }}{% endif %}</span>
@@ -39,9 +40,9 @@
   <!-- Dashboard Wrapper - Scoped styles to avoid navbar conflicts -->
   <div class="dashboard-wrapper">
     {% if current_user and (current_user|lower) == 'yeti' and fdc_failed_modules %}
-    <div style="max-width:1100px;margin:0 auto 1rem;padding:0.75rem 1rem;background:#7f1d1d;color:#fecaca;border-radius:8px;font-size:0.9rem;">
-      Optional modules failed to load: <strong>{{ fdc_failed_modules|join(', ') }}</strong>
-      — other tools are still running. Check <code>/health</code> or the log.
+    <div class="fdc-module-fail" role="status">
+      {{ _('dashboard.modules_failed') }} <strong>{{ fdc_failed_modules|join(', ') }}</strong>
+      — {{ _('dashboard.modules_failed_hint') }}
     </div>
     {% endif %}
     <!-- Main Content -->
@@ -176,6 +177,7 @@
           <h1>{{ _('dashboard.title') }}</h1>
           <p>{{ _('dashboard.browse_all') }}</p>
         </div>
+        <p class="dash-empty-search" id="dashboardEmptySearch" hidden>{{ _('dashboard.no_match') }}</p>
 
         <section class="dash-section" data-section="catalog">
           <div class="dash-section-head">
@@ -626,6 +628,21 @@
             <span class="count"><span class="section-count">0</span> {{ _('dashboard.tools_label') }}</span>
           </div>
           <div class="dashboard-grid">
+        {%- if tool_allowed('smart_search') %}
+        <a href="/smart_search" class="tool-card" data-category="admin" data-tool="smart_search">
+          <div class="card-header">
+            <i class="fas fa-search"></i>
+            <h3>{{ _('tool.smart_search.title') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'smart_search')"></i>
+          </div>
+          <p>{{ _('tool.smart_search.desc') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
+
         {%- if tool_allowed('audit') %}
         <a href="/audit" class="tool-card" data-category="admin" data-tool="audit">
           <div class="card-header">
@@ -746,8 +763,19 @@
   <script>
     const PORTAL_MINIMAL = {{ portal_minimal|default(false)|tojson }};
     const DASHBOARD_FAVORITES = {{ dashboard_favorites|default([])|tojson }};
+    const DASHBOARD_BACKGROUNDS = {{ dashboard_backgrounds|default([
+      {"id": "rocker-sta", "file": "rocker-sta-qr8Ci2tzyR8.jpg", "label": "City high-rises", "photographer": "Rocker Sta", "photographer_url": "https://unsplash.com/@starocker?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/birds-eye-view-photography-of-concrete-high-rise-buildings-qr8Ci2tzyR8?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "August 25, 2026"},
+      {"id": "josh-williams", "file": "josh-williams-bg.jpg", "label": "Night desert", "photographer": "Josh Williams", "photographer_url": "https://unsplash.com/@joshwi?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/star-trails-arc-over-desert-buttes-at-night-NMEnVWulWLQ?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "June 3, 2026"},
+      {"id": "luca-bravo", "file": "luca-bravo-zAjdgNXsMeg-unsplash.jpg", "label": "Mountain lake", "photographer": "Luca Bravo", "photographer_url": "https://unsplash.com/@lucabravo?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "photo_url": "https://unsplash.com/photos/scenic-view-of-mountains-during-dawn-zAjdgNXsMeg?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText", "date": "May 1, 2026"}
+    ])|tojson }};
+    let currentDashboardBgId = {{ (dashboard_bg.id if dashboard_bg is defined else 'rocker-sta')|tojson }};
+    const DASHBOARD_BG_FROM_SERVER = {{ (dashboard_bg is defined)|tojson }};
+    const DASHBOARD_STATIC_BG_BASE = {{ url_for('static', filename='__BG__')|tojson }};
+    window.DASHBOARD_BACKGROUNDS = DASHBOARD_BACKGROUNDS;
+    window.DASHBOARD_BG_FROM_SERVER = DASHBOARD_BG_FROM_SERVER;
+    window.DASHBOARD_STATIC_BG_BASE = DASHBOARD_STATIC_BG_BASE;
   </script>
-  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=card-layout-1"></script>
 
 </body>
 </html>

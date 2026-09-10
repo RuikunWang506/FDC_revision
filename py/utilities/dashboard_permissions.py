@@ -69,6 +69,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "vendor_app": "vendor_app",
     "container": "fdcef_container_search",
     "whatnot_live": "whatnot_live",
+    "smart_search": "smart_search",
 }
 
 # Single source of truth for admin UI + home filtering (order = display order)
@@ -100,6 +101,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "print_center", "title": "打印中心", "category": "Warehouse"},
     {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Warehouse"},
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Warehouse"},
+    {"id": "smart_search", "title": "Smart Search", "category": "Admin"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
     {"id": "vendor_app", "title": "Vendor App", "category": "Admin"},
@@ -136,6 +138,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "boat": {"href": "/boat", "label": "Boat"},
     "fdcef_container_search": {"href": "/container_search", "label": "Containers"},
     "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
+    "smart_search": {"href": "/smart_search", "label": "Search"},
     "audit": {"href": "/audit", "label": "Audit"},
     "manage_users": {"href": "/manage_users", "label": "Users"},
     "vendor_app": {"href": "/vendor_app", "label": "Vendor"},

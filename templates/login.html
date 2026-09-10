@@ -203,6 +203,21 @@
       border: 1px solid rgba(255, 193, 7, 0.35);
       color: #ffe7a8;
     }
+    .login-flash-error, .login-flash-danger {
+      background: rgba(239, 107, 115, 0.14);
+      border-color: rgba(239, 107, 115, 0.4);
+      color: #ffd0d3;
+    }
+    .login-flash-success {
+      background: rgba(46, 204, 138, 0.14);
+      border-color: rgba(46, 204, 138, 0.35);
+      color: #c9f7e3;
+    }
+    .login-flash-info {
+      background: rgba(91, 156, 245, 0.14);
+      border-color: rgba(91, 156, 245, 0.35);
+      color: #d5e6ff;
+    }
 
     .login-map-section {
       width: 100%;
@@ -386,9 +401,10 @@
         <a href="#" class="btn btn-link" data-toggle="modal" data-target="#resetPasswordModal">{{ _('login.forgot') }}</a>
       </div>
 
-      {% with messages = get_flashed_messages() %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          <div class="login-flash">{{ messages[0] }}</div>
+          {% set category, message = messages[0] %}
+          <div class="login-flash login-flash-{{ category if category in ['error', 'danger', 'warning', 'success'] else 'info' }}">{{ message }}</div>
         {% endif %}
       {% endwith %}
     </div>
@@ -493,14 +509,19 @@
           return response.json();
         })
         .then(function (data) {
-          alert(data.message);
+          if (window.fdcToast) window.fdcToast(data.message, 'success');
+          else alert(data.message);
           $('#resetPasswordModal').modal('hide');
         })
         .catch(function (error) {
-          alert('Error: ' + error.message);
+          if (window.fdcToast) window.fdcToast(error.message, 'danger');
+          else alert('Error: ' + error.message);
         });
     });
   </script>
   {% include '_i18n_client.html' %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-toast.css') }}">
+  <div id="fdcToastHost" class="fdc-toast-host" aria-live="polite"></div>
+  <script src="{{ url_for('static', filename='js/fdc-toast.js') }}"></script>
 </body>
 </html>

@@ -150,6 +150,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "tool_ids": ("invoice_lookup",),
     },
     {
+        "name": "smart_search",
+        "import_path": "py.search.smart_search",
+        "attr": "smart_search_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/smart_search", "/api/smart_search"),
+        "tool_ids": ("smart_search",),
+    },
+    {
         "name": "macy",
         "import_path": "py.order.macy_special",
         "attr": "macy_bp",

@@ -31,19 +31,17 @@ def _get_mysql_pool():
 
 
 def get_mysql_connection():
-    """Pooled MySQL connection. close() returns it to the pool."""
+    """Pooled MySQL connection. close() returns it to the pool.
+
+    Pool checkout failures return None. Do not open a direct connection as a
+    fallback — that bypasses the pool cap during exhaustion.
+    """
     try:
         connection = _get_mysql_pool().get_connection()
         if connection.is_connected():
             return connection
     except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        try:
-            connection = mysql.connector.connect(**Config.DB_CONFIG)
-            if connection.is_connected():
-                return connection
-        except Error:
-            pass
+        print(f"Error connecting to MySQL pool: {e}")
     return None
 
 

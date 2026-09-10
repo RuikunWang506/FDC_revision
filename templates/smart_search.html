@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('page.smart_search.title') }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smart_search.css') }}?v=1">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page smart-search-page">
+  <div class="ss-hero">
+    <p class="ss-kicker">{{ _('page.smart_search.kicker') }}</p>
+    <h1>{{ _('page.smart_search.hero') }}</h1>
+    <p>{{ _('page.smart_search.lead') }}</p>
+    <div class="ss-box" id="ssBox">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <input
+        id="ssInput"
+        type="search"
+        value="{{ initial_query|default('', true) }}"
+        placeholder="{{ _('page.smart_search.placeholder') }}"
+        autocomplete="off"
+        spellcheck="false"
+        enterkeyhint="search"
+        aria-label="{{ _('page.smart_search.title') }}"
+      >
+      <button type="button" id="ssClear" class="ss-clear" hidden aria-label="{{ _('page.smart_search.clear') }}">&times;</button>
+    </div>
+    <div class="ss-chips" id="ssChips">
+      <button type="button" data-fill="18432">{{ _('smart_search.chip.order') }}</button>
+      <button type="button" data-fill="M1141">{{ _('smart_search.chip.sku') }}</button>
+      <button type="button" data-fill="Loris">{{ _('smart_search.chip.customer') }}</button>
+      <button type="button" data-fill="F23265">{{ _('smart_search.chip.container') }}</button>
+    </div>
+  </div>
+
+  <div class="ss-status" id="ssStatus" hidden></div>
+  <div class="ss-results" id="ssResults" aria-live="polite"></div>
+</div>
+
+<script>
+  window.SMART_SEARCH = {
+    initial: {{ initial_query|default('', true)|tojson }},
+    api: {{ url_for('smart_search.smart_search_api')|tojson }},
+    strings: {
+      min: {{ _('page.smart_search.min')|tojson }},
+      loading: {{ _('page.smart_search.loading')|tojson }},
+      noResults: {{ _('page.smart_search.no_results')|tojson }},
+      error: {{ _('page.smart_search.error')|tojson }},
+      open: {{ _('page.smart_search.open')|tojson }}
+    }
+  };
+</script>
+<script src="{{ url_for('static', filename='js/smart_search.js') }}?v=1"></script>
+</body>
+</html>

@@ -34,13 +34,14 @@ log.txt
 log.txt
 log.txt
 
-# Ignore Google Sheets API credentials
+# Secrets / credentials (keep these out of git)
 google_sheets_credentials.json
 google_sheets_service_account.json
 google_oauth_credentials.json
 google_sheets_token.json
 credentials/
-*.json
+data/4seller_cookie_cache.json
+.vscode/
 
 # Local env mirror for NSSM / Turnstile (may contain secrets; loaded by app.py)
 nssm-fdcef-environment.env

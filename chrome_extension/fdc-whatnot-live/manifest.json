@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "FDC Whatnot Live",
+  "version": "1.0.9",
+  "description": "Reads the pinned Whatnot listing (auction, Buy Now, or Flash Sale) and sends it to the FDC overlay.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "FDC Whatnot Live",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage", "tabs", "cookies"],
+  "host_permissions": [
+    "https://www.whatnot.com/*",
+    "https://whatnot.com/*",
+    "https://www.fdcef.com/*",
+    "https://fdcef.com/*",
+    "http://127.0.0.1:5555/*",
+    "http://localhost:5555/*",
+    "http://192.168.254.30:5555/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.whatnot.com/*", "https://whatnot.com/*"],
+      "js": ["page-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.whatnot.com/*", "https://whatnot.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.fdcef.com/*",
+        "https://fdcef.com/*",
+        "http://127.0.0.1:5555/*",
+        "http://localhost:5555/*",
+        "http://192.168.254.30:5555/*"
+      ],
+      "js": ["fdc-bridge.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-toast.css') }}">
+<div id="fdcToastHost" class="fdc-toast-host" aria-live="polite"></div>
+<script src="{{ url_for('static', filename='js/fdc-toast.js') }}"></script>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <script>
+    (function () {
+      var flashes = {{ messages|tojson }};
+      flashes.forEach(function (item) {
+        var category = item[0] || "info";
+        var message = item[1] || "";
+        if (window.fdcToast) window.fdcToast(message, category);
+      });
+    })();
+  </script>
+  {% endif %}
+{% endwith %}

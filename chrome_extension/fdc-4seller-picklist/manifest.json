@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "FDC 4Seller Picklist Locations",
+  "version": "1.2.7",
+  "description": "Adds warehouse locations to 4Seller picklist PDFs using FDC inventory data.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://www.4seller.com/*",
+    "https://4seller-res.meiyunji.net/*",
+    "https://www.fdcef.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Add locations to picklist PDF"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.4seller.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["lib/pdf.worker.min.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
