@@ -7,7 +7,9 @@ import json
 import requests
 import pandas as pd
 from datetime import datetime
-from PyPDF2 import PdfReader, PdfMerger
+from pypdf import PdfReader, PdfWriter
+
+PdfMerger = PdfWriter
 from openpyxl import load_workbook, Workbook
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection
@@ -46,12 +48,15 @@ sql_server_config = Config.SQL_SERVER_CONFIG
 
 # Email configuration
 email_config = {
-    'imap_server': 'imap.gmail.com',
-    'imap_port': 993,
-    'email': 'elaine@fdcus.com',
-    'password': 'acamukrkgoifsrtq',
-    'sender_filter': 'MI9_Merchant@lorisgifts.com',
-    'download_path': r'C:\Users\stream\Dropbox\Elaine\loris 2025\==========LORIS_auto_PENDING====='
+    'imap_server': os.getenv('LORIS_IMAP_SERVER', 'imap.gmail.com'),
+    'imap_port': int(os.getenv('LORIS_IMAP_PORT', '993') or 993),
+    'email': os.getenv('LORIS_IMAP_EMAIL', '').strip(),
+    'password': os.getenv('LORIS_IMAP_PASSWORD', '').strip(),
+    'sender_filter': os.getenv('LORIS_SENDER_FILTER', 'MI9_Merchant@lorisgifts.com'),
+    'download_path': os.getenv(
+        'LORIS_DOWNLOAD_PATH',
+        r'C:\Users\stream\Dropbox\Elaine\loris 2025\==========LORIS_auto_PENDING=====',
+    ),
 }
 
 def parse_pdf_to_database(pdf_content, batch_date, email_date=None):

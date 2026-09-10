@@ -23,6 +23,7 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
     {% endif %}
 </div>
 {% endif %}
+{% include '_csrf.html' %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
@@ -94,7 +95,7 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
         {% elif request.path.startswith('/container_search') %}
         <ul class="navbar-nav mx-auto">
             <li class="nav-item d-flex align-items-center">
-                <a class="container-hub-btn" href="/boat" target="_blank" rel="noopener">Container Hub 货柜中心</a>
+                <a class="container-hub-btn" href="/boat" target="_blank" rel="noopener">{{ _('nav.container_hub') }}</a>
             </li>
         </ul>
         {% endif %}

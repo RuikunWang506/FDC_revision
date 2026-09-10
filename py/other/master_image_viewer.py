@@ -32,9 +32,6 @@ from py.utilities.master_image_viewer_permissions import master_image_viewer_hid
 
 master_image_viewer_bp = Blueprint('master_image_viewer', __name__)
 
-# TK/external user password (simple hardcoded for demo)
-TK_PASSWORD = 'ucandoit'
-
 # Global task status tracking for background China FTP fetches
 background_tasks = {}
 background_tasks_lock = threading.Lock()
@@ -64,7 +61,7 @@ def _china_directory_json_forbidden():
 
 
 def _miv_session_ok() -> bool:
-    return bool(session.get('username')) or bool(session.get('tk_user'))
+    return bool(session.get('username'))
 
 
 def _miv_json_unauthorized():
@@ -490,18 +487,10 @@ def find_images_by_sku(sku):
     finally:
         db.close()
 
-# TK password entry (popup form POST)
-@master_image_viewer_bp.route('/tk_password', methods=['POST'])
+@master_image_viewer_bp.route('/tk_password', methods=['GET', 'POST'])
 def tk_password():
-    password = request.form.get('password')
-    if password == TK_PASSWORD:
-        session['tk_user'] = True
-        session['internal_user'] = False
-        flash('Access granted for TK user.', 'info')
-        return redirect(url_for('master_image_viewer.master_image_viewer'))
-    else:
-        flash('Incorrect password. Please try again.', 'danger')
-        return redirect(url_for('master_image_viewer.master_image_viewer'))
+    session["next"] = url_for("master_image_viewer.master_image_viewer")
+    return redirect(url_for("auth.login"))
 
 
 def _china_directory_page_context():

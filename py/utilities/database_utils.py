@@ -1,56 +1,82 @@
+import os
+
 import mysql.connector
-from mysql.connector import Error
+from mysql.connector import Error, pooling
 import pyodbc
+
 from py.utilities.setting import Config
 
-def get_mysql_connection():
-    """Establishes a connection to the MySQL database."""
+_mysql_pool = None
+
+
+def _mysql_pool_size() -> int:
+    raw = (os.getenv("MYSQL_POOL_SIZE") or "8").strip()
     try:
-        connection = mysql.connector.connect(**Config.DB_CONFIG)
+        return max(1, min(int(raw), 32))
+    except ValueError:
+        return 8
+
+
+def _get_mysql_pool():
+    global _mysql_pool
+    if _mysql_pool is None:
+        cfg = dict(Config.DB_CONFIG)
+        _mysql_pool = pooling.MySQLConnectionPool(
+            pool_name="fdc_mysql",
+            pool_size=_mysql_pool_size(),
+            pool_reset_session=True,
+            **cfg,
+        )
+    return _mysql_pool
+
+
+def get_mysql_connection():
+    """Pooled MySQL connection. close() returns it to the pool."""
+    try:
+        connection = _get_mysql_pool().get_connection()
         if connection.is_connected():
             return connection
     except Error as e:
         print(f"Error connecting to MySQL: {e}")
+        try:
+            connection = mysql.connector.connect(**Config.DB_CONFIG)
+            if connection.is_connected():
+                return connection
+        except Error:
+            pass
     return None
 
+
+def get_db_connection():
+    """Alias used by auth and log viewer."""
+    return get_mysql_connection()
+
+
+def _sql_server_conn_str(database_name: str, *, readonly: bool = False) -> str:
+    cfg = Config.SQL_SERVER_CONFIG
+    parts = [
+        f"DRIVER={cfg['driver']}",
+        f"SERVER={cfg['server']}",
+        f"DATABASE={database_name}",
+        f"UID={cfg['username']}",
+        f"PWD={cfg['password']}",
+    ]
+    if readonly:
+        parts.append("ApplicationIntent=ReadOnly")
+    return ";".join(parts)
+
+
 def get_sql_server_connection_fdc():
-    """Establishes a connection to the SQL Server FDC database."""
-    return pyodbc.connect(
-        f'DRIVER={Config.SQL_SERVER_CONFIG["driver"]};'
-        f'SERVER={Config.SQL_SERVER_CONFIG["server"]};'
-        f'DATABASE={Config.SQL_SERVER_CONFIG["database_fdc"]};'
-        f'UID={Config.SQL_SERVER_CONFIG["username"]};'
-        f'PWD={Config.SQL_SERVER_CONFIG["password"]}'
-    )
+    return pyodbc.connect(_sql_server_conn_str(Config.SQL_SERVER_CONFIG["database_fdc"]))
+
 
 def get_sql_server_connection_oms_ef():
-    """Establishes a connection to the SQL Server OMS_EF database."""
-    return pyodbc.connect(
-        f'DRIVER={Config.SQL_SERVER_CONFIG["driver"]};'
-        f'SERVER={Config.SQL_SERVER_CONFIG["server"]};'
-        f'DATABASE={Config.SQL_SERVER_CONFIG["database_oms_ef"]};'
-        f'UID={Config.SQL_SERVER_CONFIG["username"]};'
-        f'PWD={Config.SQL_SERVER_CONFIG["password"]}'
-    )
+    return pyodbc.connect(_sql_server_conn_str(Config.SQL_SERVER_CONFIG["database_oms_ef"]))
+
 
 def get_sql_server_connection(database_name):
-    """Establishes a connection to the specified SQL Server database."""
-    return pyodbc.connect(
-        f'DRIVER={Config.SQL_SERVER_CONFIG["driver"]};'
-        f'SERVER={Config.SQL_SERVER_CONFIG["server"]};'
-        f'DATABASE={database_name};'
-        f'UID={Config.SQL_SERVER_CONFIG["username"]};'
-        f'PWD={Config.SQL_SERVER_CONFIG["password"]}'
-    )
+    return pyodbc.connect(_sql_server_conn_str(database_name))
 
 
 def get_sql_server_connection_readonly(database_name):
-    """SQL Server connection flagged read-only (ApplicationIntent=ReadOnly)."""
-    return pyodbc.connect(
-        f'DRIVER={Config.SQL_SERVER_CONFIG["driver"]};'
-        f'SERVER={Config.SQL_SERVER_CONFIG["server"]};'
-        f'DATABASE={database_name};'
-        f'UID={Config.SQL_SERVER_CONFIG["username"]};'
-        f'PWD={Config.SQL_SERVER_CONFIG["password"]};'
-        f'ApplicationIntent=ReadOnly'
-    )
+    return pyodbc.connect(_sql_server_conn_str(database_name, readonly=True))

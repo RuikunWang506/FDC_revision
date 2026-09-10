@@ -13,6 +13,7 @@
   <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+  {% include '_csrf.html' %}
   {% if turnstile_site_key %}
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   {% endif %}
@@ -357,6 +358,7 @@
 
     <div class="login-card">
       <form method="POST" action="{{ url_for('auth.login') }}">
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
         {% if login_popup %}
         <input type="hidden" name="popup" value="1">
         {% endif %}

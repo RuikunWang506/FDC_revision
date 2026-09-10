@@ -341,12 +341,16 @@ def get_inventory_basic():
                     if conn_fdc and conn_oms_ef:
                         try:
                             cursor_fdc = conn_fdc.cursor()
-                            cursor_fdc.execute(f"""
+                            like_sku = f"{base_sku}%"
+                            cursor_fdc.execute(
+                                """
                                 SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
                                 FROM dbo.inv AS i
-                                WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                                WHERE i.PROD_CD LIKE ? OR i.ALT_CD LIKE ?
                                 ORDER BY RTRIM(i.PROD_CD)
-                            """)
+                                """,
+                                (like_sku, like_sku),
+                            )
                             matched_skus = {row[0] for row in cursor_fdc.fetchall()}
                             cursor_fdc.close()
                             
@@ -492,12 +496,16 @@ def export_csv_complete():
                 if conn_fdc and conn_oms_ef:
                     try:
                         cursor_fdc = conn_fdc.cursor()
-                        cursor_fdc.execute(f"""
+                        like_sku = f"{base_sku}%"
+                        cursor_fdc.execute(
+                            """
                             SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
                             FROM dbo.inv AS i
-                            WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                            WHERE i.PROD_CD LIKE ? OR i.ALT_CD LIKE ?
                             ORDER BY RTRIM(i.PROD_CD)
-                        """)
+                            """,
+                            (like_sku, like_sku),
+                        )
                         matched_skus = {row[0] for row in cursor_fdc.fetchall()}
                         cursor_fdc.close()
                         

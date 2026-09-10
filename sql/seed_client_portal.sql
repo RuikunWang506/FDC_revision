@@ -1,5 +1,7 @@
--- Client portal group + users (same tools as legacy /tiktok TK password access).
--- Run once on production if app seed has not run yet.
+-- Client portal group + users.
+-- Prefer the app helper seed_client_portal_group() — it hashes passwords and
+-- keeps client_product_detail_restrict flags. This file only inserts missing rows
+-- and does not overwrite existing Client group permissions.
 
 INSERT INTO user_groups (name, slug, permissions, sort_order)
 SELECT 'Client', 'client',
@@ -10,18 +12,6 @@ WHERE NOT EXISTS (SELECT 1 FROM user_groups WHERE slug = 'client');
 
 SET @client_gid := (SELECT id FROM user_groups WHERE slug = 'client' LIMIT 1);
 
-UPDATE user_groups
-SET permissions = '{"tools": ["clientview", "master_image_viewer"]}'
-WHERE slug = 'client';
-
-INSERT INTO users (username, password, email, created_at, user_group_id)
-SELECT 'xingxing', 'ucandoit', NULL, NOW(), @client_gid
-FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'xingxing');
-
-INSERT INTO users (username, password, email, created_at, user_group_id)
-SELECT 'mydepot', 'LA8888', NULL, NOW(), @client_gid
-FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'mydepot');
-
--- Do not overwrite group/password for existing users; assign via /manage_users.
+-- Do not INSERT plaintext passwords here. Create xingxing / mydepot via the app
+-- (CLIENT_PORTAL_PASSWORD_* env vars) so bcrypt hashes are stored.
+-- Existing users are left unchanged; assign groups via /manage_users.

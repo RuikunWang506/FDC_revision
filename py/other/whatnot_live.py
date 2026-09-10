@@ -266,7 +266,7 @@ def _deny_json():
 def _ingest_token_ok() -> bool:
     expected = (os.getenv("WHATNOT_LIVE_INGEST_TOKEN") or "").strip()
     if not expected:
-        return True
+        return False
     got = (
         (request.headers.get("X-Whatnot-Token") or "").strip()
         or (request.args.get("token") or "").strip()

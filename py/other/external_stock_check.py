@@ -15,7 +15,6 @@ import time
 external_stock_check_bp = Blueprint('external_stock_check', __name__)
 
 # External user password
-EXTERNAL_PASSWORD = 'ucandoit'
 
 sql_server_config = Config.SQL_SERVER_CONFIG
 
@@ -29,11 +28,7 @@ class TikTokInventoryFetchError(Exception):
 
 
 def has_external_stock_access():
-    return bool(
-        session.get('external_user')
-        or session.get('tk_user')
-        or session.get('username')
-    )
+    return bool(session.get('username'))
 
 
 def get_db_connections():
@@ -616,17 +611,10 @@ def fetch_available_quantities(skus, manual_skus=None):
     return result
 
 
-# Password entry for external users
-@external_stock_check_bp.route('/external_stock_check/password', methods=['POST'])
+@external_stock_check_bp.route('/external_stock_check/password', methods=['GET', 'POST'])
 def external_password():
-    password = request.form.get('password')
-    if password == EXTERNAL_PASSWORD:
-        session['external_user'] = True
-        flash('Access granted.', 'info')
-        return redirect(url_for('external_stock_check.external_stock_check_page'))
-    else:
-        flash('Incorrect password. Please try again.', 'danger')
-        return redirect(url_for('external_stock_check.external_stock_check_page'))
+    session["next"] = url_for("external_stock_check.external_stock_check_page")
+    return redirect(url_for("auth.login"))
 
 
 # Main page
@@ -813,12 +801,16 @@ def get_inventory_basic():
                     if conn_fdc and conn_oms_ef:
                         try:
                             cursor_fdc = conn_fdc.cursor()
-                            cursor_fdc.execute(f"""
+                            like_sku = f"{base_sku}%"
+                            cursor_fdc.execute(
+                                """
                                 SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
                                 FROM dbo.inv AS i
-                                WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                                WHERE i.PROD_CD LIKE ? OR i.ALT_CD LIKE ?
                                 ORDER BY RTRIM(i.PROD_CD)
-                            """)
+                                """,
+                                (like_sku, like_sku),
+                            )
                             matched_skus = {row[0] for row in cursor_fdc.fetchall()}
                             cursor_fdc.close()
                             
@@ -965,12 +957,16 @@ def export_csv_complete():
                 if conn_fdc and conn_oms_ef:
                     try:
                         cursor_fdc = conn_fdc.cursor()
-                        cursor_fdc.execute(f"""
+                        like_sku = f"{base_sku}%"
+                        cursor_fdc.execute(
+                            """
                             SELECT DISTINCT RTRIM(i.PROD_CD) as prod_cd
                             FROM dbo.inv AS i
-                            WHERE i.PROD_CD LIKE '{base_sku}%' OR i.ALT_CD LIKE '{base_sku}%'
+                            WHERE i.PROD_CD LIKE ? OR i.ALT_CD LIKE ?
                             ORDER BY RTRIM(i.PROD_CD)
-                        """)
+                            """,
+                            (like_sku, like_sku),
+                        )
                         matched_skus = {row[0] for row in cursor_fdc.fetchall()}
                         cursor_fdc.close()
                         

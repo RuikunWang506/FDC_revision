@@ -14,7 +14,7 @@ def get_user_group_slug(username: Optional[str]) -> Optional[str]:
     uname = (username or "").strip()
     if not uname:
         return None
-    from py.utilities.auth import get_db_connection
+    from py.utilities.database_utils import get_db_connection
     from mysql.connector import Error
 
     connection = get_db_connection()

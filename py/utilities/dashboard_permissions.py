@@ -17,6 +17,10 @@ CLIENT_PORTAL_TOOL_IDS = frozenset({"clientview", "master_image_viewer"})
 # auth blueprint routes that are not covered by TOOL_BY_BLUEPRINT (blueprint-wide).
 ENDPOINT_TOOL: Dict[str, str] = {
     "auth.manage_users": "manage_users",
+    "auth.edit_user": "manage_users",
+    "auth.delete_user": "manage_users",
+    "auth.external_service_log": "manage_users",
+    "auth.download_customer_approved_styles": "manage_users",
 }
 
 # Unauthenticated LAN probe / session handoff for Trade Show Tool (large local uploads).

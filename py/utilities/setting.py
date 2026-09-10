@@ -1,35 +1,50 @@
 import os
-import tempfile
 from pathlib import Path
+from urllib.parse import quote_plus
+
+from py.utilities.nssm_env import load_nssm_env_file
+
+load_nssm_env_file()
+
+
+def _env(name: str, default: str = "") -> str:
+    return (os.getenv(name, default) or "").strip()
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = _env(name)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
 
 class Config:
-    # Database configuration for MySQL
+    SECRET_KEY = _env("SECRET_KEY")
+    FDC_REQUIRE_SECRETS = _env("FDC_REQUIRE_SECRETS", "0").lower() in ("1", "true", "yes")
+
+    # Database configuration for MySQL — credentials come from env (see nssm-fdcef-environment.env).
     DB_CONFIG = {
-        'host': '192.168.254.30',
-        'port': 3306,
-        'user': 'yeti',
-        'password': 'qwe123',
-        'database': 'onlinedb'
+        "host": _env("MYSQL_HOST", "192.168.254.30"),
+        "port": _env_int("MYSQL_PORT", 3306),
+        "user": _env("MYSQL_USER", "yeti"),
+        "password": _env("MYSQL_PASSWORD"),
+        "database": _env("MYSQL_DATABASE", "onlinedb"),
     }
 
-    # Cloudflare Turnstile (login CAPTCHA). Docs: https://developers.cloudflare.com/turnstile/
-    # In production, set TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY in the environment
-    # (Cloudflare dashboard → Turnstile → your site). Defaults are Cloudflare test keys (always pass).
-    TURNSTILE_SITE_KEY = os.getenv(
-        "TURNSTILE_SITE_KEY", "1x00000000000000000000AA"
-    ).strip()
-    TURNSTILE_SECRET_KEY = os.getenv(
-        "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA"
-    ).strip()
-    
-    # SQL Server configuration
+    # Cloudflare Turnstile (login CAPTCHA). Empty keys fail closed at verify time.
+    TURNSTILE_SITE_KEY = _env("TURNSTILE_SITE_KEY")
+    TURNSTILE_SECRET_KEY = _env("TURNSTILE_SECRET_KEY")
+
     SQL_SERVER_CONFIG = {
-        'server': '192.168.254.204',
-        'username': 'tristen',
-        'password': 'Fdc2022!!',
-        'driver': 'ODBC Driver 17 for SQL Server',
-        'database_fdc': 'omsdata_FDC',
-        'database_oms_ef': 'oms_EF'
+        "server": _env("SQLSERVER_HOST", "192.168.254.204"),
+        "username": _env("SQLSERVER_USER"),
+        "password": _env("SQLSERVER_PASSWORD"),
+        "driver": _env("SQLSERVER_DRIVER", "ODBC Driver 17 for SQL Server"),
+        "database_fdc": _env("SQLSERVER_DATABASE_FDC", "omsdata_FDC"),
+        "database_oms_ef": _env("SQLSERVER_DATABASE_OMS_EF", "oms_EF"),
     }
     
     # Legacy paths - DEPRECATED: Use DAM system instead
@@ -43,16 +58,11 @@ class Config:
     IMAGE_DAM_BIG_PICTURE_DIR = r"D:\Individual_big_picture"
     IMAGE_DAM_DROPBOX_DIR = r"C:\Users\Stream\Dropbox"
     IMAGE_DAM_TRASH_DIR = r"D:\catalog\trash"
-    SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-    SLACK_WEBHOOK_URL_SHIPPING_RECEIPT = 'https://hooks.slack.com/services/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'
-    SLACK_TOKEN = 'xoxb-4986748541874-7439245251395-YMVIoCeqbhWRp4rAFx66JGMK'
-    SLACK_CHANNEL = 'C07CGNKSPF1'
-    # V7 List Creator: snapshot ready + workbook export ready → #v7-list_creator_bot
-    # Override with env SLACK_WEBHOOK_URL_V7_LIST_CREATOR if you rotate the webhook.
-    SLACK_WEBHOOK_URL_V7_LIST_CREATOR = os.getenv(
-        'SLACK_WEBHOOK_URL_V7_LIST_CREATOR',
-        'https://hooks.slack.com/services/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',
-    ).strip()
+    SLACK_WEBHOOK_URL = _env("SLACK_WEBHOOK_URL")
+    SLACK_WEBHOOK_URL_SHIPPING_RECEIPT = _env("SLACK_WEBHOOK_URL_SHIPPING_RECEIPT")
+    SLACK_TOKEN = _env("SLACK_TOKEN")
+    SLACK_CHANNEL = _env("SLACK_CHANNEL")
+    SLACK_WEBHOOK_URL_V7_LIST_CREATOR = _env("SLACK_WEBHOOK_URL_V7_LIST_CREATOR")
     # Optional override for webmail “message sent” Slack posts (defaults to V7 webhook in notify_mail_sent_optional).
     SLACK_WEBHOOK_URL_MAIL_SENT = os.getenv('SLACK_WEBHOOK_URL_MAIL_SENT', '').strip()
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
@@ -81,21 +91,18 @@ class Config:
     FDC_AI_NUM_GPU = os.getenv('FDC_AI_NUM_GPU', '').strip()
 
     
-    # Email configuration
-    SMTP_SERVER = "smtp.fatcow.com"
-    SMTP_PORT = 465
-    EMAIL_ADDRESS = "Tristen@fdcus.com"
-    EMAIL_PASSWORD = "Tr1st3n827"
-    
-    
+    SMTP_SERVER = _env("SMTP_SERVER", "smtp.fatcow.com")
+    SMTP_PORT = _env_int("SMTP_PORT", 465)
+    EMAIL_ADDRESS = _env("EMAIL_ADDRESS")
+    EMAIL_PASSWORD = _env("EMAIL_PASSWORD")
+
     GOOGLE_CREDENTIALS_FILE = r'C:/FDC_FLASK_APP/client_secret.json'
-    
-    # TikTok Shop API Configuration (V2 - 202309)
-    TIKTOK_SHOP_API_KEY = os.getenv('TIKTOK_SHOP_API_KEY', 'TTP_k3VkrQAAAAAVoppuAGERJltMY_5k5EnTvLzFWow_TwZ_dYFG8G4ATZr2IvzJs4SmHJPG2POy2t-k7bP1LdcaKONRCZZOBwUK-qGXDA4N5GhKnpEh7IQpUz3FV0qSqmZbincx7wgRo41AczARWR71EuREIfKny4iU9IrdvJnvdQLYWcf_YyduhA')  # Access token
-    TIKTOK_SHOP_APP_KEY = os.getenv('TIKTOK_SHOP_APP_KEY', '6af41c3jd9d4j')  # App key (for signature)
-    TIKTOK_SHOP_SECRET = os.getenv('TIKTOK_SHOP_SECRET', '90ad10f5c10c75926b4974266c2c50ce3dc37867')
-    TIKTOK_SHOP_SHOP_ID = os.getenv('TIKTOK_SHOP_ID', 'TTP_X7_XBQAAAAAgezTKnUsJ_dqag5diV7dB')  # Shop cipher (shop identifier)
-    TIKTOK_SHOP_REFRESH_TOKEN = os.getenv('TIKTOK_SHOP_REFRESH_TOKEN', 'TTP_gnXpKAAAAAAt2jGFQFY3gQ9Rqa4UIGdzoCp--26F50FgtbPucWSNRy915euwFJqjIkk1STXEN48')
+
+    TIKTOK_SHOP_API_KEY = _env("TIKTOK_SHOP_API_KEY")
+    TIKTOK_SHOP_APP_KEY = _env("TIKTOK_SHOP_APP_KEY")
+    TIKTOK_SHOP_SECRET = _env("TIKTOK_SHOP_SECRET")
+    TIKTOK_SHOP_SHOP_ID = _env("TIKTOK_SHOP_ID")
+    TIKTOK_SHOP_REFRESH_TOKEN = _env("TIKTOK_SHOP_REFRESH_TOKEN")
     # Note: Update TIKTOK_SHOP_API_URL based on your region
     # Regional endpoints:
     # - US: https://open-api-us.tiktokshop.com (may not resolve in all networks)
@@ -107,8 +114,10 @@ class Config:
     
     # ShipStation API Configuration
 
-    # Database URL for SQLAlchemy
-    DATABASE_URL = f"mysql+mysqlconnector://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+    DATABASE_URL = (
+        f"mysql+mysqlconnector://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+        f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+    )
 
     # --- Public vs LAN base URLs ---
     # Password reset and other emails must always use the public HTTPS origin (never a LAN IP).
@@ -156,20 +165,28 @@ class Config:
     SEND_FILE_MAX_AGE_DEFAULT = int(os.getenv('FDC_STATIC_MAX_AGE', str(12 * 60 * 60)))
 
 
-# Utility functions
-from functools import wraps
-from flask import session, request, redirect, url_for
+from py.utilities.decorators import login_required  # re-export for existing imports
 
-def login_required(f):
-    """Decorator to require login for routes"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'username' not in session:
-            # Store the current URL to redirect back after login
-            session['next'] = request.url
-            return redirect(url_for('auth.login'))
-        return f(*args, **kwargs)
-    return decorated_function
+
+def validate_required_secrets(*, require: bool | None = None) -> None:
+    """Raise if production/service is missing credentials that used to live in source."""
+    if require is None:
+        require = Config.FDC_REQUIRE_SECRETS or (
+            str(os.environ.get("NSSM_SERVICE_NAME") or "").strip() != ""
+        )
+    if not require:
+        return
+    missing = []
+    if not Config.SECRET_KEY:
+        missing.append("SECRET_KEY")
+    if not Config.DB_CONFIG.get("password"):
+        missing.append("MYSQL_PASSWORD")
+    if not Config.SQL_SERVER_CONFIG.get("password"):
+        missing.append("SQLSERVER_PASSWORD")
+    if missing:
+        raise RuntimeError(
+            "Missing required environment variables: " + ", ".join(missing)
+        )
 
 def resize_image(image_file, new_width):
 

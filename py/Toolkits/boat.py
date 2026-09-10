@@ -71,23 +71,11 @@ DROPBOX_CONTAINER_PATH = r"C:\Users\stream\Dropbox\Pictures-China (1)\container 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'output', 'container_csvs')
 
 
-# Database connection details
-server = "192.168.254.204"
-database_fdc = "omsdata_FDC"
-username = "tristen"
-password = 'Fdc2022!!'
-driver = 'ODBC Driver 17 for SQL Server'
-
 def get_db_connection():
     """Get database connection"""
-    conn_str = (
-        f"DRIVER={{{driver}}};"
-        f"SERVER={server};"
-        f"DATABASE={database_fdc};"
-        f"UID={username};"
-        f"PWD={password};"
-    )
-    return pyodbc.connect(conn_str)
+    from py.utilities.database_utils import get_sql_server_connection_fdc
+
+    return get_sql_server_connection_fdc()
 
 
 _FDC_CONTAINER_SORT_RE = re.compile(r'^([A-Za-z]+)(\d+)\s*$')

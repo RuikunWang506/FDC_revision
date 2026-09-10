@@ -158,6 +158,10 @@ def register_routes(app):
     @app.route('/delete_system_restarted', methods=['POST'])
     @login_required
     def delete_system_restarted():
+        from py.utilities.log_viewer_permissions import user_can_view_logs
+
+        if not user_can_view_logs(session.get("username")):
+            return jsonify({"success": False, "error": "Access denied"}), 403
         log_path = app.config.get('SYSTEM_LOG_FILE') or Config.SYSTEM_LOG_FILE
         try:
             with open(log_path, 'r', encoding='utf-8', errors='replace') as f:

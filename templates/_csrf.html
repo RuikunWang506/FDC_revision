@@ -1,0 +1,4 @@
+{% if csrf_token is defined %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script src="{{ url_for('static', filename='js/fdc-csrf.js') }}"></script>
+{% endif %}

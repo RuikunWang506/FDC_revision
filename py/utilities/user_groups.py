@@ -8,7 +8,11 @@ import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+import os
+
 from mysql.connector import Error
+
+from py.utilities.passwords import hash_password
 
 # Default groups (sort_order). Permissions NULL = full dashboard access.
 DEFAULT_GROUPS: List[Tuple[str, str, int]] = [
@@ -28,10 +32,12 @@ CLIENT_GROUP_PERMISSIONS: Dict[str, Any] = {
     "client_product_detail_sections": [],
 }
 
-CLIENT_PORTAL_USERS: Dict[str, str] = {
-    "xingxing": "ucandoit",
-    "mydepot": "LA8888",
-}
+def _client_portal_users() -> Dict[str, str]:
+    users = {
+        "xingxing": (os.getenv("CLIENT_PORTAL_PASSWORD_XINGXING") or "").strip(),
+        "mydepot": (os.getenv("CLIENT_PORTAL_PASSWORD_MYDEPOT") or "").strip(),
+    }
+    return {name: pw for name, pw in users.items() if pw}
 
 # Lowercase usernames -> slug (after groups exist)
 PRESET_USER_SLUGS: Dict[str, str] = {
@@ -227,7 +233,7 @@ def seed_client_portal_group(connection) -> None:
             gid = int(ins.lastrowid)
         connection.commit()
 
-        for username, password in CLIENT_PORTAL_USERS.items():
+        for username, password in _client_portal_users().items():
             cur.execute("SELECT id FROM users WHERE username = %s", (username,))
             existing = cur.fetchone()
             if existing:
@@ -237,7 +243,7 @@ def seed_client_portal_group(connection) -> None:
                 INSERT INTO users (username, password, email, created_at, user_group_id)
                 VALUES (%s, %s, NULL, NOW(), %s)
                 """,
-                (username, password, gid),
+                (username, hash_password(password), gid),
             )
         connection.commit()
     finally:

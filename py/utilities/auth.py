@@ -23,13 +23,13 @@ import requests
 from user_agents import parse
 import re
 import secrets
-from py.utilities.setting import Config
+from py.utilities.setting import Config, login_required
 from py.utilities.database_utils import get_mysql_connection
 from py.utilities.logging_setup import log_event
 from datetime import datetime, timedelta
-from py.utilities.setting import Config
 import json
-from py.utilities.setting import login_required
+from py.utilities.passwords import hash_password, needs_rehash, verify_password
+from py.utilities.rate_limit import auth_limiter, client_limit_key
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
 
@@ -84,6 +84,36 @@ def log_response(response):
         else:
             log_event('INFO' if status_code < 400 else 'WARNING', log_message)
     return response
+def _is_yeti_user() -> bool:
+    return (session.get("username") or "").strip().lower() == "yeti"
+
+
+def _safe_next_url(raw, fallback=None):
+    """Only allow same-origin relative redirects after login."""
+    from urllib.parse import urlparse
+
+    if not raw:
+        return fallback
+    text = str(raw).strip()
+    if text.startswith("/") and not text.startswith("//") and not text.endswith("/login"):
+        return text
+    try:
+        parsed = urlparse(text)
+    except ValueError:
+        return fallback
+    if not parsed.scheme or not parsed.netloc:
+        return fallback
+    if parsed.path.rstrip("/").endswith("/login"):
+        return fallback
+    host = (request.host or "").split(":")[0]
+    if parsed.hostname and parsed.hostname == host:
+        path = parsed.path or "/"
+        if parsed.query:
+            path = f"{path}?{parsed.query}"
+        return path
+    return fallback
+
+
 def _login_popup_requested() -> bool:
     raw = (request.args.get("popup") or request.form.get("popup") or "").strip().lower()
     return raw in {"1", "true", "yes"}
@@ -101,12 +131,9 @@ def login():
     if 'username' in session and not popup:
         return redirect(url_for("home"))
     
-    # Get the next page from query parameters or referrer
-    next_page = request.args.get('next') or request.referrer
-    
-    # Store the next page in session
-    if next_page and not next_page.endswith('/login'):
-        session['next'] = next_page
+    next_page = _safe_next_url(request.args.get("next") or request.referrer)
+    if next_page:
+        session["next"] = next_page
     
     client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     location_data = get_location(client_ip)
@@ -145,7 +172,10 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         remember = request.form.get("remember")
-        
+        if auth_limiter.too_many(client_limit_key(client_ip, "login"), 8, 600):
+            flash("Too many login attempts. Please wait a few minutes and try again.")
+            return login_page()
+
         if check_credentials(username, password):
             update_last_login(username)
             # Check if user has an email address
@@ -158,7 +188,8 @@ def login():
                     
                     if not result or not result[0]:
                         # Store the next page in session before redirecting
-                        session['next'] = next_page
+                        if next_page:
+                            session["next"] = next_page
                         session['username'] = username
                         session['logged_in'] = True
                         if (username or '').strip().lower() == 'yetimaster':
@@ -208,7 +239,7 @@ def login():
                 return redirect(client_portal_home_url())
 
             # For other users, redirect to stored next page or home
-            redirect_url = session.pop('next', url_for("home"))
+            redirect_url = _safe_next_url(session.pop("next", None), url_for("home"))
             return redirect(redirect_url)
         else:
             flash("Invalid username or password")
@@ -307,8 +338,7 @@ def update_email():
             connection.commit()
             flash("Email updated successfully")
             current_app.logger.info(f"User {username} updated their email to {new_email}")
-            # Redirect to stored next page or home
-            redirect_url = session.pop('next', url_for("home"))
+            redirect_url = _safe_next_url(session.pop("next", None), url_for("home"))
             return redirect(redirect_url)
         except Error as e:
             connection.rollback()
@@ -383,7 +413,7 @@ def _visitor_group_id(connection):
 @auth_bp.route("/manage_users", methods=["GET", "POST"])
 @login_required
 def manage_users():
-    if session["username"] != "yeti":
+    if not _is_yeti_user():
         flash("Access denied. Only yeti can manage users.")
         return redirect(url_for("home"))
 
@@ -733,7 +763,7 @@ def manage_users():
                                         INSERT INTO users (username, password, email, created_at, user_group_id)
                                         VALUES (%s, %s, %s, NOW(), %s)
                                         """,
-                                        (username, password, email, gid_insert),
+                                        (username, hash_password(password), email, gid_insert),
                                     )
                                     connection.commit()
                                     flash("User added successfully")
@@ -754,7 +784,7 @@ def manage_users():
         list_cursor = connection.cursor(dictionary=True)
         list_cursor.execute(
             """
-            SELECT u.id, u.username, u.email, u.password, u.created_at, u.last_login_at,
+            SELECT u.id, u.username, u.email, u.created_at, u.last_login_at,
                    u.user_group_id, u.customer_purchase_fdc_ids, u.customer_purchase_efashion_ids,
                    u.customer_purchase_include_approved_styles, u.customer_purchase_manual_styles,
                    u.master_image_viewer_customer_purchase_only,
@@ -790,9 +820,7 @@ def manage_users():
                     "slug": g["slug"],
                     "sort_order": g.get("sort_order", 0),
                     "dashboard_restrict": ui["dashboard_restrict"],
-                    "mail_restrict": ui["mail_restrict"],
                     "tools_sel": ui["tools_sel"],
-                    "mail_sel": ui["mail_sel"],
                     "client_pd_restrict": ui["client_pd_restrict"],
                     "client_pd_sections_sel": ui["client_pd_sections_sel"],
                     "log_viewer_allowed": ui["log_viewer_allowed"],
@@ -887,7 +915,7 @@ def _external_service_credentials():
 @login_required
 def external_service_log():
     """Admin page: external carrier API keys and platform logins."""
-    if session.get("username") != "yeti":
+    if not _is_yeti_user():
         flash("Access denied. Only yeti can view external service logins.")
         return redirect(url_for("home"))
     return render_template(
@@ -900,8 +928,11 @@ def external_service_log():
 @auth_bp.route("/request_password_reset", methods=["POST"])
 def request_password_reset():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         identifier = data.get('identifier')
+        reset_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        if auth_limiter.too_many(client_limit_key(reset_ip, "reset"), 5, 900):
+            return jsonify({"error": "Too many reset attempts. Please wait and try again."}), 429
         
         if not identifier:
             return jsonify({"error": "Please enter your username or email address"}), 400
@@ -994,7 +1025,7 @@ def reset_password(token):
         
         try:
             cursor = connection.cursor()
-            cursor.execute("UPDATE users SET password = %s WHERE username = %s", (password, username))
+            cursor.execute("UPDATE users SET password = %s WHERE username = %s", (hash_password(password), username))
             connection.commit()
             
             # Delete the used token
@@ -1078,7 +1109,7 @@ def verify_turnstile_response(token, remote_ip=None):
     site_key = (getattr(Config, "TURNSTILE_SITE_KEY", None) or "").strip()
     secret = (getattr(Config, "TURNSTILE_SECRET_KEY", None) or "").strip()
     if not site_key or not secret:
-        return True
+        return False
     if not token:
         return False
     try:
@@ -1132,15 +1163,21 @@ def check_credentials(username, password):
             query = "SELECT password FROM users WHERE username = %s"
             cursor.execute(query, (username,))
             result = cursor.fetchone()
-            if result:
-                # User exists, check password
-                if result[0] == password:
-                    return True
-                else:
-                    return False
-            else:
-                # User doesn't exist
+            if not result:
                 return False
+            stored = result[0]
+            if not verify_password(password, stored):
+                return False
+            if needs_rehash(stored):
+                try:
+                    cursor.execute(
+                        "UPDATE users SET password = %s WHERE username = %s",
+                        (hash_password(password), username),
+                    )
+                    connection.commit()
+                except Error:
+                    connection.rollback()
+            return True
         except Error as e:
             print(f"Database error during credential check: {e}")
             return False
@@ -1421,12 +1458,12 @@ def send_email(to_email, subject, body):
 @auth_bp.route("/edit_user", methods=["POST"])
 @login_required
 def edit_user():
-    if session.get("username") != "yeti":
+    if not _is_yeti_user():
         return jsonify({"error": "Access denied"}), 403
 
     data = request.get_json() or {}
     user_id = data.get("id")
-    password = data.get("password")
+    password = (data.get("password") or "").strip()
     email = data.get("email", "")
     customer_purchase_fdc_ids = (data.get("customer_purchase_fdc_ids") or "").strip()
     customer_purchase_efashion_ids = (
@@ -1446,7 +1483,7 @@ def edit_user():
     )
     master_image_viewer_hide_path = 1 if data.get("master_image_viewer_hide_path") else 0
 
-    if not user_id or not password:
+    if not user_id:
         return jsonify({"error": "Missing required fields"}), 400
 
     if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
@@ -1459,33 +1496,60 @@ def edit_user():
     try:
         _ensure_user_groups_schema_once()
         cursor = connection.cursor()
-        cursor.execute(
-            """
-            UPDATE users
-            SET password = %s,
-                email = %s,
-                customer_purchase_fdc_ids = %s,
-                customer_purchase_efashion_ids = %s,
-                customer_purchase_include_approved_styles = %s,
-                customer_purchase_manual_styles = %s,
-                master_image_viewer_customer_purchase_only = %s,
-                client_product_detail_customer_purchase_only = %s,
-                master_image_viewer_hide_path = %s
-            WHERE id = %s
-            """,
-            (
-                password,
-                email,
-                customer_purchase_fdc_ids or None,
-                customer_purchase_efashion_ids or None,
-                1 if customer_purchase_include_approved_styles else 0,
-                customer_purchase_manual_styles or None,
-                master_image_viewer_customer_purchase_only,
-                client_product_detail_customer_purchase_only,
-                master_image_viewer_hide_path,
-                user_id,
-            ),
-        )
+        if password:
+            cursor.execute(
+                """
+                UPDATE users
+                SET password = %s,
+                    email = %s,
+                    customer_purchase_fdc_ids = %s,
+                    customer_purchase_efashion_ids = %s,
+                    customer_purchase_include_approved_styles = %s,
+                    customer_purchase_manual_styles = %s,
+                    master_image_viewer_customer_purchase_only = %s,
+                    client_product_detail_customer_purchase_only = %s,
+                    master_image_viewer_hide_path = %s
+                WHERE id = %s
+                """,
+                (
+                    hash_password(password),
+                    email,
+                    customer_purchase_fdc_ids or None,
+                    customer_purchase_efashion_ids or None,
+                    1 if customer_purchase_include_approved_styles else 0,
+                    customer_purchase_manual_styles or None,
+                    master_image_viewer_customer_purchase_only,
+                    client_product_detail_customer_purchase_only,
+                    master_image_viewer_hide_path,
+                    user_id,
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE users
+                SET email = %s,
+                    customer_purchase_fdc_ids = %s,
+                    customer_purchase_efashion_ids = %s,
+                    customer_purchase_include_approved_styles = %s,
+                    customer_purchase_manual_styles = %s,
+                    master_image_viewer_customer_purchase_only = %s,
+                    client_product_detail_customer_purchase_only = %s,
+                    master_image_viewer_hide_path = %s
+                WHERE id = %s
+                """,
+                (
+                    email,
+                    customer_purchase_fdc_ids or None,
+                    customer_purchase_efashion_ids or None,
+                    1 if customer_purchase_include_approved_styles else 0,
+                    customer_purchase_manual_styles or None,
+                    master_image_viewer_customer_purchase_only,
+                    client_product_detail_customer_purchase_only,
+                    master_image_viewer_hide_path,
+                    user_id,
+                ),
+            )
         connection.commit()
         return jsonify({"success": True, "message": "User updated successfully"})
     except Error as e:
@@ -1502,7 +1566,7 @@ def edit_user():
 @login_required
 def download_customer_approved_styles():
     """CSV of cus_invt approved styles for a user's FDC / e-fashion customer IDs."""
-    if session.get("username") != "yeti":
+    if not _is_yeti_user():
         return jsonify({"error": "Access denied"}), 403
 
     user_id = request.args.get("user_id")
@@ -1564,8 +1628,10 @@ def download_customer_approved_styles():
 @auth_bp.route("/delete_user", methods=["POST"])
 @login_required
 def delete_user():
-    # Parse the JSON data from the request
-    data = request.get_json()
+    if not _is_yeti_user():
+        return jsonify({"error": "Access denied"}), 403
+
+    data = request.get_json() or {}
     user_id = data.get('userId')
     
     if not user_id:
@@ -1577,15 +1643,19 @@ def delete_user():
     
     try:
         cursor = connection.cursor()
-        
-        # First check if this is the last admin user to prevent deleting all admins
+        cursor.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"error": "User not found"}), 404
+        if str(row[0] or "").strip().lower() == "yeti":
+            return jsonify({"error": "Cannot delete the yeti account"}), 400
+
         cursor.execute("SELECT COUNT(*) FROM users")
         total_users = cursor.fetchone()[0]
         
         if total_users <= 1:
             return jsonify({"error": "Cannot delete the last user"}), 400
         
-        # Delete the user
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         connection.commit()
         
@@ -1664,11 +1734,14 @@ def user_settings():
                     cursor.execute("SELECT password FROM users WHERE username = %s", (username,))
                     stored_password = cursor.fetchone()['password']
                     
-                    if stored_password != current_password:
+                    if not verify_password(current_password, stored_password):
                         error_message = "Current password is incorrect"
                     else:
                         try:
-                            cursor.execute("UPDATE users SET password = %s WHERE username = %s", (new_password, username))
+                            cursor.execute(
+                                "UPDATE users SET password = %s WHERE username = %s",
+                                (hash_password(new_password), username),
+                            )
                             connection.commit()
                             success_message = "Password updated successfully"
                         except Error as e:

@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.serving import WSGIRequestHandler
 import os
@@ -110,10 +110,12 @@ def _running_as_windows_service():
 _load_nssm_env_file()
 
 from py.utilities.logging_setup import configure_logging, log_event
-from py.utilities.setting import Config
+from py.utilities.setting import Config, validate_required_secrets
 from routes import register_routes
 from py.utilities.navigation_audit import register_navigation_audit
 from py.utilities.auth import log_event
+from py.utilities.csrf import register_csrf
+from py.utilities.security_headers import register_security_headers
 
 
 
@@ -161,30 +163,51 @@ class CustomRequestHandler(WSGIRequestHandler):
         log_event("ERROR", entry)
 
 
+validate_required_secrets()
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-app.secret_key = 'FDCkey2026-may-27'
+app.secret_key = Config.SECRET_KEY or os.environ.get("SECRET_KEY") or ""
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY is required. Set it in nssm-fdcef-environment.env.")
 app.config.from_object(Config)
 
 # Session configuration for both local and production
-app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP for localhost
+app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP for LAN
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Only set production cookie / scheme. Do NOT pin SERVER_NAME: that forces generated
 # external URLs to www even when staff open the app via the LAN IP (e.g. http://192.168.254.30:port),
 # which slows everything by sending traffic through Cloudflare. Emails use Config.PUBLIC_APP_ORIGIN.
-if app.config.get('ENV') == 'production':
+_secure_cookie = str(os.environ.get("FDC_SESSION_COOKIE_SECURE") or "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+if app.config.get('ENV') == 'production' or _secure_cookie:
     app.config['PREFERRED_URL_SCHEME'] = 'https'
-    app.config['SESSION_COOKIE_SECURE'] = True
+    if _secure_cookie:
+        app.config['SESSION_COOKIE_SECURE'] = True
 
 # Keep template auto-reload even when the NSSM service runs with debug off.
 app.jinja_env.auto_reload = True
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 configure_logging(app)
+register_csrf(app)
+register_security_headers(app)
 register_routes(app)
 register_navigation_audit(app)
+
+@app.errorhandler(404)
+def _not_found(_e):
+    return render_template("errors/404.html"), 404
+
+
+@app.errorhandler(500)
+def _server_error(_e):
+    return render_template("errors/500.html"), 500
 
 try:
     from py.Toolkits.V7listcreator import workbook_exports_fail_orphaned_running
