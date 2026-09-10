@@ -387,6 +387,12 @@
                     $('#verifyOrderButton').click();
                 }
             });
+
+            var prefillOrder = new URLSearchParams(window.location.search).get('order_number');
+            if (prefillOrder) {
+                $('#orderNumberInput').val(prefillOrder);
+                $('#verifyOrderButton').click();
+            }
             
             // Zhuankuan Process Button
             $('#processZhuankuanButton').click(function() {

@@ -6,37 +6,58 @@
   <title>{{ _('page.smart_search.title') }}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/smart_search.css') }}?v=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/smart_search.css') }}?v=10">
 </head>
 <body class="fdc-staff-page has-navbar">
 {% include 'navbar.html' %}
 <div class="fdc-page smart-search-page">
-  <div class="ss-hero">
-    <p class="ss-kicker">{{ _('page.smart_search.kicker') }}</p>
-    <h1>{{ _('page.smart_search.hero') }}</h1>
-    <p>{{ _('page.smart_search.lead') }}</p>
-    <div class="ss-box" id="ssBox">
-      <i class="fas fa-search" aria-hidden="true"></i>
-      <input
-        id="ssInput"
-        type="search"
-        value="{{ initial_query|default('', true) }}"
-        placeholder="{{ _('page.smart_search.placeholder') }}"
-        autocomplete="off"
-        spellcheck="false"
-        enterkeyhint="search"
-        aria-label="{{ _('page.smart_search.title') }}"
-      >
-      <button type="button" id="ssClear" class="ss-clear" hidden aria-label="{{ _('page.smart_search.clear') }}">&times;</button>
+  <div class="ss-hero" id="ssHero">
+    <div id="ssHeroHome">
+      <form id="ssForm" class="ss-form" action="/smart_search" method="get" role="search">
+        <div class="ss-box" id="ssBox">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <input
+            id="ssInput"
+            name="q"
+            type="search"
+            value="{{ initial_query|default('', true) }}"
+            placeholder="{{ _('page.smart_search.placeholder') }}"
+            autocomplete="off"
+            spellcheck="false"
+            enterkeyhint="search"
+            aria-label="{{ _('page.smart_search.title') }}"
+          >
+          <button type="button" id="ssClear" class="ss-clear" hidden aria-label="{{ _('page.smart_search.clear') }}">&times;</button>
+          <button type="submit" id="ssSubmit" class="ss-submit">{{ _('page.smart_search.submit') }}</button>
+        </div>
+      </form>
     </div>
     <div class="ss-chips" id="ssChips">
       <button type="button" data-fill="18432">{{ _('smart_search.chip.order') }}</button>
       <button type="button" data-fill="M1141">{{ _('smart_search.chip.sku') }}</button>
       <button type="button" data-fill="Loris">{{ _('smart_search.chip.customer') }}</button>
       <button type="button" data-fill="F23265">{{ _('smart_search.chip.container') }}</button>
+      <button type="button" data-fill="%3305%">{{ _('smart_search.chip.wildcard') }}</button>
+      <button type="button" data-fill="5858721823">{{ _('smart_search.chip.phone') }}</button>
+      <button type="button" data-fill="satchel">{{ _('smart_search.chip.satchel') }}</button>
+      <button type="button" data-fill="crossbody">{{ _('smart_search.chip.crossbody') }}</button>
+    </div>
+    <div class="ss-toolkit" id="ssToolkit">
+      <div class="ss-toolkit-btns" id="ssToolkitBtns">
+        <button type="button" data-pattern="contains">{{ _('smart_search.toolkit.contains') }}</button>
+        <button type="button" data-pattern="starts">{{ _('smart_search.toolkit.starts') }}</button>
+        <button type="button" data-pattern="ends">{{ _('smart_search.toolkit.ends') }}</button>
+        <button type="button" data-pattern="any">{{ _('smart_search.toolkit.any') }}</button>
+        <button type="button" data-pattern="one">{{ _('smart_search.toolkit.one') }}</button>
+        <button type="button" data-pattern="regex">{{ _('smart_search.toolkit.regex') }}</button>
+      </div>
+      <p class="ss-pattern-preview" id="ssPatternPreview" hidden></p>
     </div>
   </div>
 
+  <nav class="ss-jump" id="ssJump" hidden aria-label="{{ _('smart_search.jump') }}">
+    <div class="ss-jump-rail" id="ssJumpRail"></div>
+  </nav>
   <div class="ss-status" id="ssStatus" hidden></div>
   <div class="ss-results" id="ssResults" aria-live="polite"></div>
 </div>
@@ -45,15 +66,24 @@
   window.SMART_SEARCH = {
     initial: {{ initial_query|default('', true)|tojson }},
     api: {{ url_for('smart_search.smart_search_api')|tojson }},
+    stream: {{ url_for('smart_search.smart_search_stream')|tojson }},
     strings: {
       min: {{ _('page.smart_search.min')|tojson }},
       loading: {{ _('page.smart_search.loading')|tojson }},
       noResults: {{ _('page.smart_search.no_results')|tojson }},
       error: {{ _('page.smart_search.error')|tojson }},
-      open: {{ _('page.smart_search.open')|tojson }}
+      open: {{ _('page.smart_search.open')|tojson }},
+      pattern: {{ _('smart_search.toolkit.preview')|tojson }},
+      matchedIn: {{ _('smart_search.matched_in')|tojson }},
+      jump: {{ _('smart_search.jump')|tojson }},
+      collapse: {{ _('smart_search.collapse')|tojson }},
+      expand: {{ _('smart_search.expand')|tojson }},
+      noOrder: {{ _('smart_search.no_order')|tojson }},
+      showNoOrder: {{ _('smart_search.show_no_order')|tojson }},
+      hideNoOrder: {{ _('smart_search.hide_no_order')|tojson }}
     }
   };
 </script>
-<script src="{{ url_for('static', filename='js/smart_search.js') }}?v=1"></script>
+<script src="{{ url_for('static', filename='js/smart_search.js') }}?v=10"></script>
 </body>
 </html>
