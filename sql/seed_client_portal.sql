@@ -3,7 +3,7 @@
 
 INSERT INTO user_groups (name, slug, permissions, sort_order)
 SELECT 'Client', 'client',
-       '{"tools": ["clientview", "master_image_viewer"], "mail_account_ids": [], "client_product_detail_restrict": true, "client_product_detail_sections": []}',
+       '{"tools": ["clientview", "master_image_viewer"], "client_product_detail_restrict": true, "client_product_detail_sections": []}',
        25
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM user_groups WHERE slug = 'client');
@@ -11,7 +11,7 @@ WHERE NOT EXISTS (SELECT 1 FROM user_groups WHERE slug = 'client');
 SET @client_gid := (SELECT id FROM user_groups WHERE slug = 'client' LIMIT 1);
 
 UPDATE user_groups
-SET permissions = '{"tools": ["clientview", "master_image_viewer"], "mail_account_ids": []}'
+SET permissions = '{"tools": ["clientview", "master_image_viewer"]}'
 WHERE slug = 'client';
 
 INSERT INTO users (username, password, email, created_at, user_group_id)

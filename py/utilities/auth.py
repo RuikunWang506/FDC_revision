@@ -348,30 +348,6 @@ def _sidebar_users_ordered(users_list):
     return yeti_rows + others
 
 
-def _mail_accounts_for_permissions_ui():
-    """Mailboxes from MySQL for ACL checkboxes (same DB as users)."""
-    conn = get_db_connection()
-    if not conn:
-        return []
-    cur = None
-    try:
-        cur = conn.cursor(dictionary=True)
-        cur.execute(
-            "SELECT id, label, email FROM mail_accounts ORDER BY label ASC, id ASC"
-        )
-        return list(cur.fetchall())
-    except Error:
-        return []
-    finally:
-        if cur is not None:
-            try:
-                cur.close()
-            except Exception:
-                pass
-        if conn.is_connected():
-            conn.close()
-
-
 def _cluster_users_by_group(users_sorted):
     blocks = []
     cur_key = None
@@ -438,14 +414,7 @@ def manage_users():
                     flash("Invalid group.")
                     return redirect(url_for("auth.manage_users"))
                 dashboard_restrict = request.form.get("dashboard_restrict") == "1"
-                mail_restrict = request.form.get("mail_restrict") == "1"
                 tools_sel = request.form.getlist("tools")
-                mail_sel = []
-                for x in request.form.getlist("mail_account_ids"):
-                    try:
-                        mail_sel.append(int(x))
-                    except (TypeError, ValueError):
-                        continue
                 client_pd_restrict = request.form.get("client_pd_restrict") == "1"
                 client_pd_sections_sel = request.form.getlist(
                     "client_product_detail_sections"
@@ -475,10 +444,7 @@ def manage_users():
                         base["tools"] = tools_sel
                     else:
                         base.pop("tools", None)
-                    if mail_restrict:
-                        base["mail_account_ids"] = mail_sel
-                    else:
-                        base.pop("mail_account_ids", None)
+                    base.pop("mail_account_ids", None)
                     if client_pd_restrict:
                         base["client_product_detail_restrict"] = True
                         base["client_product_detail_sections"] = client_pd_sections_sel
@@ -859,7 +825,6 @@ def manage_users():
             )
 
         users_by_group = _cluster_users_by_group(users)
-        mail_accounts = _mail_accounts_for_permissions_ui()
         dashboard_tools_grouped = _dashboard_tools_grouped(DASHBOARD_TOOLS)
         sidebar_users = _sidebar_users_ordered(users)
         all_groups_select = fetch_groups_list(connection)
@@ -875,7 +840,6 @@ def manage_users():
             sidebar_users=sidebar_users,
             current_user=session["username"],
             dashboard_tools_grouped=dashboard_tools_grouped,
-            mail_accounts=mail_accounts,
             client_product_detail_sections=CLIENT_PRODUCT_DETAIL_SECTIONS,
         )
     except Error as e:

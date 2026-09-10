@@ -150,9 +150,6 @@ class Config:
     for dir_path in OUTPUT_DIRS.values():
         dir_path.mkdir(parents=True, exist_ok=True)
 
-    # Mail UI (IMAP/SMTP): local cache dir on Windows server
-    EMAIL_DATA_DIR = Path(os.getenv('EMAIL_DATA_DIR', r'D:\Email'))
-
     # Re-read Jinja templates from disk without restarting the process (works with debug off).
     TEMPLATES_AUTO_RELOAD = True
     # Cache CSS/JS/images in the browser so the homepage is not re-downloaded every visit.

@@ -6,6 +6,7 @@ import math
 import json
 import tempfile
 from datetime import datetime
+from urllib.parse import quote
 import logging
 import re
 import glob
@@ -1396,6 +1397,64 @@ def sidebar_container_lists(*, arrived_limit: int = 5) -> tuple[list[dict], list
                 seen_arrived.add(cid)
                 arrived.append(item)
     return ocean, arrived[:arrived_limit]
+
+
+FDCEF_CONTAINER_SEARCH_URL = "https://www.fdcef.com/container_search"
+
+
+def _arrival_date_mmdd(raw) -> str:
+    """Format Receive Time (or similar date) as MM/DD with no year."""
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    text = text.split()[0].replace("-", "/")
+    parts = [p for p in text.split("/") if p]
+    try:
+        if len(parts) >= 3 and len(parts[0]) == 4:
+            return f"{int(parts[1]):02d}/{int(parts[2]):02d}"
+        if len(parts) >= 2:
+            return f"{int(parts[0]):02d}/{int(parts[1]):02d}"
+    except (TypeError, ValueError):
+        return ""
+    return ""
+
+
+def recent_arrivals_for_dashboard(*, limit: int = 8) -> list[dict]:
+    """Latest landed containers from the Container Hub cache for the homepage sidebar.
+
+    Reads the same cached /boat/data payload as ``sidebar_container_lists``
+    (Container Hub / container_search) without re-parsing the sheet CSV.
+    Display date is boat landed ``received_date`` (Receive Time / 收货时间), MM/DD.
+    Returns dicts with id, arrival_date (MM/DD), and an fdcef.com container_search URL.
+    """
+    try:
+        cap = max(1, min(int(limit or 8), 12))
+    except (TypeError, ValueError):
+        cap = 8
+    payload = load_latest_cached_boat_payload() or {}
+    out: list[dict] = []
+    seen: set[str] = set()
+    for row in payload.get("data") or []:
+        cid = normalize_container_id(row.get("container"))
+        if not cid or cid.startswith("L") or cid in seen:
+            continue
+        if str(row.get("action_mode") or "").strip().lower() != "landed":
+            continue
+        date_raw = str(row.get("received_date") or "").strip()
+        arrival_date = _arrival_date_mmdd(date_raw)
+        if not arrival_date:
+            continue
+        seen.add(cid)
+        out.append(
+            {
+                "id": cid,
+                "arrival_date": arrival_date,
+                "url": f"{FDCEF_CONTAINER_SEARCH_URL}?container_id={quote(cid, safe='')}",
+            }
+        )
+        if len(out) >= cap:
+            break
+    return out
 
 
 _PACKSLIP_BIG_CUSTOMER_SQL = """

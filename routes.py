@@ -205,15 +205,23 @@ def register_routes(app):
             except Exception:
                 portal_ctx = {}
         dashboard_favorites: list = []
+        recent_arrivals: list = []
         if not portal_minimal:
             from py.utilities.dashboard_permissions import get_dashboard_favorites
 
             dashboard_favorites = get_dashboard_favorites(current_user)
+            try:
+                from py.Toolkits.boat import recent_arrivals_for_dashboard
+
+                recent_arrivals = recent_arrivals_for_dashboard(limit=8)
+            except Exception:
+                recent_arrivals = []
         return render_template(
             "index.html",
             current_user=current_user,
             portal_minimal=portal_minimal,
             dashboard_favorites=dashboard_favorites,
+            recent_arrivals=recent_arrivals,
             **portal_ctx,
         )
 

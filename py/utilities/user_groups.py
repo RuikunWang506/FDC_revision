@@ -1,5 +1,5 @@
 """
-User groups: dashboard + mail permissions are stored per group; users belong to one group.
+User groups: dashboard permissions are stored per group; users belong to one group.
 Only schema + seed helpers here; ACL logic stays in dashboard_permissions + auth.get_user_permissions.
 """
 from __future__ import annotations
@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from mysql.connector import Error
 
-# Default groups (sort_order). Permissions NULL = full access for dashboard + mail.
+# Default groups (sort_order). Permissions NULL = full dashboard access.
 DEFAULT_GROUPS: List[Tuple[str, str, int]] = [
     ("Yeti", "yeti", 0),
     ("Admin", "admin", 5),
@@ -24,7 +24,6 @@ DEFAULT_GROUPS: List[Tuple[str, str, int]] = [
 # Same tools as legacy TK password (ucandoit) portal access.
 CLIENT_GROUP_PERMISSIONS: Dict[str, Any] = {
     "tools": ["clientview", "master_image_viewer"],
-    "mail_account_ids": [],
     "client_product_detail_restrict": True,
     "client_product_detail_sections": [],
 }
@@ -292,14 +291,11 @@ def parse_permissions_ui(raw: Any) -> Dict[str, Any]:
     if not isinstance(parsed, dict):
         parsed = {}
     tools = parsed.get("tools")
-    mail_ids = parsed.get("mail_account_ids")
     cpd_sections = parsed.get("client_product_detail_sections")
     return {
         "raw": parsed,
         "dashboard_restrict": "tools" in parsed,
-        "mail_restrict": "mail_account_ids" in parsed,
         "tools_sel": tools if isinstance(tools, list) else [],
-        "mail_sel": _int_list(mail_ids),
         "client_pd_restrict": bool(parsed.get("client_product_detail_restrict")),
         "client_pd_sections_sel": cpd_sections if isinstance(cpd_sections, list) else [],
         "customer_purchase_customer_id": str(
@@ -316,16 +312,6 @@ def parse_permissions_ui(raw: Any) -> Dict[str, Any]:
         ),
         "log_viewer_allowed": bool(parsed.get("log_viewer_allowed")),
     }
-
-
-def _int_list(raw: Any) -> List[int]:
-    out: List[int] = []
-    for x in raw or []:
-        try:
-            out.append(int(x))
-        except (TypeError, ValueError):
-            continue
-    return out
 
 
 def group_member_counts(connection) -> Dict[int, int]:

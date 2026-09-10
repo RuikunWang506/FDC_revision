@@ -54,8 +54,6 @@ ENDPOINT_TO_SLUG = {
     'invoice_lookup.invoice_lookup': 'page-invoice-lookup',
     'customer.customer_home': 'page-customer',
     'customer.customer_details': 'page-customer',
-    'email.mailboxes': 'page-mail',
-    'email.inbox': 'page-mail',
     'order_lookup.order_lookup': 'page-order-lookup',
     'order_processor.order_processor': 'page-order-processor',
     'four_seller.four_seller_page': 'page-4seller',

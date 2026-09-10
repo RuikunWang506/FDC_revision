@@ -477,31 +477,6 @@
                             </div>
                         </div>
                         <div class="mu-perm-section">
-                            <h3 class="text-uppercase small text-muted">{{ te('Mailboxes') }}</h3>
-                            <div class="mu-switch-row">
-                                <label class="d-flex align-items-center mb-0">
-                                    <input type="checkbox" class="mr-2" name="mail_restrict" value="1" id="modal_mail_restrict">
-                                    Limit which mail accounts members can open
-                                </label>
-                            </div>
-                            {% if mail_accounts %}
-                            <div class="mu-select-links modal-mail-links">
-                                <a href="#" class="text-primary modal-select-all-mail">{{ te('Select all') }}</a>
-                                <a href="#" class="text-primary modal-clear-mail">{{ te('Clear') }}</a>
-                            </div>
-                            <div class="mu-checkbox-grid mu-mail-grid modal-mail-panel" style="max-height:200px;">
-                                {% for m in mail_accounts %}
-                                <label>
-                                    <input type="checkbox" name="mail_account_ids" value="{{ m.id }}" class="modal-mail-cb">
-                                    <span>{{ m.label or m.email or ('Account ' ~ m.id) }}{% if m.email %} <span class="text-muted">({{ m.email }})</span>{% endif %}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <p class="small text-warning mb-0">No <code>{{ te('mail_accounts') }}</code> rows.</p>
-                            {% endif %}
-                        </div>
-                        <div class="mu-perm-section">
                             <h3 class="text-uppercase small text-muted">{{ te('Client product detail') }}</h3>
                             <p class="mu-mini-hint mb-2">{{ _('page.manage_users.sections_on') }} <code>/clientview/product_detail</code>. {{ _('page.manage_users.limit_hint') }}</p>
                             <div class="mu-switch-row">
@@ -563,7 +538,7 @@
                     <div class="modal-body">
                         <p class="small text-muted mb-3">
                             Copies saved permissions from <strong id="copy_source_group_label">—</strong>
-                            (dashboard tools, mailboxes, client product detail). Unsaved changes in the editor are not included.
+                            (dashboard tools, client product detail). Unsaved changes in the editor are not included.
                         </p>
                         <div class="form-group mb-0">
                             <label for="copy_new_group_name">{{ te('New group name') }}</label>
@@ -749,19 +724,12 @@
                 $('#modal_group_id').val(g.id);
                 $('#modal_group_title').text(g.name);
                 $('#modal_dashboard_restrict').prop('checked', !!g.dashboard_restrict);
-                $('#modal_mail_restrict').prop('checked', !!g.mail_restrict);
                 var ts = g.tools_sel || [];
                 $('.modal-tool-cb').each(function () {
                     var v = $(this).attr('value');
                     $(this).prop('checked', toolIdMatch(ts, v));
                 });
-                var ms = (g.mail_sel || []).map(function (x) { return parseInt(x, 10); });
-                $('.modal-mail-cb').each(function () {
-                    var id = parseInt($(this).val(), 10);
-                    $(this).prop('checked', ms.indexOf(id) >= 0);
-                });
                 $('.modal-dash-links, .modal-dash-panel').toggle(!!g.dashboard_restrict);
-                $('.modal-mail-links, .modal-mail-panel').toggle(!!g.mail_restrict);
                 $('#modal_client_pd_restrict').prop('checked', !!g.client_pd_restrict);
                 var cpd = g.client_pd_sections_sel || [];
                 $('.modal-cpd-cb').each(function () {
@@ -795,9 +763,6 @@
             $('#modal_dashboard_restrict').on('change', function () {
                 $('.modal-dash-links, .modal-dash-panel').toggle($(this).is(':checked'));
             });
-            $('#modal_mail_restrict').on('change', function () {
-                $('.modal-mail-links, .modal-mail-panel').toggle($(this).is(':checked'));
-            });
             $('#modal_client_pd_restrict').on('change', function () {
                 $('.modal-cpd-links, .modal-cpd-panel').toggle($(this).is(':checked'));
             });
@@ -809,14 +774,6 @@
             $('.modal-clear-tools').on('click', function (e) {
                 e.preventDefault();
                 $('.modal-tool-cb').prop('checked', false);
-            });
-            $('.modal-select-all-mail').on('click', function (e) {
-                e.preventDefault();
-                $('.modal-mail-cb').prop('checked', true);
-            });
-            $('.modal-clear-mail').on('click', function (e) {
-                e.preventDefault();
-                $('.modal-mail-cb').prop('checked', false);
             });
             $('.modal-select-all-cpd').on('click', function (e) {
                 e.preventDefault();

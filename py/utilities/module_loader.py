@@ -342,14 +342,6 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "tool_ids": (),
     },
     {
-        "name": "email",
-        "import_path": "py.other.email",
-        "attr": "email_bp",
-        "kind": "blueprint",
-        "path_prefixes": ("/email",),
-        "tool_ids": ("fdc_mail",),
-    },
-    {
         "name": "fdc_ai",
         "import_path": "py.utilities.fdc_ai",
         "attr": "fdc_ai_bp",

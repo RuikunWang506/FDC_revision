@@ -103,12 +103,6 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
             <li class="nav-item d-flex align-items-center mr-2">
                 {% include '_lang_switch.html' %}
             </li>
-            <!-- QR code icon button -->
-            <li class="nav-item d-flex align-items-center">
-                <button id="navbar-qr-btn" class="btn btn-link p-0 mr-2" title="{{ _('nav.qr_scan') }}" style="color: #fff;">
-                    <i class="fas fa-qrcode fa-lg"></i>
-                </button>
-            </li>
             {% if current_user and not hide_staff_nav_links() %}
             <li class="nav-item dropdown d-flex align-items-center" id="fdcOnlineNavItem">
                 <a class="nav-link dropdown-toggle py-2 pr-2 mr-1" href="#" id="fdcOnlineDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{ _('nav.online') }}">
@@ -154,24 +148,6 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
         </ul>
     </div>
 </nav>
-
-<!-- QR Code Modal -->
-<div class="modal fade" id="navbarQrModal" tabindex="-1" role="dialog" aria-labelledby="navbarQrModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-    <div class="modal-content bg-dark text-center">
-      <div class="modal-header border-0">
-        <h5 class="modal-title text-white" id="navbarQrModalLabel">{{ _('nav.qr_title') }}</h5>
-        <button type="button" class="close text-white" onclick="$('#navbarQrModal').modal('hide');" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <canvas id="navbar-qr-canvas" style="margin:0 auto; display:block;"></canvas>
-        <div class="mt-2 text-white small" id="navbar-qr-url"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <style>
 .navbar {
@@ -219,15 +195,6 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
     justify-content: center;
     font-weight: bold;
     text-transform: uppercase;
-}
-#navbar-qr-btn {
-    background: none;
-    border: none;
-    outline: none;
-    cursor: pointer;
-}
-#navbar-qr-btn:focus {
-    outline: none;
 }
 .fdc-lang-switch {
     display: inline-flex;
@@ -323,34 +290,9 @@ body.has-navbar { padding-top: calc(50px + env(safe-area-inset-top, 0px)); }
 }
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 $(function() {
     $('.dropdown-toggle').dropdown();
-    
-    // QR code button click handler
-    $('#navbar-qr-btn').on('click', function() {
-        var url = window.location.href;
-        
-        // If on a palletdetail page, try to get the short URL
-        if (url.includes('/palletdetail/') && typeof window.palletShortUrl !== 'undefined') {
-            var baseUrl = url.split('/palletdetail/')[0];
-            url = baseUrl + window.palletShortUrl;
-        }
-        
-        $('#navbar-qr-url').text(url);
-        // Generate QR code
-        if (window.QRious) {
-            var qr = new QRious({
-                element: document.getElementById('navbar-qr-canvas'),
-                value: url,
-                size: 180,
-                background: 'white',
-                foreground: '#222'
-            });
-        }
-        $('#navbarQrModal').modal('show');
-    });
 });
 document.addEventListener('DOMContentLoaded', function() {
     var pdSearch = document.getElementById('navbarPdSearchInput');

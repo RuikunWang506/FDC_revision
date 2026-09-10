@@ -2,7 +2,6 @@
 Home dashboard tool cards — ids match templates/index.html data-tool attributes.
 Permissions JSON on users.permissions:
   tools: list[str] | omitted → full dashboard access
-  mail_account_ids: list[int] | omitted → all mailboxes
 """
 from __future__ import annotations
 
@@ -40,7 +39,6 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "item_lookup": "item_lookup",
     "invoice_lookup": "invoice_lookup",
     "customer": "customer",
-    "email": "fdc_mail",
     "order_lookup": "order_lookup",
     "order_processor": "order_processor",
     "external_stock_check": "external_stock_check",
@@ -71,34 +69,33 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
 
 # Single source of truth for admin UI + home filtering (order = display order)
 DASHBOARD_TOOLS: List[Dict[str, str]] = [
-    {"id": "item_lookup", "title": "SKU/STYLE Lookup", "category": "Lookup"},
-    {"id": "invoice_lookup", "title": "Invoice Lookup", "category": "Lookup"},
-    {"id": "customer", "title": "Customer Analytics", "category": "Lookup"},
-    {"id": "fdc_mail", "title": "Mail", "category": "Lookup"},
-    {"id": "order_lookup", "title": "Sales Orders", "category": "Orders"},
-    {"id": "order_processor", "title": "Order Processor", "category": "Orders"},
+    {"id": "item_lookup", "title": "SKU/STYLE Lookup", "category": "Catalog"},
+    {"id": "clientview", "title": "Client Portal", "category": "Catalog"},
+    {"id": "bag_style_viewer", "title": "Bag Style Viewer", "category": "Catalog"},
+    {"id": "v7_listcreator", "title": "List Creator V7", "category": "Catalog"},
+    {"id": "tradeshowtool", "title": "Trade Show Tool", "category": "Catalog"},
+    {"id": "master_image_viewer", "title": "Master Image Viewer", "category": "Catalog"},
+    {"id": "dam", "title": "DAM System", "category": "Catalog"},
+    {"id": "image_upload", "title": "Smart Image Upload", "category": "Catalog"},
+    {"id": "burlington_highlight", "title": "Burlington-highlight", "category": "Catalog"},
+    {"id": "order_lookup", "title": "Sales Orders", "category": "Sales"},
+    {"id": "order_processor", "title": "Order Processor", "category": "Sales"},
+    {"id": "customer", "title": "Customer Analytics", "category": "Sales"},
+    {"id": "invoice_lookup", "title": "Invoice Lookup", "category": "Sales"},
+    {"id": "four_seller", "title": "4Seller Stock Sync", "category": "Sales"},
+    {"id": "whatnot_live", "title": "Whatnot Live", "category": "Sales"},
     {"id": "external_stock_check", "title": "External Stock Check", "category": "Inventory"},
     {"id": "internal_stock_check", "title": "Internal Stock Check", "category": "Inventory"},
     {"id": "inventory_manual_adjuster", "title": "Inventory Manual Adjuster", "category": "Inventory"},
-    {"id": "four_seller", "title": "4Seller Stock Sync", "category": "Inventory"},
-    {"id": "location_massive_update", "title": "Massive Location Update", "category": "Inventory"},
     {"id": "oosc", "title": "Out of Stock Check", "category": "Inventory"},
-    {"id": "dam", "title": "DAM System", "category": "Media"},
-    {"id": "image_upload", "title": "Smart Image Upload", "category": "Media"},
-    {"id": "master_image_viewer", "title": "Master Image Viewer", "category": "Media"},
-    {"id": "clientview", "title": "Client Portal", "category": "Media"},
-    {"id": "bag_style_viewer", "title": "Bag Style Viewer", "category": "Media"},
-    {"id": "burlington_highlight", "title": "Burlington-highlight", "category": "Media"},
-    {"id": "v7_listcreator", "title": "List Creator V7", "category": "Utilities"},
-    {"id": "loris_fedex", "title": "Loris Automation", "category": "Utilities"},
-    {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Utilities"},
-    {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Utilities"},
-    {"id": "print_center", "title": "打印中心", "category": "Utilities"},
-    {"id": "whatnot_live", "title": "Whatnot Live", "category": "Utilities"},
-    {"id": "tradeshowtool", "title": "Trade Show Tool", "category": "Utilities"},
-    {"id": "boat", "title": "Shipping Intelligence", "category": "Logistics"},
-    {"id": "fdcef_container_search", "title": "FDCEF container search", "category": "Logistics"},
-    {"id": "warehousemap", "title": "Warehouse Map", "category": "Logistics"},
+    {"id": "location_massive_update", "title": "Massive Location Update", "category": "Inventory"},
+    {"id": "boat", "title": "Shipping Intelligence", "category": "Warehouse"},
+    {"id": "fdcef_container_search", "title": "FDCEF container search", "category": "Warehouse"},
+    {"id": "warehousemap", "title": "Warehouse Map", "category": "Warehouse"},
+    {"id": "loris_fedex", "title": "Loris Automation", "category": "Warehouse"},
+    {"id": "print_center", "title": "打印中心", "category": "Warehouse"},
+    {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Warehouse"},
+    {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Warehouse"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
     {"id": "vendor_app", "title": "Vendor App", "category": "Admin"},
@@ -109,7 +106,6 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "item_lookup": {"href": "/item_lookup", "label": "SKU"},
     "invoice_lookup": {"href": "/invoice_lookup", "label": "Invoice"},
     "customer": {"href": "/customer", "label": "Customers"},
-    "fdc_mail": {"href": "/email", "label": "Mail"},
     "order_lookup": {"href": "/order_lookup", "label": "Orders"},
     "order_processor": {"href": "/order_processor", "label": "Processor"},
     "external_stock_check": {"href": "/external_stock_check", "label": "Ext Stock"},
@@ -245,29 +241,6 @@ def enforce_dashboard_tool_access():
         "warning",
     )
     return redirect(url_for("home"))
-
-
-def mail_accounts_allowed_ids(perms: Optional[Dict[str, Any]], username: str) -> Optional[set]:
-    """
-    None = unrestricted (all mailboxes).
-    set of int = only those account ids.
-    """
-    if (username or "").strip().lower() == "yeti":
-        return None
-    if not perms:
-        return None
-    raw = perms.get("mail_account_ids")
-    if raw is None:
-        return None
-    if not isinstance(raw, list):
-        return None
-    out: set = set()
-    for x in raw:
-        try:
-            out.add(int(x))
-        except (TypeError, ValueError):
-            continue
-    return out
 
 
 def get_dashboard_favorites(username: str) -> List[str]:
