@@ -172,7 +172,11 @@ def display_online():
         timeline_layout_range,
         today_pst,
     )
-    from py.utilities.user_log_parser import attach_activities_to_sessions, load_user_activities
+    from py.utilities.user_log_parser import (
+        attach_activities_to_sessions,
+        cover_sessions_with_activities,
+        load_user_activities,
+    )
 
     search_term = request.args.get('search', '').strip()
     view = request.args.get('view', 'dashboard')
@@ -203,13 +207,19 @@ def display_online():
         username=selected_user or None,
         search_term=search_term,
     )
-    display_sessions = (
-        merge_sessions(raw_sessions, gap_sec=merge_gap)
-        if merge_enabled
-        else sorted(raw_sessions, key=lambda s: s['start'], reverse=True)
-    )
-    display_sessions = filter_by_min_duration(display_sessions, min_duration)
-    display_sessions = enrich_session_displays(display_sessions, multi_day=multi_day)
+    if view != 'raw' and date_to >= today_pst():
+        from py.utilities.online_presence import export_open_sessions
+
+        for open_session in export_open_sessions():
+            if selected_user and open_session['username'].lower() != selected_user.lower():
+                continue
+            if date_from and open_session['date'] < date_from:
+                continue
+            if date_to and open_session['date'] > date_to:
+                continue
+            if search_term and search_term.lower() not in open_session['username'].lower():
+                continue
+            raw_sessions.append(open_session)
 
     user_log_path = _cfg_path('USER_LOG_FILE', 'user.log')
     session_activities = load_user_activities(
@@ -218,6 +228,22 @@ def display_online():
         date_to=date_to if view != 'raw' else None,
         username=selected_user or None,
     )
+    display_sessions = (
+        merge_sessions(raw_sessions, gap_sec=merge_gap)
+        if merge_enabled
+        else sorted(raw_sessions, key=lambda s: s['start'], reverse=True)
+    )
+    display_sessions = cover_sessions_with_activities(
+        display_sessions,
+        session_activities,
+        gap_sec=merge_gap if merge_enabled else 30,
+    )
+    if merge_enabled:
+        display_sessions = merge_sessions(display_sessions, gap_sec=merge_gap)
+    else:
+        display_sessions.sort(key=lambda s: s['start'], reverse=True)
+    display_sessions = filter_by_min_duration(display_sessions, min_duration)
+    display_sessions = enrich_session_displays(display_sessions, multi_day=multi_day)
     display_sessions = attach_activities_to_sessions(
         display_sessions,
         session_activities,

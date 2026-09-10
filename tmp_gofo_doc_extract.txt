@@ -1,0 +1,1433 @@
+pages=41 file=GOFO对外接口文档v260326.pdf
+
+===== PAGE 1 =====
+1
+GOFO 对外 API口文档开发规范
+目录
+测试环境域名：https://uat-dbu-api.eminxing.com......................................................................2
+1.API创建订单接口（必须对接项）............................................................................................2
+接口简介：................................................................................................................................ 2
+基本信息：................................................................................................................................ 2
+请求参数：................................................................................................................................ 3
+请求示例：................................................................................................................................ 8
+响应参数：.............................................................................................................................. 10
+返回代码对照表：..................................................................................................................10
+响应示例：.............................................................................................................................. 11
+收件国家简码对照表..............................................................................................................12
+2.API取消订单接口（必须对接项）..........................................................................................12
+接口简介：.............................................................................................................................. 12
+基本信息：.............................................................................................................................. 12
+请求参数：.............................................................................................................................. 13
+请求示例：.............................................................................................................................. 13
+响应参数：.............................................................................................................................. 13
+返回代码对照表：..................................................................................................................14
+响应示例：.............................................................................................................................. 14
+3.API获取面单接口（必须对接项）..........................................................................................14
+接口简介：.............................................................................................................................. 14
+基本信息：.............................................................................................................................. 14
+请求参数：.............................................................................................................................. 15
+响应参数：.............................................................................................................................. 15
+返回代码对照表：..................................................................................................................15
+响应示例：.............................................................................................................................. 16
+4.API轨迹查询 V2接口（按实际情况对接）...........................................................................16
+接口简介：.............................................................................................................................. 16
+基本信息：.............................................................................................................................. 17
+请求参数：.............................................................................................................................. 17
+响应参数：.............................................................................................................................. 17
+返回代码对照表：..................................................................................................................20
+响应示例：.............................................................................................................................. 20
+5. 总包预报接口（按实际情况对接）.........................................................................................23
+接口简介：.............................................................................................................................. 23
+基本信息：.............................................................................................................................. 23
+请求参数：.............................................................................................................................. 24
+请求示例：.............................................................................................................................. 24
+返回代码对照表：..................................................................................................................25
+===== PAGE 2 =====
+2
+响应示例：.............................................................................................................................. 25
+6. 提单信息接口（按实际情况对接）.........................................................................................26
+接口简介：.............................................................................................................................. 26
+基本信息：.............................................................................................................................. 26
+请求参数：.............................................................................................................................. 26
+请求示例：.............................................................................................................................. 28
+响应示例：.............................................................................................................................. 29
+7. 运费测算（按实际情况对接）.................................................................................................29
+接口简介：.............................................................................................................................. 29
+基本信息：.............................................................................................................................. 29
+请求参数：.............................................................................................................................. 30
+响应参数：.............................................................................................................................. 34
+请求示例：.............................................................................................................................. 34
+响应示例：.............................................................................................................................. 35
+返回代码对照表：..................................................................................................................36
+收件国家简码对照表..............................................................................................................36
+8. 派送范围查询（按实际情况对接）.........................................................................................37
+接口简介：.............................................................................................................................. 37
+基本信息：.............................................................................................................................. 37
+请求参数：.............................................................................................................................. 37
+响应参数：.............................................................................................................................. 38
+请求示例：.............................................................................................................................. 38
+响应示例：.............................................................................................................................. 39
+返回代码对照表：..................................................................................................................39
+收件国家简码对照表..............................................................................................................40
+9. 请求头 Header 认证获取示例.................................................................................................40
+测试环境域名：https://uat-dbu-api.eminxing.com
+1. API 创建订单接口（必须对接项）
+接口简介：
+接入上游数据 ，对外提供创建订单的接口。
+基本信息：
+===== PAGE 3 =====
+3
+标识 接口信息
+测试地址 /open-api/v2/order/create
+Header
+Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 POST
+请求类型 JSON
+请求参数：
+参数 子属性 示例
+值
+类型 必填 参数描述
+cOrderNo 4804
+4527
+616
+String 非必
+填
+客户单号(长度 1-30)
+referenceNo TEST
+4804
+4527
+616
+String 非必
+填
+参考单号(长度 1-30)
+reference4 TEST
+4804
+45
+String 非必
+填
+预留字段（长度 1-32），应用在面
+单下方，可存放 sku信息
+ytReference TEST
+4804
+45
+String 非必
+填
+面单 Reference栏位显示内容(长
+度 1-30)
+shippingType HDN String 非必
+填
+配送类型：HDN（送货上门），
+ZT（自提），默认为HDN(送货上
+门)
+productCode key-
+code-
+01
+String 必填 产品编码（长度1～100）大件、
+小件默认揽收
+固定值
+小件揽收：GOFO Parcel
+Pickup
+===== PAGE 4 =====
+4
+大件揽收：GOFO Ground
+Pickup
+大件自送：GOFO Ground
+declaredValue 12 number 必填 包裹预报货值，单位：美金 范围
+0.0001-100.00 例如：13
+queryReceiveS
+tartTime
+“2025
+-03-
+03
+08:00
+:00”
+String 非必
+填
+揽收开始时间
+标准格式：yyyy-MM-dd
+HH:mm:ss
+queryReceiveE
+ndTime
+“2025
+-03-
+03
+18:59
+:59”
+String 非必
+填
+揽收结束时间
+标准格式：yyyy-MM-dd
+HH:mm:ss
+orderShipper {} object 必填 寄件信息
+shipperName louis String 必填 发件人-姓名，长度为 1-50
+shipperPhone 1367
+8987
+875
+String 必填 发件人-手机号，长度为10-14
+shipperCountry Chin
+a
+String 必填 发件人-国家 根据实际情况，传
+China
+shipperState Heilo
+ngjia
+ng
+String 必填 发件人-省/州 China- 省的名称的
+汉语拼音 州的名称
+长度 1-35
+例如：Heilongjiang
+shipperCity Wula
+ncha
+bu
+String 必填 发件人-市 China- 市的名称的汉
+语拼音 Mexio- 市的名称
+长度 1-50
+例如：Wulanchabu
+shipperArea Yaoh
+ai
+String 非必
+填
+发件人-区 区的名称的汉语拼音
+长度 1-50
+例如：Yaohai
+===== PAGE 5 =====
+5
+shipperStreet 309
+Dong
+feng
+Middl
+eRd
+String 必填 发件人-详细地址
+长度1-100
+shipperCode 2240
+00
+String 必填 发件人-邮编根据实际情况 03100
+shipperEmail 2324
+3535
+@16
+3.co
+m
+String 非必
+填
+发件人-邮箱，长度为 1-100
+orderConsigne
+e
+{} object 必填 收件信息
+consigneeName louis String 必填 收件人-姓名，长度为 1-100
+consigneePhone 1367
+8987
+875
+String 必填 收件人手机号，长度为10-14
+consigneeCount
+ry US
+String 必填
+收件国家
+（具体可参考如下：收件国家简码
+对照表）
+consigneeState XXX
+XXX
+String 必填 收件人-州
+长度 1-35
+consigneeCity XXX
+XX
+String 必填 收件人-市（
+长度 1-50
+consigneeArea XXX
+X
+String 非必
+填
+收件人-区
+长度 1-50
+address1 xxxx String 必填 收件地址1
+长度1-130
+address2 xxxx String 非必
+填
+收件地址2
+长度1-130
+===== PAGE 6 =====
+6
+address3 xxxx String 非必
+填
+收件地址3
+长度1-130
+consigneeCode 90210 String 必填 收件人-邮编 必须为 5-9位数字。
+对收件人邮编进行匹配。如果邮编
+有误则报错，请客户确认该邮编是
+否存在。 例如：90210
+90210-1111
+consigneeNumIn 103 String 非必
+填
+收件人-内门牌号
+长度 1-20
+consigneeNumE
+xt
+2012 String 非必
+填
+收件人-外门牌号
+长度 1-20
+remarks Blanc
+a
+String 非必
+填
+收件地址的附加信息 附加信息能
+够更好地确认收件人地址，特别是
+当收件人居住在偏僻或难以定位的
+地方。
+长度1-120
+consigneeEmail 2324
+3535
+@16
+3.co
+m
+String 非必
+填
+收件人邮箱，长度为 1-100
+orderReturnInf
+o {} object 非必
+填
+退件信息
+returnName louis String 非必
+填
+姓名，长度为1-50
+returnPhone 1367
+8987
+875
+String 非必
+填
+联系电话，长度为10-14
+returnEmail 2324
+3535
+@16
+3.co
+m
+String 非必
+填
+邮箱，长度为1-96
+returnCountry US String 非必
+填
+国家，默认US
+===== PAGE 7 =====
+7
+returnCode 3310
+0
+String 非必
+填
+邮编，长度为1-10
+returnState xxxx String 非必
+填
+州，长度为1-35
+returnCity xxxx String 非必
+填
+市，长度为1-50
+returnStreet 309
+Dong
+feng
+Middl
+eRd
+String 非必
+填
+详细地址，长度为1-130
+orderInsurance {} object 非必
+填
+订单保价
+insuredAmount 10 number 非必
+填
+保价金额(是否保价为是时必填) 范
+围0.0001-10000
+orderGoods {} object 必填 订单货物规格
+weight 1 number 必填 包裹预报重量，单位：kg，值为
+0.001-99.00 例如：50
+length 1 number 必填 包裹的长，单位：cm, 固定 2位小
+数，若无则固定传1 例如：25
+范围 1到 999
+height 1 number 必填 包裹的高，单位：cm, 固定 2位小
+数，若无则固定传 1 例如：5 范
+围 1到 999
+width 1 number 必填 包裹的宽，单位：cm, 固定 2位小
+数，若无则固定传1 例如：10
+范围 1到 999
+weightUnit KG String 非必
+填
+重量单位 默认单位：KG
+例如 KG\LB\OZ
+dimensionalUnit CM String 非必
+填
+尺寸单位 默认单位：CM 例如
+CM\INCH\IN
+orderItemList [] array 必填 订单物品信息
+===== PAGE 8 =====
+8
+itemNameEn xxx String 必填 物品名称
+长度1-128
+itemNameZh 连衣
+裙
+String 非必
+填
+物品中文名称 例如：连衣裙长度
+1-60
+itemQty 1 number 必填 物品件数 例如：1 范围 1到 9999
+entryPort PHX String 必填 （新对接客户必填）注入口岸
+EWR,PHX,IAH,DFW,SEA,SFO,LAX,O
+RD,JFK,ATL,MCO,MIA,SAV,CLT,CVG
+merchantCode TEST
+4804
+4527
+6
+String 非必
+填
+商户代码
+长度 1-50
+deliveryPartner 1 String 非必
+填
+尾程服务商
+如果需要交给其他尾程服
+务商的，这个字段必填；
+isSpecialItem 1 String 非必
+填
+危险品标识
+传"1"，代表是危险品
+pickupType 1 number 非必
+填
+揽收方式:1 客户自送，2口岸提
+货，3上门揽收
+请求示例：
+{
+"cOrderNo": "PK-123456-0",
+"declaredValue": 0.010,
+"orderConsignee": {
+"address1": "312 E 6280 S",
+"address2": "",
+"consigneeCity": "MURRAY",
+"consigneeCode": "84107-7574",
+"consigneeCountry": "US",
+"consigneeEmail": "abc@u.shipping.com",
+"consigneeName": "Joseph",
+"consigneePhone": "6777771363",
+"consigneeState": "UT",
+===== PAGE 9 =====
+9
+"remarks": "备注"
+},
+"orderGoods": {
+"dimensionalUnit": "CM",
+"height": 6.0,
+"length": 27.01,
+"weight": 1.352,
+"weightUnit": "KG",
+"width": 19.99
+},
+"orderItemList": [
+{
+"itemNameEn": "Computers & Accessories",
+"itemNameZh": "连衣裙",
+"itemQty": 1
+}
+],
+"orderShipper": {
+"shipperCity": "Rancho Cucamonga",
+"shipperCode": "91730",
+"shipperCountry": "US",
+"shipperName": "THOMAS",
+"shipperPhone": "6666604229",
+"shipperState": "CA",
+"shipperStreet": "9881 6th St Suite 203"
+},
+"orderReturnInfo": {
+"returnName": "THOMAS",
+"returnPhone": "6777771363",
+"returnEmail": "abcdefg@us.shipping.com",
+"returnCode": "93001",
+"returnCountry": "US",
+"returnState": "Florida",
+"returnCity": "Miami-Dade",
+"returnStreet": "9881 6th St Suite 203"
+},
+"orderInsurance": {
+"insuredAmount": "55"
+},
+"productCode": "GOFO Parcel Pickup",
+"reference4": "X9-GOLD*1",
+"shippingType": "HDN",
+"ytReference": "123456-0",
+"pickupType": 1
+}
+===== PAGE 10 =====
+10
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 状态码
+msg XXX String 返回结果中文描述
+msgEn XXX String 返回结果英文描述
+data
+{客户单号、操作
+类型，签收PIN
+码、运单号}
+obj 返回数据
+返回代码对照表：
+代码 描述
+200 成功
+301 参数异常
+305 数据已存在
+306 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+===== PAGE 11 =====
+11
+响应示例：
+完整报文实例
+业务平台: GOFO 请求 URL（接口地址）: https://uat-dbu-
+api.eminxing.com/open-api/v2/order/create
+请求头:（报文请求头：账号；密码） {'Authorization': 'Basic
+R09GTy1TSEFSRTpHT0ZPLVNIQVJFQDE='}
+最新请求时间: 2025-07-28 13:49:17 请求报文:
+{"cOrderNo":"OBS4192507270SJ7895419","declaredValue":1,"orderConsigne
+e":{"address1":"520 Reed road","address2":"
+","consigneeCity":"Dalton","consigneeCode":"30720","consigneeCountry":
+"US","consigneeName":"Tersa
+Willisas","consigneePhone":"(+1)70625456916","consigneeState":"GA"},"
+orderGoods":{"height":1,"length":1,"weight":0.12,"width":1},"orderIte
+mList":[{"itemNameEn":"wallet","itemNameZh":"钱包
+","itemQty":1}],"orderShipper":{"shipperCity":"City of
+Industry","shipperCode":"91748","shipperCountry":"US","shipperName":"
+Yoyo","shipperPhone":"6262955445","shipperState":"CA","shipperStreet":
+"17788 Rowland Street, Unit A"},"productCode":"GOFO Parcel
+Pickup","reference4":"OBS4192507270SJ7895419","referenceNo":"OBS41925
+07270SJ7895419","ytReference":"OBS4192507270SJ7895419"}
+响应报文: {"msg":"寄件邮编未配置揽收站点，下单失败
+","code":500,"data":{},"msgEn":"Shipping postal code not configured
+with collection station, order failed"}
+{
+"code":200,
+"msg":"操作成功",
+"msgEn":"Success",
+"data":
+{
+"fourSegmentCode":"1-2-3-F1-112-2",
+"cOrderNo":"12424",
+"verificationPin":"WJ2VX9",
+”type“:"create",
+"waybillNo":"124247896464"
+}
+}
+===== PAGE 12 =====
+12
+收件国家简码对照表
+国家 收件国家枚举 传参示例 注意
+美国
+US,
+USA,
+United States(USA)
+"consigneeCountry" : "US" 需要按照列出
+枚举值填写
+波多黎各
+PR,
+Puerto Rico
+"consigneeCountry" : "PR" 需要按照列出
+枚举值填写
+法国 FR,
+France "consigneeCountry" : "FR" 需要按照列出
+枚举值填写
+荷兰 NL,
+Netherlands "consigneeCountry" : "NL" 需要按照列出
+枚举值填写
+意大利
+IT,
+Italy
+"consigneeCountry" : "IT" 需要按照列出
+枚举值填写
+摩尔多瓦 MD,
+Moldova "consigneeCountry" : "MD" 需要按照列出
+枚举值填写
+2.API 取消订单接口（必须对接项）
+接口简介：
+对外提供取消订单的接口
+基本信息：
+标识 接口信息
+测试地址 /open-api/v2/order/cancel
+Header Authorization : Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+===== PAGE 13 =====
+13
+请求方式 POST
+请求类型 json
+请求参数：
+参数 示例值 类型 必填 参数描述
+orderNo GF524145504
+4696
+String 必填 GOFO 的运单
+号
+remarks 订单取消 String 非必填 取消备注 长
+度1-100
+请求示例：
+{
+"orderNo":"GF5241455044696",
+"remarks":"订单取消"
+}
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 状态码
+msg XXX String 返回结果中文描述
+msgEn XXX String 返回结果英文描述
+===== PAGE 14 =====
+14
+返回代码对照表：
+代码 描述
+200 成功
+301 参数异常
+305 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+响应示例：
+{
+"code":200,
+"msg":"操作成功",
+"msgEn":"Success"
+}
+3.API 获取面单接口（必须对接项）
+接口简介：
+对外提供获取面单的接口
+基本信息：
+===== PAGE 15 =====
+15
+标识 接口信息
+测试地址 /open-
+api/v2/order/getOrderLabelUrlV2?order
+No=xxxxxxx
+Header Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 GET
+请求类型 params
+请求参数：
+参数 示例值 类型 必填 参数描述
+orderNo TEST103265
+78480445276
+16
+String 必填 订单号 或 运
+单号 或 客户
+单号
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 返回代码 200成
+功 500 失败
+msg 操作成功 String 返回结果描述
+data {base64Code:面单
+文件Base64码}
+Object 返回结果
+返回代码对照表：
+===== PAGE 16 =====
+16
+代码 描述
+200 成功
+301 参数异常
+305 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+响应示例：
+{
+"msg":"操作成功",
+"code":200,
+"data":{
+"base64code":"JVBERi0xLjUNCiXi48/TDQoxIDAgb2JqDQo8PA..."
+},
+"msgEn":"Success"
+}
+4.API 轨迹查询 V2 接口（按实际情况对接）
+接口简介：
+对外提供查询轨迹的接口
+===== PAGE 17 =====
+17
+基本信息：
+标识 接口信息
+测试地址 /open-api/v2/order/track/{orderNo}
+Header Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 GET
+请求类型 json
+请求参数：
+参数 示例值 类型 必填 参数描述
+orderNo TEST103265
+78480445276
+16
+String 必填 订单号 或 运
+单号 或 客户
+单号
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 返回代码 200成
+功 500 失败
+msg 操作成功 String 返回结果描述
+data [{运单单
+号，客户
+单号，轨
+迹描述，
+轨迹状态
+ID，操作
+Object 返回结果
+===== PAGE 18 =====
+18
+时间，轨
+迹发生地
+点，操作
+人姓名，
+签收人(仅
+已签收返
+回)，签收
+人类型(仅
+已签收返
+回)，签收
+地点的纬
+度(仅已签
+收返回)，
+签收地点
+的经度(仅
+已签收返
+回)，异常
+类型，是
+否通过
+pin签收}]
+orderNo String 运单单号
+thirdWaybillNo String 客户单号
+enContext String 轨迹描述
+operationMove String 轨迹编码详见
+“GOFO全量对外轨
+迹（GOFO full
+external
+trajectory））”
+location String 轨迹发生地点，例
+如：机场、仓库、
+网点、地理坐标
+等。
+===== PAGE 19 =====
+19
+operator String 操作人姓名
+operationTime Date 操作时间
+groupTimeZone String operationTimed的
+时区，例： UTC
++8:00
+signer String 签收人（仅已签收
+返回）
+signerType String 签收人类型
+0 本人/他人签收
+1 前台/接待人员
+2 邮箱
+3 他人代收
+4 快递代收点
+5 院内
+6 侧门
+7 后门
+8 物业/租房处
+9 包裹收件室
+10 其它安全位置
+11 门口/院内
+errorCode Int 异常类型： 1001
+=高风险地区
+1002=收件人地址
+错误 1003=收件
+人拒收 1005= 收
+件人不在家 1006
+= 其他 1007= 被
+抢 1008= 丢失
+1009= 无法联系
+收件人 1012= 派
+送意外中断
+pin String 是否通过pin签
+收，pin='1'代表通
+过pin完成签收，
+===== PAGE 20 =====
+20
+pin='0'代表通过签
+收证明完成签收。
+processCity String 轨迹发生城市
+processProvince String 轨迹发生州
+processPostCode String 轨迹发生邮编
+isReturn String 退件标识；
+isReturn：退件
+返回代码对照表：
+代码 描述
+200 成功
+301 参数异常
+305 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+响应示例：
+{
+"msg":"operation_successful",
+"code":200,
+===== PAGE 21 =====
+21
+"data":[
+{
+"pubEsContext":"Delivered,signedbylily,personsign,note:-",
+"operationMove":"205",
+"orderNo":"TEST4816848043400",
+"thirdWaybillNo":"TEST4816848043400",
+"operator":"station-lqw的快递员1号",
+"operationTime":"2024-07-2503:45:56",
+"groupTimeZone":"UTC+8:00",
+"pin":"0",
+"enContext":"Delivered,signedbylily,personsign,note:-",
+"signerType":"0",
+"location":"station-lqw",
+"dept_id":39,
+"signer":"lily"
+},
+{
+"pubEsContext":"Deliveryfailed,type:Ledestinatairen'estpaschezlui",
+"operationMove":"206",
+"groupTimeZone":"UTC+8:00",
+"orderNo":"TEST4816848043400",
+"enContext":"Deliveryfailed,type:nothomeondeliveryattempt",
+"thirdWaybillNo":"TEST4816848043400",
+"location":"station-lqw",
+"dept_id":39,
+"operator":"station-lqw的快递员1号",
+"operationTime":"2024-07-1622:25:01"
+},
+{
+"pubEsContext":"Thecourierisoutfordelivery",
+"operationMove":"208",
+"groupTimeZone":"UTC+8:00",
+===== PAGE 22 =====
+22
+"orderNo":"TEST4816848043400",
+"enContext":"Thecourierisoutfordelivery",
+"thirdWaybillNo":"TEST4816848043400",
+"location":"station-lqw",
+"dept_id":39,
+"operator":"station-lqw的快递员1号",
+"operationTime":"2024-07-1518:52:11"
+},
+{
+"pubEsContext":"GFgetstheorderinformation",
+"operationMove":"100",
+"orderNo":"TEST4816848043400",
+"enContext":"GFgetstheorderinformation",
+"thirdWaybillNo":"TEST4816848043400",
+"operationTime":"2024-07-1518:50:03"
+},
+{
+"pubEsContext":"Dispatchedtocourierbystation",
+"operationMove":"203",
+"groupTimeZone":"UTC+8:00",
+"orderNo":"TEST4816848043400",
+"enContext":"Dispatchedtocourierbystation",
+"thirdWaybillNo":"TEST4816848043400",
+"location":"station-lqw",
+"dept_id":39,
+"operator":"system",
+"operationTime":"2024-07-1518:47:11"
+},
+{
+"pubEsContext":"Arrivedatstation",
+"operationMove":"201",
+"groupTimeZone":"UTC+8:00",
+===== PAGE 23 =====
+23
+"orderNo":"TEST4816848043400",
+"enContext":"Arrivedatstation",
+"thirdWaybillNo":"TEST4816848043400",
+"location":"station-lqw",
+"dept_id":39,
+"operator":"system",
+"operationTime":"2024-07-1518:42:11"
+}
+],
+"msgEn":"Success"
+}
+5. 总包预报接口（按实际情况对接）
+接口简介：
+用于发货确认
+基本信息：
+标识 接口信息
+测试地址 /open-api/v2/order/bagging
+Header Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 POST
+请求类型 json
+===== PAGE 24 =====
+24
+请求参数：
+父级对象 子对象 类型 必填 参数描述
+bagLabelCode String 必填 总包批次号或者发货箱
+号
+startTime Long 必填 发货时间（时间戳）
+bagCount String 非必填 批次总运单数量
+shipperItems List 必填 发货清单对象
+billNo String 必填 运单号
+weight BigDecimal 必填 重量
+unit String 非必填 包裹预报重量的计量单位。
+用于指定包裹重量的单位，
+例如千克（KG）、克
+（G）、磅（LB）。此字段
+为可选项，若未提供，系统
+默认使用千克（KG）
+请求示例：
+[
+{
+"startTime":1688107381900,
+"bagLabelCode":"AAAA1029384",
+"bagCount":3,
+"shipperItems":[
+{"billNo":"TEST4702641817668","weight":"1"},
+{"billNo":"TEST4702641818036","weight":"1"},
+{"billNo":"TEST4702641818244","weight":"1"},
+{"billNo":"TEST4702641818548","weight":"1"},
+===== PAGE 25 =====
+25
+{"billNo":"TEST4702641818724","weight":"1"},
+{"billNo":"TEST4702641818900","weight":"1"},
+{"billNo":"TEST4702641819156","weight":"1"},
+{"billNo":"TEST4702641819316","weight":"1"},
+{"billNo":"TEST4702641819508","weight":"1"},
+{"billNo":"TEST4702641819652","weight":"3"}
+]
+}
+]
+返回代码对照表：
+代码 描述
+200 成功
+301 参数异常
+305 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+响应示例：
+{
+"msg":"操作成功",
+===== PAGE 26 =====
+26
+"code":200,
+"msgEn":"Success"
+}
+6. 提单信息接口（按实际情况对接）
+接口简介：
+用于获取货物的航空信息
+基本信息：
+标识 接口信息
+测试地址 /open-api/airWaybillNo/createOrUpdate
+Header Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 POST
+请求类型 json
+请求参数：
+父级对象 子对象 类型 必填 参数描述
+airWayBillNo String 必填 提单号
+flightNo String 非必填 航班号
+preFlightTime String 非必填 航班预计起飞
+时间
+actualFlightTi String 非必填 航班实际起飞
+===== PAGE 27 =====
+27
+me 时间
+preArriveFligh
+tTime
+String 非必填 航班预计到达
+时间
+arriveFlightTi
+me
+String 非必填 航班实际到达
+时间
+originTimeUtc
+Str
+String 非必填 始发地时区
+(UTC+8 格式)
+originTimeZon
+e
+String 非必填 始发地时区时
+区ID
+destinationTi
+meUTCStr
+String 非必填 始发地时区
+(UTC+1 格式)
+destinationTi
+meZone
+String 非必填 目的地时区时
+区ID
+customsclear
+anceWarehou
+seTime
+String 非必填 清关入库时间
+customsclear
+anceOutWare
+houseTime
+String 非必填 清关出库时间
+cCoClear String 非必填 清关国家
+coStatus Integer 非必填 清关状态
+1 未清关 2
+已清关
+flightType Integer 非必填 航班类型
+1散货 2包机
+isTruckTransf
+er
+Integer 非必填 是否卡转（卡
+车转运）
+===== PAGE 28 =====
+28
+0是1否
+landPort String 非必填 落地口岸
+coPort String 非必填 清关口岸
+coTime String 非必填 清关时间
+lockField String 非必填 锁定字段
+isEndStatus Integer 非必填 是否是终结态
+1正常态2终
+结态
+boxNoInfo List 必填 箱号信息
+boxNo String 必填 箱号
+waybillQuantity Integer 必填 包裹数量
+请求示例：
+{
+"airWayBillNo":"TD123456789012",
+"flightNo":"CA1550",
+"preFlightTime":"2024-07-1418:00:00",
+"actualFlightTime":"2024-07-1419:00:00",
+"preArriveFlightTime":"2024-07-1616:00:00",
+"arriveFlightTime":"2024-07-1615:00:00",
+"originTimeUTCStr":"UTC+8",
+"originTimeZone":"Aaia/Shanghai",
+"destinationTimeUTCStr":"UTC+1",
+"destinationTimeZone":"Europe/Paris",
+"customsclearanceWarehouseTime":"2024-07-1412:00:00",
+===== PAGE 29 =====
+29
+"customsclearanceOutWarehouseTime":"2024-07-1416:00:00",
+"customsclearanceCountry":"FRANCE",
+"customsclearanceStatus":1,
+"operateTpye":1,
+"boxNoInfo":[
+{
+"boxNo":"OS173895377397",
+"waybillQuantity":20
+},
+{
+"boxNo":"OS17389589898397",
+"waybillQuantity":25
+}
+]
+}
+响应示例：
+{
+"msg":"操作成功 "，
+"msgEn":"success",
+"code":200
+}
+7. 运费测算（按实际情况对接）
+接口简介：
+客户下单前进行运费测算，进行费用评估。
+基本信息：
+===== PAGE 30 =====
+30
+标识 接口信息
+测试地址 /open-api/v2/order/costEstimation
+Header
+Authorization:Basic
+base64encode(user:password)
+详情参考第八条Header 认证获取示例
+请求方式 POST
+请求类型 JSON
+请求参数：
+参数 子属性 示例值 类型 必填 参数描述
+cOrderNo 48044527616 String 非必填 客户单号(长度1-30)
+referenceNo TEST480445
+27616
+String 非必填 参考单号(长度1-30)
+reference4 TEST480445 String 非必填 预留字段（长度1-255），应用在面
+单下方，可存放 sku信息
+ytReference TEST480445 String 非必填 面单 Reference栏位显示内容(长度
+1-30)
+shippingType HDN String 非必填 配送类型：HDN（送货上门），ZT
+（自提），默认为 HDN(送货上门)
+productCode key-code-01 String 必填 产品编码（长度1～100）
+固定值
+小件：GOFO Parcel Pickup
+大 件 揽 收 ： GOFO Ground
+Pickup
+大件自送：GOFO Ground
+declaredValue 12 numbe
+r
+必填 包裹预报货值，单位：美金 范围
+0.0001-100.00 例如：13
+queryCollectSt
+artTime
+“2025-03-03
+08:00:00”
+String 非必填 揽收开始时间
+===== PAGE 31 =====
+31
+标准格式：yyyy-MM-ddHH:mm:ss
+queryCollectE
+ndTime
+“2025-03-03
+18:59:59”
+String 非必填 揽收结束时间
+标准格式：yyyy-MM-ddHH:mm:ss
+orderShipper {} object 必填 寄件信息
+shipperNam
+e
+louis String 必填 发件人-姓名，长度为1-50
+shipperPho
+ne
+13678987875 String 必填 发件人-手机号，长度为 10-14
+shipperCou
+ntry
+China String 必填 发件人-国家 根据实际情况，传
+China
+shipperStat
+e
+Heilongjiang String 必填 发件人-省/州 China- 省的名称的汉
+语拼音 州的名称
+长度 1-35
+例如：Heilongjiang
+shipperCity Wulanchabu String 必填 发件人-市 China- 市的名称的汉语
+拼音 Mexio- 市的名称
+长度 1-50
+例如：Wulanchabu
+shipperArea Yaohai String 非必填 发件人-区 区的名称的汉语拼音
+长度 1-50
+例如：Yaohai
+shipperStre
+et
+309
+Dongfeng
+MiddleRd
+String 必填 发件人-详细地址
+长度 1-100
+shipperCod
+e
+224000 String 必填 发件人-邮编根据实际情况 03100
+shipperEma
+il
+23243535@1
+63.com
+String 非必填 发件人-邮箱，长度为 1-100
+orderConsigne
+e
+{} object 必填 收件信息
+===== PAGE 32 =====
+32
+consigneeN
+ame
+louis String 必填 收件人-姓名，长度为 1-100
+consigneeP
+hone
+13678987875 String 必填 收件人手机号，长度为 10-14
+consigneeC
+ountry US
+String 必填
+收件国家
+（具体可参考如下：收件国家简码对
+照表）
+consigneeS
+tate
+XXXXXX String 必填 收件人-州
+长度 1-35
+consigneeC
+ity
+XXXXX String 必填 收件人-市（
+长度 1-50
+consigneeA
+rea
+XXXX String 非必填 收件人-区
+长度 1-50
+address1 xxxx String 必填 收件地址 1
+长度 1-120
+address2 xxxx String 非必填 收件地址 2
+长度 1-120
+address3 xxxx String 非必填 收件地址 3
+长度 1-120
+consigneeC
+ode
+90210 String 必填 收件人-邮编 必须为 5-6位数字。对
+收件人邮编进行匹配。如果邮编有误
+则报错，请客户确认该邮编是否存
+在。 例如：90210
+consigneeN
+umIn
+103 String 非必填 收件人-内门牌号
+长度 1-20
+consigneeN
+umExt
+2012 String 非必填 收件人-外门牌号
+长度 1-20
+remarks Blanca String 非必填 收件地址的附加信息 附加信息能够更
+===== PAGE 33 =====
+33
+好地确认收件人地址，特别是当收件
+人居住在偏僻或难以定位的地方。
+长度 1-120
+consigneeE
+mail
+23243535@1
+63.com
+String 非必填 收件人邮箱，长度为1-100
+orderInsuranc
+e
+{} object 非必填 订单保价
+insuredAmo
+unt
+10 numbe
+r
+非必填 保价金额(是否保价为是时必填) 范围
+0.0001-10000
+orderGoods {} object 必填 订单货物规格
+weight 1 numbe
+r
+必填 包裹预报重量，单位：kg，值为
+0.001-99.00 例如：50
+length 1 numbe
+r
+必填 包裹的长，单位：cm, 固定 2位小
+数，若无则固定传1 例如：25 范
+围 1到 999
+height 1 numbe
+r
+必填 包裹的高，单位：cm, 固定 2位小
+数，若无则固定传1 例如：5 范围
+1到 999
+width 1 numbe
+r
+必填 包裹的宽，单位：cm, 固定 2位小
+数，若无则固定传 1 例如：10 范围
+1到 999
+weightUnit KG String 非必填 (内测)重量单位 默认单位：KG 可选
+项 KG\LB
+dimensional
+Unit
+CM String 非必填 (内测)尺寸单位 默认单位：CM 可
+选项CM\INCH
+orderItemList [] array 必填 订单物品信息
+itemNameE
+n
+xxx String 必填 物品名称
+长度 1-128
+itemNameZ
+h
+连衣裙 String 非必填 物品中文名称 例如：连衣裙长度 1-
+60
+itemQty 1 numbe 必填 物品件数 例如：1 范围 1到9999
+===== PAGE 34 =====
+34
+r
+entryPort PHX String 必填
+注入口岸
+EWR,PHX,IAH,DFW,SEA,SFO,LAX,
+ORD,JFK,ATL,MCO,MIA,SAV,CLT,C
+VG
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 状态码
+msg XXX String 返回结果中文描述
+msgEn XXX String 返回结果英文描述
+data {} obj 返回数据
+totalTaxAmount BigDecimal 含税总金额
+currencyName String 币种名称
+zoneRegion Int 邮编分区
+deliveryDays Int 时效
+请求示例：
+{
+"cOrderNo": "",
+"entryPort": "PHX",
+"referenceNo": "REF162176560",
+"ytReference": "yt314008965",
+"reference3": "awnaifnaigksdgoa12454156",
+"reference4": "12344",
+"productType": "EXP",
+"shippingType": "ZT",
+"pickUpCode": "12345678910",
+"declaredValue": "92",
+===== PAGE 35 =====
+35
+"orderGoods": {
+"weight": "3",
+"length": "12",
+"width": "23",
+"height": "6"
+},
+"orderShipper": {
+"shipperName": "413133",
+"shipperPhone": "13513513515",
+"shipperCountry": "China",
+"shipperState": "Guangdong",
+"shipperCity": "Shenzhen",
+"shipperArea": "Nanshan",
+"shipperStreet": "12443",
+"shipperCode": "30099",
+"shipperEmail": "225265@ztn.com"
+},
+"orderConsignee": {
+"consigneeName": "Margaret Brown",
+"consigneePhone": "2526051196",
+"consigneeCountry": "US",
+"consigneeState": "Wyoming",
+"consigneeCity": "Cheyenne",
+"consigneeArea": "Cheyenne",
+"address1": "1313",
+"address2": "Rue Cuirassé Bretagne",
+"address3": "Aulnois-sous-Laon",
+"consigneeCode": "82006",
+"consigneeNumIn": "123",
+"consigneeNumExt": "118",
+"remarks": "1313",
+"consigneeEmail": "chenjie@gofoexpress.com"
+},
+"orderItemList": [
+{
+"itemNameEn": "Children educational toys",
+"itemNameZh": "儿童益智玩具",
+"itemQty": "2"
+}
+],
+"orderInsurance": {
+"insuredAmount": "39"
+}
+}
+响应示例：
+===== PAGE 36 =====
+36
+{
+"msg": "操作成功",
+"code": 200,
+"data": {
+"totalTaxAmount": 2.0000,
+"currencyName": "USD",
+"zoneRegion":1,
+"deliveryDays":4
+},
+"msgEn": "Success"
+}
+返回代码对照表：
+代码 描述
+200 成功
+301 参数异常
+305 数据不存在
+401 未认证（签名错误）
+404 接口不存在
+500 操作失败
+收件国家简码对照表
+国家 收件国家枚举 传参示例 注意
+美国
+US,
+USA,
+United States(USA)
+"consigneeCountry" : "US" 需要按照列出
+枚举值填写
+===== PAGE 37 =====
+37
+波多黎各
+PR,
+Puerto Rico
+"consigneeCountry" : "PR" 需要按照列出
+枚举值填写
+法国 FR,
+France "consigneeCountry" : "FR" 需要按照列出
+枚举值填写
+荷兰 NL,
+Netherlands "consigneeCountry" : "NL" 需要按照列出
+枚举值填写
+意大利
+IT,
+Italy
+"consigneeCountry" : "IT" 需要按照列出
+枚举值填写
+摩尔多瓦 MD,
+Moldova "consigneeCountry" : "MD" 需要按照列出
+枚举值填写
+8. 派送范围查询（按实际情况对接）
+接口简介：
+判断客户邮编是否可达,提前进行订单筛选，适用于订单筛单的客户对接；
+基本信息：
+标识 接口信息
+测试地
+址
+/open-api/v2/order/verifyDelivery
+Header Authorization : Basic base64encode(user:password) 详情参考第八
+九 Header 认证获取示例
+请求方
+式
+POST
+请求类
+型
+json
+请求参数：
+===== PAGE 38 =====
+38
+父级对象 子对象 类型 必填 参数描述
+orderConsignee String 必填 收件信息
+consigneeCountry String 必填 国家
+consigneeState String 非必填 省/州
+consigneeCity String 非必填 城市
+consigneeArea String 非必填 区域
+consigneeStreet String 非必填 详细地址
+consigneeCode String 必填 邮编
+响应参数：
+参数名 示例值 参数类型 参数描述
+code 200 Int 返回代码 200成
+功 500 失败
+msg 该邮编可达 String 返回结果描述
+msgEn This postal code
+can be reached
+String 返回结果英文描述
+data {分拣码信息} Object 返回结果
+sortingCode String 分拣码
+请求示例：
+===== PAGE 39 =====
+39
+{
+"orderConsignee": {
+"consigneeCountry": "13626",
+"consigneeState": "New York",
+"consigneeCity": "Barnes Corners",
+"consigneeArea": "Barnes Corners",
+"consigneeStreet": "20EME ARRONDISSEMENT 5EME ETAGE PORTE 94",
+"consigneeCode": "New York"
+}
+}
+响应示例：
+{
+"msg": "该邮编可达",
+"code": 200,
+"data": {
+"sortingCode": "bobo-bobo-a"
+},
+"msgEn": "This postal code can be reached"
+}
+返回代码对照表：
+代码 描述
+200 该邮编可达
+301 参数异常
+501 邮编不可达
+===== PAGE 40 =====
+40
+502 该邮编可达,地址类型为 xxx，不可达
+收件国家简码对照表
+国家 收件国家枚举 传参示例 注意
+美国
+US,
+USA,
+United States(USA)
+"consigneeCountry" : "US" 需要按照列出
+枚举值填写
+波多黎各 PR,
+Puerto Rico "consigneeCountry" : "PR" 需要按照列出
+枚举值填写
+9. 请求头Header 认证获取示例
+示例：
+账户名：zhangsanAAA
+密码：zhangsan123456
+1. 将账户名和密码拼接成 ：zhangsanAAA:zhangsan123456 通过 base64 编码
+生成工具生成。工具链接：https://base64.us/
+
+===== PAGE 41 =====
+41
+加密后得到：emhhbmdzYW5BQUE6emhhbmdzYW4xMjM0NTY=
+2. 请求头中的权限认证为 ：
+Authorization: Basic emhhbmdzYW5BQUE6emhhbmdzYW4xMjM0NTY=

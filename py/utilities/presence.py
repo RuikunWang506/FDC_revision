@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 
-from flask import Blueprint, jsonify, session
+from flask import Blueprint, jsonify, request, session
 
 from py.utilities.online_presence import (
     heartbeat,
@@ -71,7 +71,9 @@ def presence_heartbeat():
     if not username:
         return jsonify({'ok': False, 'error': 'not authenticated'}), 401
     sid = _presence_session_id()
-    result = heartbeat(sid, username)
+    payload = request.get_json(silent=True) or {}
+    active = bool(payload.get('active')) if isinstance(payload, dict) else False
+    result = heartbeat(sid, username, active=active)
     result['online_count'] = online_count()
     return jsonify(result)
 

@@ -37,7 +37,11 @@ def erp_date(cursor, when: datetime | None = None) -> int:
     return int(cursor.fetchone()[0])
 
 
-def erp_log_time(cursor) -> int:
+def erp_log_time(cursor, when: datetime | None = None) -> int:
+    if when is not None:
+        return (
+            when.hour * 3600 + when.minute * 60 + when.second
+        ) * 100 + when.microsecond // 10000
     cursor.execute(
         """
         SELECT (DATEPART(HOUR, GETDATE()) * 3600

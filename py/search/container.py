@@ -3,9 +3,352 @@ from flask import Blueprint, render_template, request, send_file, current_app,se
 import pandas as pd
 import re
 from py.utilities.auth import login_required
+from py.utilities.color_abbrev import normalize_color_to_abbrev
 from py.utilities.setting import Config
 
 container_bp = Blueprint('container', __name__)
+
+
+def _style_color_case_key(style: str, color: str) -> str:
+    style_part = str(style or "").strip()
+    color_part = normalize_color_to_abbrev(str(color or "").strip())
+    return f"{style_part} {color_part}".strip().upper()
+
+
+def _parse_measurement_lwh(measurement) -> tuple[float, float, float] | None:
+    """Parse packing-list MEASUREMENT values like 22.8*18.5*28 or 22.8x18.5x28."""
+    if measurement is None or (isinstance(measurement, float) and pd.isna(measurement)):
+        return None
+    text = str(measurement).strip()
+    if not text or text.lower() in ("nan", "none", "/", "-"):
+        return None
+    parts = re.split(r"[*xX×]", text)
+    if len(parts) < 3:
+        return None
+    try:
+        return float(parts[0].strip()), float(parts[1].strip()), float(parts[2].strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _container_year_from_source(file) -> int | None:
+    """Best-effort container year from path/name (F23265 → 2023, folder 2023年 → 2023)."""
+    text = ""
+    if isinstance(file, str):
+        text = file
+    else:
+        text = str(getattr(file, "name", "") or getattr(file, "filename", "") or "")
+    folder = re.search(r"(20\d{2})年", text)
+    if folder:
+        return int(folder.group(1))
+    name = os.path.basename(text)
+    match = re.match(r"^FT?(\d{2})", name, re.IGNORECASE)
+    if match:
+        yy = int(match.group(1))
+        return 2000 + yy if yy < 80 else 1900 + yy
+    return None
+
+
+def _normalize_carton_inches(
+    length: float,
+    width: float,
+    height: float,
+    *,
+    year: int | None = None,
+    from_cm_header: bool = False,
+) -> tuple[float, float, float]:
+    """Return carton dims in inches using era rules + size safety net.
+
+    Eras (from Dropbox packing lists):
+      - <=2022 older: K / MEASUREMENT(CM) is real cm
+      - 2023 transition: mixed; use size (max>=40 => cm)
+      - >=2024 newer: K usually inches even when labeled CM; still convert if max>=40
+    """
+    max_side = max(length, width, height)
+    if year is not None and year <= 2022 and from_cm_header:
+        return length / 2.54, width / 2.54, height / 2.54
+    if year is not None and year <= 2022 and max_side >= 30.0:
+        # Sole CM column on old sheets (no IN unit column).
+        return length / 2.54, width / 2.54, height / 2.54
+    if max_side >= 40.0:
+        return length / 2.54, width / 2.54, height / 2.54
+    return length, width, height
+
+
+def extract_packing_list_case_dimensions(file) -> dict[str, dict] | None:
+    """Read Placking/Packing List MEASUREMENT (masterbox) into style+color → L/W/H.
+
+    Carton / masterbox source (normalized to inches):
+      - Prefer MEASUREMENT/(CM) column when present (older/intermediate column K)
+      - Else 2nd IN MEASUREMENT column (newer dual-IN: unit then carton)
+      - Else 2nd MEASUREMENT / only MEASUREMENT column
+      - Convert cm→in via year cutoff + size heuristic
+
+    Returns:
+      - dict keyed by uppercase ``STYLE COLOR`` (color abbreviated), values
+        ``{'length': float, 'width': float, 'height': float}``
+      - empty dict if the packing sheet is found but no usable measurements
+      - None if the packing sheet cannot be parsed at all
+    """
+    if hasattr(file, "seek"):
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+    elif hasattr(file, "stream") and hasattr(file.stream, "seek"):
+        try:
+            file.stream.seek(0)
+        except Exception:
+            pass
+
+    source_year = _container_year_from_source(file)
+
+    try:
+        excel_file = pd.ExcelFile(file)
+    except Exception:
+        return None
+
+    packing_sheet = None
+    packing_list = None
+    preferred_sheet_names = ["placking list", "packing list"]
+
+    for preferred_name in preferred_sheet_names:
+        for sheet_name in excel_file.sheet_names:
+            if str(sheet_name).strip().lower() == preferred_name:
+                packing_sheet = sheet_name
+                break
+        if packing_sheet:
+            break
+
+    if not packing_sheet:
+        for sheet_name in excel_file.sheet_names:
+            normalized = str(sheet_name).strip().lower()
+            if "pack" in normalized and "list" in normalized:
+                packing_sheet = sheet_name
+                break
+
+    candidate_sheets = []
+    if packing_sheet is not None:
+        candidate_sheets.append(packing_sheet)
+    if 0 not in candidate_sheets and len(excel_file.sheet_names) > 0:
+        candidate_sheets.append(0)
+
+    for sheet_name in candidate_sheets:
+        try:
+            for header_row in [6, 5, 7, 4, 3, 2, 1, 0]:
+                try:
+                    if hasattr(file, "seek"):
+                        try:
+                            file.seek(0)
+                        except Exception:
+                            pass
+                    temp_df = pd.read_excel(file, sheet_name=sheet_name, header=header_row)
+                    col_str = " ".join([str(c).upper() for c in temp_df.columns])
+                    has_style = "STYLE" in col_str
+                    has_qty = "QTY" in col_str
+                    has_ctn = "CTN" in col_str
+                    has_measurement = "MEASUREMENT" in col_str or "DIMENSION" in col_str
+                    if (
+                        (has_style and (has_qty or has_ctn or has_measurement))
+                        or (has_ctn and has_measurement)
+                        or (sum([has_style, has_qty, has_ctn, has_measurement]) >= 3)
+                    ):
+                        if len(temp_df) > 0:
+                            packing_list = temp_df
+                            packing_sheet = sheet_name
+                            break
+                except Exception:
+                    continue
+            if packing_list is not None:
+                break
+        except Exception:
+            continue
+
+    if packing_list is None:
+        return None
+
+    packing_list = packing_list.dropna(how="all")
+    measurement_cols = [
+        col
+        for col in packing_list.columns
+        if "MEASUREMENT" in str(col).upper() or "DIMENSION" in str(col).upper()
+    ]
+    style_color_col = None
+    qty_ctn_col = None
+    total_col = None
+
+    for col in packing_list.columns:
+        col_str = str(col).upper()
+        if "STYLE" in col_str and style_color_col is None:
+            style_color_col = col
+        elif "QTY" in col_str and "CTN" in col_str and qty_ctn_col is None:
+            qty_ctn_col = col
+        elif col_str == "TOTAL" and total_col is None:
+            total_col = col
+
+    cm_cols = [col for col in measurement_cols if "CM" in str(col).upper()]
+    in_cols = [
+        col
+        for col in measurement_cols
+        if "IN" in str(col).upper() and "CM" not in str(col).upper()
+    ]
+    from_cm_header = False
+    if cm_cols:
+        # Older/intermediate: carton in K (CM header).
+        carton_measurement_col = cm_cols[0]
+        from_cm_header = True
+    elif len(in_cols) >= 2:
+        # New: two IN columns — unit then carton.
+        carton_measurement_col = in_cols[1]
+    elif len(measurement_cols) >= 2:
+        carton_measurement_col = measurement_cols[1]
+    elif len(measurement_cols) == 1:
+        carton_measurement_col = measurement_cols[0]
+        from_cm_header = "CM" in str(carton_measurement_col).upper()
+    else:
+        carton_measurement_col = None
+
+    if carton_measurement_col is None or style_color_col is None:
+        return {}
+
+    packing_dict: dict[str, dict] = {}
+    for _, row in packing_list.iterrows():
+        try:
+            style_color = (
+                str(row[style_color_col]).strip() if pd.notna(row[style_color_col]) else ""
+            )
+            parts = style_color.rsplit(" ", 1) if style_color else []
+            style = parts[0].strip() if len(parts) > 0 else ""
+            color = parts[1].strip() if len(parts) > 1 else ""
+            if not style or not color:
+                continue
+
+            dims = _parse_measurement_lwh(row[carton_measurement_col])
+            if not dims:
+                continue
+
+            qty_ctn = 0.0
+            total = 0.0
+            if qty_ctn_col is not None and qty_ctn_col in row.index:
+                try:
+                    qty_ctn = float(row[qty_ctn_col]) if pd.notna(row[qty_ctn_col]) else 0.0
+                except (TypeError, ValueError):
+                    qty_ctn = 0.0
+            if total_col is not None and total_col in row.index:
+                try:
+                    total = float(row[total_col]) if pd.notna(row[total_col]) else 0.0
+                except (TypeError, ValueError):
+                    total = 0.0
+
+            if qty_ctn_col is not None and qty_ctn <= 1:
+                continue
+
+            key = _style_color_case_key(style, color)
+            length, width, height = _normalize_carton_inches(
+                *dims, year=source_year, from_cm_header=from_cm_header
+            )
+            existing = packing_dict.get(key)
+            if existing is None or total > existing.get("total", 0):
+                packing_dict[key] = {
+                    "length": length,
+                    "width": width,
+                    "height": height,
+                    "total": total,
+                    "qty_ctn": qty_ctn,
+                }
+        except Exception:
+            continue
+
+    return {
+        key: {
+            "length": value["length"],
+            "width": value["width"],
+            "height": value["height"],
+        }
+        for key, value in packing_dict.items()
+    }
+
+
+def lookup_case_dimensions(
+    packing_dims: dict[str, dict], style: str, color: str
+) -> tuple[float | None, float | None, float | None]:
+    """Return (length, width, height) for a style/color, or (None, None, None)."""
+    if not packing_dims:
+        return None, None, None
+    key = _style_color_case_key(style, color)
+    hit = packing_dims.get(key)
+    if not hit:
+        # Fallback: raw key without re-abbrev in case abbrev already applied upstream.
+        raw = f"{str(style or '').strip()} {str(color or '').strip()}".strip().upper()
+        hit = packing_dims.get(raw)
+    if not hit:
+        return None, None, None
+    return hit.get("length"), hit.get("width"), hit.get("height")
+
+
+def excel_recency_key(path: str) -> tuple[int, int, str]:
+    """Sort key for packing-list Excels: (year, container_seq, path). Higher = newer."""
+    folder = re.search(r"(20\d{2})年", path)
+    year = int(folder.group(1)) if folder else (_container_year_from_source(path) or 0)
+    name = os.path.basename(path)
+    match = re.match(r"^FT?(\d+)", name, re.IGNORECASE)
+    if not match:
+        match = re.match(r"^L(\d+)", name, re.IGNORECASE)
+    seq = int(match.group(1)) if match else 0
+    return (year, seq, path)
+
+
+def build_masterbox_dim_catalog(
+    excel_paths: list[str],
+) -> tuple[dict[str, dict], dict[str, dict], dict]:
+    """Build STYLE+COLOR and STYLE masterbox maps from packing-list Excels.
+
+    Newest Excel wins (by year folder + container number). Older files are read
+    first so later/newer paths overwrite the same keys.
+    """
+    exact: dict[str, dict] = {}
+    style_map: dict[str, dict] = {}
+    exact_recency: dict[str, tuple] = {}
+    style_recency: dict[str, tuple] = {}
+    stats = {"files": 0, "parsed": 0, "empty": 0, "failed": 0}
+
+    for path in sorted(excel_paths, key=excel_recency_key):
+        stats["files"] += 1
+        recency = excel_recency_key(path)
+        try:
+            dims = extract_packing_list_case_dimensions(path)
+        except Exception:
+            stats["failed"] += 1
+            continue
+        if dims is None:
+            stats["failed"] += 1
+            continue
+        if not dims:
+            stats["empty"] += 1
+            continue
+        stats["parsed"] += 1
+
+        for key, value in dims.items():
+            length = float(value["length"])
+            width = float(value["width"])
+            height = float(value["height"])
+            if length <= 0 or width <= 0 or height <= 0:
+                continue
+
+            prev = exact_recency.get(key)
+            if prev is None or recency >= prev:
+                exact[key] = {"length": length, "width": width, "height": height}
+                exact_recency[key] = recency
+
+            style = key.rsplit(" ", 1)[0].strip().upper() if " " in key else key.upper()
+            prev_style = style_recency.get(style)
+            if prev_style is None or recency >= prev_style:
+                style_map[style] = {"length": length, "width": width, "height": height}
+                style_recency[style] = recency
+
+    stats["exact_keys"] = len(exact)
+    stats["styles"] = len(style_map)
+    return exact, style_map, stats
 
 
 def _filter_system_file_line_items(df):
@@ -148,171 +491,23 @@ def process_container_file(file, container_number):
     System_file_tab = System_file_tab.applymap(
         lambda x: re.sub(r'\s+', ' ', str(x)) if isinstance(x, str) else x
     )
-    
-    # Try different sheet names for packing list
-    packing_sheet = None
-    PackingList = None
-    
-    # First, get available sheets
-    if hasattr(file, 'seek'):
-        try:
-            file.seek(0)
-        except Exception:
-            pass
-    elif hasattr(file, 'stream') and hasattr(file.stream, 'seek'):
-        try:
-            file.stream.seek(0)
-        except Exception:
-            pass
-    excel_file = pd.ExcelFile(file)
-    
-    for sheet_name in ['Packing List', 'Placking List', 0]:
-        if packing_sheet:
-            break
-        try:
-            # Try different header row positions (0-7) to find actual column headers
-            for header_row in [6, 5, 7, 4, 3, 2, 1, 0]:
-                try:
-                    temp_df = pd.read_excel(file, sheet_name=sheet_name, header=header_row)
-                    
-                    # Check if this looks like valid headers
-                    col_str = ' '.join([str(c).upper() for c in temp_df.columns])
-                    
-                    # More flexible validation: look for any key column names
-                    has_style = 'STYLE' in col_str
-                    has_qty = 'QTY' in col_str
-                    has_ctn = 'CTN' in col_str
-                    has_measurement = 'MEASUREMENT' in col_str or 'DIMENSION' in col_str
-                    
-                    # Must have at least 2-3 of these indicators
-                    if (has_style and (has_qty or has_ctn or has_measurement)) or \
-                       (has_ctn and has_measurement) or \
-                       (sum([has_style, has_qty, has_ctn, has_measurement]) >= 3):
-                        
-                        # Additional validation: check if we have numeric data in expected rows
-                        if len(temp_df) > 0:
-                            PackingList = temp_df
-                            packing_sheet = sheet_name
-                            break
-                except Exception as e:
-                    continue
-            
-            if PackingList is not None:
-                break
-                
-        except Exception as e:
-            continue
-    
-    if PackingList is None:
+
+    packing_dims = extract_packing_list_case_dimensions(file)
+    if packing_dims is None:
         raise ValueError("Could not parse packing list sheet - valid headers not found")
 
-    PackingList = PackingList.dropna(how='all')
-    
-    # Extract case dimensions from MEASUREMENT column (format: "L*W*H")
     case_length_list = []
     case_width_list = []
     case_height_list = []
-    
-    # Find the carton measurement column (second MEASUREMENT column or by name pattern)
-    measurement_cols = [col for col in PackingList.columns if 'MEASUREMENT' in str(col).upper() or 'DIMENSION' in str(col).upper()]
-    carton_measurement_col = None
-    style_color_col = None
-    qty_ctn_col = None
-    total_col = None
-    
-    # Find relevant columns - be flexible with naming
-    for col in PackingList.columns:
-        col_str = str(col).upper()
-        if 'STYLE' in col_str and style_color_col is None:
-            style_color_col = col
-        elif 'QTY' in col_str and 'CTN' in col_str and qty_ctn_col is None:
-            qty_ctn_col = col
-        elif col_str == 'TOTAL' and total_col is None:
-            total_col = col
-    
-    # Use second MEASUREMENT column if available (carton measurement), otherwise first
-    # Pandas adds .1, .2 etc. to duplicate column names
-    if len(measurement_cols) >= 2:
-        carton_measurement_col = measurement_cols[1]
-    elif len(measurement_cols) == 1:
-        carton_measurement_col = measurement_cols[0]
-    
-    # Create a mapping of Style+Color from PackingList to dimensions
-    # Strategy: Use rows where QTY/CTN > 1 and prefer rows with highest TOTAL value
-    packing_dict = {}
-    
-    if carton_measurement_col is not None and style_color_col is not None:
-        for idx, row in PackingList.iterrows():
-            try:
-                measurement = row[carton_measurement_col]
-                style_color = str(row[style_color_col]).strip() if pd.notna(row[style_color_col]) else ''
-                
-                # Extract style and color from combined format (e.g., "N2532  BK")
-                # Handle cases where style and color are separate or combined
-                parts = style_color.rsplit(' ', 1) if style_color else []
-                style = parts[0].strip() if len(parts) > 0 else ''
-                color = parts[1].strip() if len(parts) > 1 else ''
-                
-                if style and color and pd.notna(measurement):
-                    key = f"{style} {color}"
-                    measurement_str = str(measurement).strip()
-                    
-                    # Only process rows where QTY/CTN > 1 (not single-pack entries) or if TOTAL is not provided
-                    qty_ctn = 0
-                    total = 0
-                    
-                    if qty_ctn_col and qty_ctn_col in row.index:
-                        try:
-                            qty_ctn = float(row[qty_ctn_col]) if pd.notna(row[qty_ctn_col]) else 0
-                        except (ValueError, TypeError):
-                            qty_ctn = 0
-                    
-                    if total_col and total_col in row.index:
-                        try:
-                            total = float(row[total_col]) if pd.notna(row[total_col]) else 0
-                        except (ValueError, TypeError):
-                            total = 0
-                    
-                    # Accept if QTY/CTN > 1 or if we don't have QTY/CTN column
-                    if (qty_ctn > 1 or qty_ctn_col is None) and '*' in measurement_str:
-                        dim_parts = measurement_str.split('*')
-                        if len(dim_parts) >= 3:
-                            try:
-                                length = float(dim_parts[0].strip())
-                                width = float(dim_parts[1].strip())
-                                height = float(dim_parts[2].strip())
-                                
-                                # Store this dimension, preferring rows with higher TOTAL value
-                                if key not in packing_dict or total > packing_dict[key].get('total', 0):
-                                    packing_dict[key] = {
-                                        'length': length,
-                                        'width': width,
-                                        'height': height,
-                                        'total': total,
-                                        'qty_ctn': qty_ctn
-                                    }
-                            except ValueError as e:
-                                pass
-            except Exception as e:
-                continue
-    
-    # Now align with System_file_tab using the mapping
-    for idx, row in System_file_tab.iterrows():
+    for _, row in System_file_tab.iterrows():
         style = str(row['STYLE NO']).strip() if pd.notna(row['STYLE NO']) else ''
         color = str(row['COLOR']).strip() if pd.notna(row['COLOR']) else ''
-        key = f"{style} {color}"
-        
-        if key in packing_dict:
-            case_length_list.append(packing_dict[key]['length'])
-            case_width_list.append(packing_dict[key]['width'])
-            case_height_list.append(packing_dict[key]['height'])
-        else:
-            case_length_list.append('')
-            case_width_list.append('')
-            case_height_list.append('')
-    
-    
-    
+        length, width, height = lookup_case_dimensions(packing_dims, style, color)
+        case_length_list.append(length if length is not None else '')
+        case_width_list.append(width if width is not None else '')
+        case_height_list.append(height if height is not None else '')
+
+
     step3_columns = [
         'Item#', 'WHS#', 'Descrip', 'Unit', 'OrdSize', 'MinStk', 'Price Type', 'Price1', 'Price2', 'Price3', 
         'Price4', 'Price5', 'QtyPrice1', 'QtyPrice2', 'QtyPrice3', 'QtyPrice4', 'QtyPrice5', 'QtyPrice6', 

@@ -79,6 +79,7 @@ def _load_container_status_map() -> dict[str, dict[str, str]]:
             SELECT PUR_NUM, SUM(RCVD_QTY) AS total_rcvd
             FROM dbo.bin_pur
             WHERE PUR_NUM IN ({placeholders})
+              AND pur_cd = 1
             GROUP BY PUR_NUM
             """,
             containers,

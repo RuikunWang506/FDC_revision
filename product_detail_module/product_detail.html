@@ -350,6 +350,65 @@
             margin-right: 6px;
             cursor: pointer;
         }
+        .si-value.masterbox-dims-clickable {
+            cursor: pointer;
+            color: #4338ca;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 3px;
+        }
+        .si-value.masterbox-dims-clickable:hover {
+            color: #312e81;
+        }
+        .masterbox-sources-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .masterbox-sources-table th,
+        .masterbox-sources-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+        }
+        .masterbox-sources-table th {
+            background: #f3f4f6;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            position: sticky;
+            top: 0;
+        }
+        .masterbox-sources-table tr:last-child td {
+            border-bottom: none;
+        }
+        .masterbox-sources-table .mb-dim {
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .masterbox-sources-table .mb-sku {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+        }
+        .mb-dim-group {
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .mb-dim-group:last-child {
+            margin-bottom: 0;
+        }
+        .mb-dim-heading {
+            padding: 10px 12px;
+            background: #eef2ff;
+            color: #312e81;
+            font-weight: 700;
+            font-size: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
         .product-header {
             background: #667eea;
@@ -1973,7 +2032,17 @@
                                 </div>
                                 <div class="si-field">
                                     <span class="si-label">{{ te('Masterbox') }} {{ te('Dimensions') }}</span>
+                                    {% if style_group.masterbox_sources %}
+                                    <div class="si-value masterbox-dims-clickable"
+                                         title="Click to see unique masterbox dimensions by container / SKU"
+                                         onclick="openMasterboxSourcesPopup('{{ style_group.parent_info.style }}', event)"
+                                         data-sources='{{ style_group.masterbox_sources | tojson }}'>
+                                        {% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}
+                                        <span class="si-loc-edit">{{ style_group.masterbox_sources | length }}</span>
+                                    </div>
+                                    {% else %}
                                     <div class="si-value">{% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="si-field">
                                     <span class="si-label">{{ te('Bag_Size') }} {{ te('Dimensions') }}</span>
@@ -2662,6 +2731,37 @@
             }
         }
 
+        function getStockCellValue(row) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 13) return 0;
+            const stockIdx = cells.length >= 14 ? 3 : 2;
+            const stock = parseInt(cells[stockIdx].textContent, 10);
+            return Number.isNaN(stock) ? 0 : stock;
+        }
+
+        // Sort each DB's data rows by stock desc so zero/negative (red) rows stay at bottom
+        function sortStockTableByStock() {
+            document.querySelectorAll('.history-section.stock-panel table.dataTable').forEach(function(table) {
+                const tbody = table.tBodies[0];
+                if (!tbody) return;
+                const dataRows = Array.from(tbody.querySelectorAll('tr.data-row'));
+                const summaryRows = Array.from(tbody.querySelectorAll('tr.summary-row'));
+                const byDb = { FDC: [], E_FAS: [], Both: [] };
+                dataRows.forEach(function(row) {
+                    const db = row.getAttribute('data-database');
+                    if (byDb[db]) byDb[db].push(row);
+                });
+                ['FDC', 'E_FAS', 'Both'].forEach(function(db) {
+                    byDb[db].sort(function(a, b) {
+                        return getStockCellValue(b) - getStockCellValue(a);
+                    });
+                });
+                [...byDb.FDC, ...byDb.E_FAS, ...byDb.Both, ...summaryRows].forEach(function(row) {
+                    tbody.appendChild(row);
+                });
+            });
+        }
+
         function tagStockTableColumns() {
             document.querySelectorAll('.history-section.stock-panel table.dataTable').forEach(function(table) {
                 table.querySelectorAll('tbody tr').forEach(function(tr) {
@@ -2688,6 +2788,7 @@
                     }
                 });
             });
+            sortStockTableByStock();
         }
         tagStockTableColumns();
 
@@ -2731,6 +2832,8 @@
                 
                 row.style.display = showRow ? '' : 'none';
             });
+
+            sortStockTableByStock();
             
             // Recalculate summary rows with filtered data
             summaryRows.forEach(summaryRow => {
@@ -3858,6 +3961,29 @@
       </div>
     </div>
 
+    <!-- Masterbox Dimensions Sources Modal -->
+    <div class="modal fade" id="masterboxSourcesModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Masterbox Dimensions — <span id="masterboxSourcesStyle" style="color:#667eea;font-weight:bold;"></span></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="{{ te('Close') }}">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div style="margin-bottom: 10px; color: #6b7280; font-size: 13px;">
+              Unique masterbox dimensions — Container / SKU
+            </div>
+            <div id="masterboxSourcesContent" style="max-height: 480px; overflow-y: auto;"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ te('Close') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="editDescriptionModal" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -4595,6 +4721,46 @@
         });
     }
     
+    function openMasterboxSourcesPopup(style, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const el = event.currentTarget;
+        let sources = [];
+        try {
+            sources = JSON.parse(el.getAttribute('data-sources') || '[]');
+        } catch (e) {
+            sources = [];
+        }
+        document.getElementById('masterboxSourcesStyle').innerText = style;
+        const host = document.getElementById('masterboxSourcesContent');
+        if (!sources.length) {
+            host.innerHTML = '<div style="color:#6b7280;padding:12px;">No masterbox dimensions found</div>';
+            $('#masterboxSourcesModal').modal('show');
+            return;
+        }
+        const groups = {};
+        sources.forEach(s => {
+            const key = s.dimensions || '';
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(s);
+        });
+        const dimKeys = Object.keys(groups).sort();
+        host.innerHTML = dimKeys.map(dim => {
+            const rows = groups[dim];
+            const tableRows = rows.map(s => {
+                const container = String(s.container || '—').replace(/</g, '&lt;');
+                const sku = String(s.sku || '—').replace(/</g, '&lt;');
+                return '<tr><td>' + container + '</td><td class="mb-sku">' + sku + '</td></tr>';
+            }).join('');
+            return '<div class="mb-dim-group">' +
+                '<div class="mb-dim-heading">' + String(dim).replace(/</g, '&lt;') + '</div>' +
+                '<table class="masterbox-sources-table">' +
+                '<thead><tr><th>Container</th><th>SKU</th></tr></thead>' +
+                '<tbody>' + tableRows + '</tbody></table></div>';
+        }).join('');
+        $('#masterboxSourcesModal').modal('show');
+    }
+
     function openInfoPopup(style, info, event) {
         event.preventDefault();
         event.stopPropagation();

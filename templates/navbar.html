@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
 {% include '_i18n_client.html' %}
 {% if current_user and not hide_staff_nav_links() %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-ai-assistant.css') }}">
-<script src="{{ url_for('static', filename='js/fdc-presence.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/fdc-presence.js') }}?v=online-vis1" defer></script>
 <script src="{{ url_for('static', filename='js/fdc-ai-assistant.js') }}" defer></script>
 {% if help_context_url is defined and request.endpoint not in ['help.index', 'help.article'] %}
 <a href="{{ help_context_url }}" class="fdc-help-fab" title="{{ _('nav.page_help') }}" aria-label="{{ _('nav.page_help') }}">❓ <span class="fdc-help-fab-label">{{ _('nav.help') }}</span></a>

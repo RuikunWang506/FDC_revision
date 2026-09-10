@@ -355,6 +355,81 @@ def fetch_case_weights_by_skus(skus, database_name: str) -> dict[str, float]:
     return weights
 
 
+def fetch_masterbox_by_skus(skus, database_name: str) -> dict[str, dict]:
+    """Masterbox L/W/H (inches) + CASE_WT from inv/inv_detl, keyed by uppercase SKU."""
+    if not skus or not database_name:
+        return {}
+
+    cleaned = []
+    seen = set()
+    for sku in skus:
+        try:
+            key = str(sku).replace("\u00a0", " ").strip().upper()
+        except Exception:
+            key = str(sku).strip().upper()
+        if key and key not in seen:
+            seen.add(key)
+            cleaned.append(key)
+    if not cleaned:
+        return {}
+
+    placeholders = ",".join(["?"] * len(cleaned))
+    out: dict[str, dict] = {}
+    conn = None
+    cursor = None
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            SELECT
+                UPPER(LTRIM(RTRIM(i.PROD_CD))) AS sku,
+                i.CASE_WT,
+                idt.CASE_LEN,
+                idt.CASE_WI,
+                idt.CASE_HI,
+                CAST(ISNULL(i.PC_CASE, 0) AS INT) AS case_qty
+            FROM dbo.inv AS i
+            LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
+            WHERE UPPER(LTRIM(RTRIM(i.PROD_CD))) IN ({placeholders})
+            """,
+            cleaned,
+        )
+        for row in cursor.fetchall():
+            sku_key = str(row[0] or "").strip().upper()
+            if not sku_key:
+                continue
+
+            def _f(v):
+                try:
+                    return float(v) if v is not None else 0.0
+                except (TypeError, ValueError):
+                    return 0.0
+
+            out[sku_key] = {
+                "sku": sku_key,
+                "weight": _f(row[1]),
+                "length": _f(row[2]),
+                "width": _f(row[3]),
+                "height": _f(row[4]),
+                "case_qty": int(row[5] or 0),
+                "dim_unit": "INCH",
+            }
+    except Exception as e:
+        current_app.logger.error(
+            "Error fetching masterbox dims from %s: %s", database_name, e
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+    return out
+
+
 def fetch_sku_inventory_by_skus(skus):
     """Fetch in-warehouse and sold/reserved per SKU from FDC and E_FAS (summed).
 
@@ -1484,4 +1559,413 @@ def eta_fashion_label_from_order_lookup():
     except Exception as e:
         current_app.logger.exception("ETA Fashion label PDF failed for order %s", order_number)
         return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@order_lookup_bp.route("/order_lookup/gofo_availability", methods=["POST"])
+@login_required
+def gofo_availability():
+    """Check GOFO Parcel/Ground availability via production Open API (Excel fallback)."""
+    from py.utilities.gofo_api import check_parcel_and_ground, normalize_zip
+
+    payload = request.get_json(silent=True) or {}
+    order_number = str(
+        payload.get("order_number") or session.get("order_number") or ""
+    ).strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order number provided."}), 400
+
+    header_info, *_rest = generate_order(order_number)
+    if not header_info:
+        return jsonify({"ok": False, "error": f"Order {order_number} not found."}), 404
+
+    zip_code = normalize_zip(header_info.get("ship_to_zip"))
+    if not zip_code or zip_code.upper() == "N/A":
+        return jsonify({"ok": False, "error": "This order has no ship-to ZIP."}), 400
+
+    city = header_info.get("ship_to_city") or ""
+    state = header_info.get("ship_to_state") or ""
+    country = header_info.get("ship_to_country") or ""
+    phone = header_info.get("phone") or ""
+    name = (
+        header_info.get("ship_customer_name")
+        or header_info.get("customer")
+        or ""
+    ).strip()
+    adr1 = (header_info.get("ship_address_1") or "").strip()
+    adr2 = (header_info.get("ship_address_2") or "").strip()
+    street = adr2 or adr1
+
+    current_user = session.get("username", "unknown")
+    current_app.logger.info(
+        "***%s***__@@@GOFO availability@@@__ order=%s zip=%s",
+        current_user,
+        order_number,
+        zip_code,
+    )
+
+    result = check_parcel_and_ground(
+        zip_code=zip_code,
+        country=country,
+        state=state if state != "N/A" else "",
+        city=city if city != "N/A" else "",
+        street=street,
+        phone=phone if phone != "N/A" else "",
+        name=name,
+    )
+    if not result.get("ok"):
+        return jsonify(result), 502
+
+    result["order_number"] = order_number
+    return jsonify(result)
+
+
+def _order_ship_context(header_info: dict) -> dict:
+    city = header_info.get("ship_to_city") or ""
+    state = header_info.get("ship_to_state") or ""
+    country = header_info.get("ship_to_country") or ""
+    phone = header_info.get("phone") or ""
+    name = (
+        header_info.get("ship_customer_name")
+        or header_info.get("customer")
+        or ""
+    ).strip()
+    adr1 = (header_info.get("ship_address_1") or "").strip()
+    adr2 = (header_info.get("ship_address_2") or "").strip()
+    return {
+        "zip": header_info.get("ship_to_zip") or "",
+        "city": "" if city == "N/A" else city,
+        "state": "" if state == "N/A" else state,
+        "country": country,
+        "phone": "" if phone == "N/A" else phone,
+        "name": name,
+        "street": adr2 or adr1,
+    }
+
+
+def _style_from_sku(sku: str) -> str:
+    """Best-effort style key from SKU when ALT_CD is missing (e.g. 'L1850 BK' -> 'L1850')."""
+    text = str(sku or "").strip()
+    if not text:
+        return ""
+    parts = text.split()
+    if len(parts) >= 2:
+        return parts[0].strip()
+    return text
+
+
+def _whole_box_suggestions(order_number: str) -> tuple[list[dict], str | None, int]:
+    """Unique styles with total boxes + masterbox L/W/H/wt (inches)."""
+    header_info, *_rest = generate_order(order_number)
+    if not header_info:
+        return [], f"Order {order_number} not found.", 0
+
+    database_name = "omsdata_FDC" if len(str(order_number).strip()) == 5 else "oms_EF"
+    try:
+        conn = pyodbc.connect(
+            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+            f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+        )
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT
+                LTRIM(RTRIM(O.PROD_CD)) AS sku,
+                CAST(O.ORDER_QTY AS INT) AS qty,
+                CAST(O.PC_UNIT AS INT) AS per_box,
+                LTRIM(RTRIM(ISNULL(i.ALT_CD, ''))) AS style,
+                i.CASE_WT AS box_wt,
+                idt.CASE_LEN AS master_len,
+                idt.CASE_WI AS master_wid,
+                idt.CASE_HI AS master_hei
+            FROM DBO.ORD_LOG O
+            LEFT JOIN dbo.inv i ON O.PROD_CD = i.PROD_CD
+            LEFT JOIN dbo.inv_detl idt ON O.PROD_CD = idt.prod_cd
+            WHERE O.ORD_NUM = ?
+            ORDER BY O.COMM_LN
+            """,
+            (order_number,),
+        )
+        lines = cur.fetchall()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        current_app.logger.exception("whole-box line fetch failed for %s", order_number)
+        return [], str(e), 0
+
+    def _f(v):
+        try:
+            return float(v) if v is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    # Aggregate by unique style
+    by_style: dict[str, dict] = {}
+    for row in lines:
+        sku = str(row[0] or "").strip()
+        qty = int(row[1] or 0)
+        per_box = int(row[2] or 0)
+        style = str(row[3] or "").strip()
+        # Prefer ALT_CD style code; never keep color SKU as the style key
+        style = _style_from_sku(style) if style else ""
+        if not style:
+            style = _style_from_sku(sku)
+        if not style:
+            style = sku or "UNKNOWN"
+        box_count = line_box_count(qty, per_box)
+        if box_count < 1:
+            continue
+        length = _f(row[5])
+        width = _f(row[6])
+        height = _f(row[7])
+        weight = _f(row[4])
+        entry = by_style.get(style)
+        if not entry:
+            by_style[style] = {
+                "style": style,
+                "sku": sku,
+                "label": style,
+                "qty": box_count,
+                "length": round(length, 2),
+                "width": round(width, 2),
+                "height": round(height, 2),
+                "weight": round(weight, 2),
+            }
+        else:
+            entry["qty"] = int(entry.get("qty") or 0) + box_count
+            # Keep first non-empty masterbox dims/wt
+            if not entry.get("length") and length:
+                entry["length"] = round(length, 2)
+                entry["width"] = round(width, 2)
+                entry["height"] = round(height, 2)
+            if not entry.get("weight") and weight:
+                entry["weight"] = round(weight, 2)
+            if not entry.get("sku") and sku:
+                entry["sku"] = sku
+
+    boxes = list(by_style.values())
+    total_boxes = sum(int(b.get("qty") or 0) for b in boxes)
+    missing = [
+        b["style"]
+        for b in boxes
+        if not (
+            float(b.get("length") or 0) > 0
+            and float(b.get("width") or 0) > 0
+            and float(b.get("height") or 0) > 0
+            and float(b.get("weight") or 0) > 0
+        )
+    ]
+    note = None
+    if missing:
+        note = (
+            "Missing masterbox L/W/H or box wt for style(s): "
+            + ", ".join(missing[:12])
+            + ("…" if len(missing) > 12 else "")
+        )
+    return boxes, note, total_boxes
+
+
+def _mix_package_suggestion(order_number: str) -> dict:
+    """Mix package: total boxes from label-maker notes logic; dims/weight blank."""
+    notes = fetch_order_notes(order_number)
+    total = parse_boxes_from_notes(notes)
+    source = "notes"
+    if not total:
+        # Fallback: sum full boxes from order lines (same as order items footer)
+        database_name = "omsdata_FDC" if len(str(order_number).strip()) == 5 else "oms_EF"
+        try:
+            conn = pyodbc.connect(
+                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};'
+                f'DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+            )
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT CAST(ORDER_QTY AS INT), CAST(PC_UNIT AS INT)
+                FROM DBO.ORD_LOG
+                WHERE ORD_NUM = ?
+                """,
+                (order_number,),
+            )
+            total = 0
+            for row in cur.fetchall():
+                total += full_box_count(row[0], row[1])
+            cur.close()
+            conn.close()
+            source = "order_lines"
+        except Exception:
+            total = 0
+            source = "none"
+    if not total or total < 1:
+        total = 1
+    return {
+        "total_boxes": int(total),
+        "source": source,
+        "dim_unit": "INCH",
+        "boxes": [
+            {
+                "style": "",
+                "sku": "",
+                "label": "Mix package",
+                "qty": int(total),
+                "length": "",
+                "width": "",
+                "height": "",
+                "weight": "",
+            }
+        ],
+        "note": (
+            f"Total boxes from order notes (label maker): {total}."
+            if source == "notes"
+            else f"Total full boxes from order lines: {total}."
+            if source == "order_lines"
+            else "Enter total boxes and package dimensions."
+        ),
+    }
+
+
+@order_lookup_bp.route("/order_lookup/gofo_packages", methods=["GET", "POST"])
+@login_required
+def gofo_packages():
+    """Load or save GOFO package dims/weight for a sales order (MySQL)."""
+    from py.utilities.gofo_order_packages import load_packages, save_packages
+
+    current_user = session.get("username", "unknown")
+    if request.method == "GET":
+        order_number = str(
+            request.args.get("order_number") or session.get("order_number") or ""
+        ).strip()
+        if not order_number:
+            return jsonify({"ok": False, "error": "No order number provided."}), 400
+        try:
+            saved = load_packages(order_number)
+        except Exception as e:
+            current_app.logger.exception("Load gofo packages failed")
+            return jsonify({"ok": False, "error": str(e)}), 500
+        whole_boxes, whole_note, whole_total = _whole_box_suggestions(order_number)
+        mix_suggestion = _mix_package_suggestion(order_number)
+
+        # Ignore stale whole-box saves that stored per-SKU rows instead of unique styles
+        if saved and (saved.get("package_mode") or "").lower() == "whole":
+            stale = False
+            for box in saved.get("boxes") or []:
+                style = str(box.get("style") or "").strip()
+                label = str(box.get("label") or "").strip()
+                sku = str(box.get("sku") or "").strip()
+                key = style or label
+                if not key or " " in key or (sku and key == sku and " " in sku):
+                    stale = True
+                    break
+            if stale:
+                saved = None
+
+        return jsonify(
+            {
+                "ok": True,
+                "order_number": order_number,
+                "saved": saved,
+                "whole_box_suggestion": {
+                    "dim_unit": "INCH",
+                    "boxes": whole_boxes,
+                    "total_boxes": whole_total,
+                    "note": whole_note,
+                },
+                "mix_package_suggestion": mix_suggestion,
+            }
+        )
+
+    payload = request.get_json(silent=True) or {}
+    order_number = str(
+        payload.get("order_number") or session.get("order_number") or ""
+    ).strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order number provided."}), 400
+    try:
+        saved = save_packages(
+            order_number=order_number,
+            package_mode=str(payload.get("package_mode") or "mix"),
+            dim_unit=str(payload.get("dim_unit") or "INCH"),
+            boxes=payload.get("boxes") or [],
+            updated_by=current_user,
+        )
+    except Exception as e:
+        current_app.logger.exception("Save gofo packages failed")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    current_app.logger.info(
+        "***%s***__@@@GOFO packages saved@@@__ order=%s mode=%s boxes=%s",
+        current_user,
+        order_number,
+        saved.get("package_mode"),
+        len(saved.get("boxes") or []),
+    )
+    return jsonify({"ok": True, **saved})
+
+
+@order_lookup_bp.route("/order_lookup/gofo_check_price", methods=["POST"])
+@login_required
+def gofo_check_price():
+    """Estimate GOFO Parcel/Ground price for entered boxes; persists package data."""
+    from py.utilities.gofo_api import estimate_prices_for_boxes, normalize_zip
+    from py.utilities.gofo_order_packages import save_packages
+
+    payload = request.get_json(silent=True) or {}
+    order_number = str(
+        payload.get("order_number") or session.get("order_number") or ""
+    ).strip()
+    if not order_number:
+        return jsonify({"ok": False, "error": "No order number provided."}), 400
+
+    header_info, *_rest = generate_order(order_number)
+    if not header_info:
+        return jsonify({"ok": False, "error": f"Order {order_number} not found."}), 404
+
+    ship = _order_ship_context(header_info)
+    zip_code = normalize_zip(ship["zip"])
+    if not zip_code or zip_code.upper() == "N/A":
+        return jsonify({"ok": False, "error": "This order has no ship-to ZIP."}), 400
+
+    boxes = payload.get("boxes") or []
+    dim_unit = str(payload.get("dim_unit") or "INCH").upper()
+    package_mode = str(payload.get("package_mode") or "mix").lower()
+    current_user = session.get("username", "unknown")
+
+    try:
+        save_packages(
+            order_number=order_number,
+            package_mode=package_mode,
+            dim_unit=dim_unit,
+            boxes=boxes,
+            updated_by=current_user,
+        )
+    except Exception as e:
+        current_app.logger.exception("Save packages before price check failed")
+        return jsonify({"ok": False, "error": f"Could not save packages: {e}"}), 500
+
+    current_app.logger.info(
+        "***%s***__@@@GOFO check price@@@__ order=%s zip=%s boxes=%s mode=%s",
+        current_user,
+        order_number,
+        zip_code,
+        len(boxes),
+        package_mode,
+    )
+
+    result = estimate_prices_for_boxes(
+        boxes=boxes,
+        dim_unit=dim_unit,
+        zip_code=zip_code,
+        country=ship["country"],
+        state=ship["state"],
+        city=ship["city"],
+        street=ship["street"],
+        phone=ship["phone"],
+        name=ship["name"],
+    )
+    if not result.get("ok"):
+        return jsonify(result), 502
+
+    result["order_number"] = order_number
+    result["package_mode"] = package_mode
+    result["saved"] = True
+    return jsonify(result)
 

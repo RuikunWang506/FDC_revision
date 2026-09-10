@@ -62,14 +62,15 @@ def _parse_duration_seconds(text: str) -> int:
 def _fmt_duration(seconds: int) -> str:
     seconds = max(0, int(seconds))
     hours, rem = divmod(seconds, 3600)
-    minutes, sec = divmod(rem, 60)
-    if hours and minutes:
-        return f'{hours}小时{minutes}分钟'
+    minutes, secs = divmod(rem, 60)
+    parts: list[str] = []
     if hours:
-        return f'{hours}小时'
+        parts.append(f'{hours}小时')
     if minutes:
-        return f'{minutes}分钟'
-    return f'{sec}秒'
+        parts.append(f'{minutes}分钟')
+    if secs or not parts:
+        parts.append(f'{secs}秒')
+    return ''.join(parts)
 
 
 def _fmt_time(dt: datetime) -> str:
@@ -169,9 +170,9 @@ def parse_online_log_line(line: str) -> dict[str, Any] | None:
     if not start or not end:
         return None
 
-    duration_sec = _parse_duration_seconds(m.group('duration_text'))
-    if duration_sec <= 0 and end > start:
-        duration_sec = int((end - start).total_seconds())
+    duration_sec = max(0, int((end - start).total_seconds()))
+    if duration_sec <= 0:
+        duration_sec = _parse_duration_seconds(m.group('duration_text'))
 
     username = m.group('username').strip()
     return {
@@ -262,6 +263,11 @@ def merge_sessions(
         for nxt in user_sessions[1:]:
             gap = (nxt['start'] - block['end']).total_seconds()
             if gap <= gap_sec:
+                if nxt['start'] < block['start']:
+                    block['start'] = nxt['start']
+                    block['start_iso'] = block['start'].isoformat()
+                    block['start_time'] = _fmt_time(block['start'])
+                    block['date'] = _fmt_date(block['start'])
                 block['end'] = max(block['end'], nxt['end'])
                 block['end_iso'] = block['end'].isoformat()
                 block['end_time'] = _fmt_time(block['end'])
@@ -269,6 +275,8 @@ def merge_sessions(
                 block['duration_display'] = _fmt_duration(block['duration_sec'])
                 block['fragment_count'] += 1
                 block['fragments'].append(nxt)
+                if nxt.get('is_open') or block.get('is_open'):
+                    block['is_open'] = True
             else:
                 merged.append(block)
                 block = dict(nxt)
@@ -289,7 +297,10 @@ def filter_by_min_duration(
 ) -> list[dict[str, Any]]:
     if min_sec <= 0:
         return sessions
-    return [s for s in sessions if s.get('duration_sec', 0) >= min_sec]
+    return [
+        s for s in sessions
+        if s.get('is_open') or s.get('duration_sec', 0) >= min_sec
+    ]
 
 
 def summarize_users(
@@ -560,6 +571,20 @@ def timeline_layout_range(
     return timeline_layout_combined(sessions, date_from=date_from, date_to=date_to)
 
 
+def refresh_session_duration(session: dict[str, Any]) -> dict[str, Any]:
+    start = session.get('start')
+    end = session.get('end')
+    if isinstance(start, datetime) and isinstance(end, datetime):
+        session['duration_sec'] = max(0, int((end - start).total_seconds()))
+        session['duration_display'] = _fmt_duration(session['duration_sec'])
+        session['start_iso'] = start.isoformat()
+        session['end_iso'] = end.isoformat()
+        session['start_time'] = _fmt_time(start)
+        session['end_time'] = _fmt_time(end)
+        session['date'] = _fmt_date(start)
+    return session
+
+
 def enrich_session_displays(
     sessions: list[dict[str, Any]],
     *,
@@ -567,6 +592,7 @@ def enrich_session_displays(
 ) -> list[dict[str, Any]]:
     fmt = _fmt_datetime if multi_day else _fmt_time
     for s in sessions:
+        refresh_session_duration(s)
         s['start_display'] = fmt(s['start'])
         s['end_display'] = fmt(s['end'])
     return sessions

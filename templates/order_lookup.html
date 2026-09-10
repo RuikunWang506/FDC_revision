@@ -215,6 +215,185 @@
             font-weight: 500;
         }
 
+        .gofo-avail-btn {
+            font-weight: 600;
+            border-width: 2px;
+        }
+
+        .gofo-btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .gofo-price-btn {
+            font-weight: 600;
+            border-width: 2px;
+        }
+
+        .gofo-avail-result .gofo-svc {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-top: 4px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #f4f6f8;
+        }
+
+        .gofo-avail-result .gofo-svc-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .gofo-avail-result .gofo-badge {
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .gofo-badge.reachable {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .gofo-badge.unreachable,
+        .gofo-badge.blocked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .gofo-badge.error,
+        .gofo-badge.unknown {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .gofo-avail-result .gofo-zip-meta {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 6px;
+        }
+
+        .gofo-avail-result .gofo-error {
+            color: #721c24;
+            font-size: 13px;
+        }
+
+        #gofoPriceModal .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        #gofoPriceModal .modal-header {
+            background: linear-gradient(135deg, #1f7a4d, #2d9c6a);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        #gofoPriceModal .gofo-mode-toggle {
+            display: inline-flex;
+            border: 1px solid #cfd8dc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #gofoPriceModal .gofo-mode-toggle button {
+            border: 0;
+            background: #f5f7f9;
+            padding: 8px 14px;
+            font-weight: 600;
+            color: #455a64;
+        }
+
+        #gofoPriceModal .gofo-mode-toggle button.active {
+            background: #1f7a4d;
+            color: #fff;
+        }
+
+        #gofoPriceModal .gofo-box-card {
+            border: 1px solid #e0e6ea;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafbfc;
+        }
+
+        #gofoPriceModal .gofo-box-card .gofo-box-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #37474f;
+        }
+
+        #gofoPriceModal .gofo-box-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        #gofoPriceModal .gofo-box-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        #gofoPriceModal .gofo-box-table th,
+        #gofoPriceModal .gofo-box-table td {
+            border: 1px solid #e0e6ea;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+
+        #gofoPriceModal .gofo-box-table th {
+            background: #f0f4f7;
+            font-weight: 700;
+            color: #37474f;
+            white-space: nowrap;
+        }
+
+        #gofoPriceModal .gofo-box-table input {
+            width: 100%;
+            min-width: 64px;
+        }
+
+        #gofoPriceModal .gofo-box-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        #gofoPriceModal .gofo-total-boxes {
+            font-weight: 700;
+            color: #1f7a4d;
+        }
+
+        #gofoPriceModal .gofo-price-result .gofo-svc {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f4f6f8;
+            border-radius: 6px;
+            margin-top: 6px;
+            font-size: 14px;
+        }
+
+        #gofoPriceModal .gofo-price-amount {
+            font-weight: 800;
+            color: #1f7a4d;
+        }
+
         a.bol-processor-link {
             color: #2563eb !important;
             text-decoration: underline !important;
@@ -1515,6 +1694,28 @@
                         </div>
                     </div>
                     {% endif %}
+
+                    {% if header_info.ship_to_zip and header_info.ship_to_zip != 'N/A' %}
+                    <div class="info-row gofo-avail-row" style="display: block; border-top: 2px solid #eee; margin-top: 15px; padding-top: 15px;">
+                        <div class="gofo-btn-row">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary gofo-avail-btn"
+                                    id="gofoAvailBtn"
+                                    data-order="{{ header_info.order_number }}">
+                                <i class="fas fa-shipping-fast mr-1"></i>{{ te('Check GOFO availability') }}
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-success gofo-price-btn"
+                                    id="gofoPriceBtn"
+                                    data-order="{{ header_info.order_number }}"
+                                    data-toggle="modal"
+                                    data-target="#gofoPriceModal">
+                                <i class="fas fa-dollar-sign mr-1"></i>{{ te('Check price') }}
+                            </button>
+                        </div>
+                        <div id="gofoAvailResult" class="gofo-avail-result mt-2" aria-live="polite"></div>
+                    </div>
+                    {% endif %}
                     
                     {% if not (header_info.order_status and header_info.order_status != 'N/A') and not (header_info.priority and header_info.priority != 'N/A' and header_info.priority != 'Normal') and not (header_info.ship_method and header_info.ship_method != 'N/A') and not (header_info.tracking_number and header_info.tracking_number != 'N/A') and not header_info.label_burlington_bol and not (header_info.ship_to_city and header_info.ship_to_city != 'N/A') and not (header_info.attention and header_info.attention != 'N/A') and not (header_info.phone and header_info.phone != 'N/A') and not (header_info.email and header_info.email != 'N/A') and not header_info.locations %}
                     <div class="text-center p-3 text-muted">
@@ -2576,6 +2777,353 @@
                 generateEtaFashionLabelPdf('4x6', $(this));
             });
 
+            $('#gofoAvailBtn').on('click', async function() {
+                const $btn = $(this);
+                const $out = $('#gofoAvailResult');
+                const order = ($btn.data('order') || $('#order_number').val() || '').toString().trim();
+                if (!order) {
+                    $out.html('<div class="gofo-error">No order number.</div>');
+                    return;
+                }
+                const originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Checking…');
+                $out.empty();
+                try {
+                    const response = await fetch('{{ url_for("order_lookup.gofo_availability") }}', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_number: order })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || !data.ok) {
+                        throw new Error((data && data.error) || 'GOFO check failed.');
+                    }
+                    const statusLabel = {
+                        reachable: 'Reachable',
+                        unreachable: 'Not reachable',
+                        blocked: 'Blocked',
+                        error: 'Error',
+                        unknown: 'Unknown'
+                    };
+                    let html = '';
+                    (data.services || []).forEach(function(svc) {
+                        const st = svc.status || 'unknown';
+                        html += '<div class="gofo-svc">' +
+                            '<span class="gofo-svc-label">' + $('<div>').text(svc.label || svc.key).html() + '</span>' +
+                            '<span class="gofo-badge ' + st + '" title="' + $('<div>').text(svc.message || '').html() + '">' +
+                            (statusLabel[st] || st) +
+                            '</span></div>';
+                    });
+                    if (data.zip) {
+                        html += '<div class="gofo-zip-meta">ZIP ' + $('<div>').text(data.zip).html();
+                        if (data.zip_check && data.zip_check.sorting_code) {
+                            html += ' · sort ' + $('<div>').text(data.zip_check.sorting_code).html();
+                        }
+                        html += '</div>';
+                    }
+                    $out.html(html);
+                } catch (err) {
+                    $out.html('<div class="gofo-error"><i class="fas fa-exclamation-circle mr-1"></i>' +
+                        $('<div>').text(err.message || 'GOFO check failed.').html() + '</div>');
+                } finally {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+
+            (function initGofoPriceModal() {
+                const $modal = $('#gofoPriceModal');
+                if (!$modal.length) return;
+
+                const orderNumber = ($('#gofoPriceBtn').data('order') || '{{ header_info.order_number if header_info else "" }}').toString().trim();
+                let packageMode = 'mix';
+                let wholeSuggestion = { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 0 };
+                let mixSuggestion = { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 1 };
+                let boxes = [];
+
+                function esc(s) {
+                    return $('<div>').text(s == null ? '' : String(s)).html();
+                }
+
+                function totalBoxes() {
+                    return boxes.reduce(function(sum, b) {
+                        return sum + (parseInt(b.qty, 10) || 0);
+                    }, 0);
+                }
+
+                function updateToolbar() {
+                    $('#gofoTotalBoxes').text(totalBoxes());
+                    const isWhole = packageMode === 'whole';
+                    $('#gofoRepeatAllBtn').toggle(isWhole && boxes.length > 1);
+                }
+
+                function setMode(mode, applyPrefill) {
+                    packageMode = mode === 'whole' ? 'whole' : 'mix';
+                    $('#gofoModeMix').toggleClass('active', packageMode === 'mix');
+                    $('#gofoModeWhole').toggleClass('active', packageMode === 'whole');
+                    if (applyPrefill) {
+                        if (packageMode === 'whole') {
+                            $('#gofoDimUnit').val(wholeSuggestion.dim_unit || 'INCH').data('prev', wholeSuggestion.dim_unit || 'INCH');
+                            boxes = (wholeSuggestion.boxes || []).map(function(b) {
+                                return {
+                                    style: b.style || b.label || '',
+                                    sku: b.sku || '',
+                                    label: b.style || b.label || '',
+                                    qty: b.qty || 1,
+                                    length: b.length || '',
+                                    width: b.width || '',
+                                    height: b.height || '',
+                                    weight: b.weight || ''
+                                };
+                            });
+                            if (!boxes.length) {
+                                boxes = [{ style: '', sku: '', label: '', qty: 1, length: '', width: '', height: '', weight: '' }];
+                            }
+                            $('#gofoPackageNote').text(
+                                (wholeSuggestion.note ? wholeSuggestion.note + ' ' : '') +
+                                'Unique styles with masterbox dims / box wt. Total boxes: ' +
+                                (wholeSuggestion.total_boxes || totalBoxes()) + '.'
+                            );
+                        } else {
+                            $('#gofoDimUnit').val(mixSuggestion.dim_unit || 'INCH').data('prev', mixSuggestion.dim_unit || 'INCH');
+                            boxes = (mixSuggestion.boxes || []).map(function(b) {
+                                return {
+                                    style: '',
+                                    sku: '',
+                                    label: b.label || 'Mix package',
+                                    qty: b.qty || mixSuggestion.total_boxes || 1,
+                                    length: '',
+                                    width: '',
+                                    height: '',
+                                    weight: ''
+                                };
+                            });
+                            if (!boxes.length) {
+                                boxes = [{ style: '', sku: '', label: 'Mix package', qty: mixSuggestion.total_boxes || 1, length: '', width: '', height: '', weight: '' }];
+                            }
+                            $('#gofoPackageNote').text(mixSuggestion.note || 'Mix package — enter dims/weight. Total boxes from label maker notes.');
+                        }
+                    }
+                    renderBoxes();
+                }
+
+                function renderBoxes() {
+                    const unit = ($('#gofoDimUnit').val() || 'INCH') === 'CM' ? 'cm' : 'in';
+                    const isWhole = packageMode === 'whole';
+                    let html = '<table class="gofo-box-table"><thead><tr>';
+                    if (isWhole) {
+                        html += '<th>Style</th><th>Boxes</th>';
+                    } else {
+                        html += '<th>Package</th><th>Boxes</th>';
+                    }
+                    html += '<th>L (' + unit + ')</th><th>W (' + unit + ')</th><th>H (' + unit + ')</th><th>Wt (lb)</th><th></th>';
+                    html += '</tr></thead><tbody>';
+                    boxes.forEach(function(box, idx) {
+                        html += '<tr data-idx="' + idx + '">';
+                        if (isWhole) {
+                            html += '<td><input type="text" class="form-control form-control-sm gofo-box-style" data-idx="' + idx + '" value="' + esc(box.style || box.label || '') + '" placeholder="Style"></td>';
+                        } else {
+                            html += '<td><input type="text" class="form-control form-control-sm gofo-box-label" data-idx="' + idx + '" value="' + esc(box.label || 'Mix package') + '"></td>';
+                        }
+                        html += '<td style="width:70px;"><input type="number" min="1" step="1" class="form-control form-control-sm gofo-box-qty" data-idx="' + idx + '" value="' + esc(box.qty || 1) + '"></td>';
+                        html += '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm gofo-box-len" data-idx="' + idx + '" value="' + esc(box.length) + '"></td>';
+                        html += '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm gofo-box-wid" data-idx="' + idx + '" value="' + esc(box.width) + '"></td>';
+                        html += '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm gofo-box-hei" data-idx="' + idx + '" value="' + esc(box.height) + '"></td>';
+                        html += '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm gofo-box-wt" data-idx="' + idx + '" value="' + esc(box.weight) + '"></td>';
+                        html += '<td style="white-space:nowrap;">' +
+                            '<button type="button" class="btn btn-sm btn-outline-secondary gofo-dup-box mr-1" data-idx="' + idx + '" title="Duplicate"><i class="fas fa-copy"></i></button>' +
+                            '<button type="button" class="btn btn-sm btn-outline-danger gofo-del-box" data-idx="' + idx + '" title="Remove">&times;</button>' +
+                            '</td>';
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    $('#gofoBoxList').html(html);
+                    updateToolbar();
+                }
+
+                function readBoxesFromDom() {
+                    boxes.forEach(function(box, idx) {
+                        const styleVal = $('.gofo-box-style[data-idx="' + idx + '"]').val();
+                        const labelVal = $('.gofo-box-label[data-idx="' + idx + '"]').val();
+                        if (typeof styleVal !== 'undefined') {
+                            box.style = styleVal;
+                            box.label = styleVal;
+                        }
+                        if (typeof labelVal !== 'undefined') {
+                            box.label = labelVal;
+                        }
+                        box.length = $('.gofo-box-len[data-idx="' + idx + '"]').val();
+                        box.width = $('.gofo-box-wid[data-idx="' + idx + '"]').val();
+                        box.height = $('.gofo-box-hei[data-idx="' + idx + '"]').val();
+                        box.weight = $('.gofo-box-wt[data-idx="' + idx + '"]').val();
+                        box.qty = parseInt($('.gofo-box-qty[data-idx="' + idx + '"]').val(), 10) || 1;
+                    });
+                    updateToolbar();
+                }
+
+                function inchToCm(v) { return Math.round((parseFloat(v) || 0) * 2.54 * 100) / 100; }
+                function cmToInch(v) { return Math.round((parseFloat(v) || 0) / 2.54 * 100) / 100; }
+
+                $modal.on('show.bs.modal', async function() {
+                    $('#gofoPriceResult').empty();
+                    try {
+                        const response = await fetch('{{ url_for("order_lookup.gofo_packages") }}?order_number=' + encodeURIComponent(orderNumber));
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok || !data.ok) {
+                            throw new Error((data && data.error) || 'Failed to load packages.');
+                        }
+                        wholeSuggestion = data.whole_box_suggestion || { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 0 };
+                        mixSuggestion = data.mix_package_suggestion || { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 1 };
+                        if (data.saved && Array.isArray(data.saved.boxes) && data.saved.boxes.length) {
+                            packageMode = data.saved.package_mode || 'mix';
+                            $('#gofoDimUnit').val(data.saved.dim_unit || 'INCH').data('prev', data.saved.dim_unit || 'INCH');
+                            boxes = data.saved.boxes.map(function(b) {
+                                const style = b.style || '';
+                                return {
+                                    style: style,
+                                    sku: b.sku || '',
+                                    label: b.label || style || 'Mix package',
+                                    qty: b.qty || 1,
+                                    length: b.length === 0 || b.length === '0' ? '' : (b.length || ''),
+                                    width: b.width === 0 || b.width === '0' ? '' : (b.width || ''),
+                                    height: b.height === 0 || b.height === '0' ? '' : (b.height || ''),
+                                    weight: b.weight === 0 || b.weight === '0' ? '' : (b.weight || '')
+                                };
+                            });
+                            setMode(packageMode, false);
+                            $('#gofoPackageNote').text('Loaded saved package data for this order.');
+                            renderBoxes();
+                        } else {
+                            setMode('whole', true);
+                        }
+                    } catch (err) {
+                        setMode('mix', true);
+                        $('#gofoPackageNote').text(err.message || 'Could not load saved packages.');
+                        renderBoxes();
+                    }
+                });
+
+                $('#gofoModeMix').on('click', function() { setMode('mix', true); });
+                $('#gofoModeWhole').on('click', function() { setMode('whole', true); });
+
+                $('#gofoDimUnit').on('change', function() {
+                    readBoxesFromDom();
+                    const next = $(this).val();
+                    const prev = $(this).data('prev') || 'INCH';
+                    if (next === prev) return;
+                    boxes.forEach(function(box) {
+                        if (box.length === '' && box.width === '' && box.height === '') return;
+                        if (next === 'CM' && prev === 'INCH') {
+                            box.length = box.length === '' ? '' : inchToCm(box.length);
+                            box.width = box.width === '' ? '' : inchToCm(box.width);
+                            box.height = box.height === '' ? '' : inchToCm(box.height);
+                        } else if (next === 'INCH' && prev === 'CM') {
+                            box.length = box.length === '' ? '' : cmToInch(box.length);
+                            box.width = box.width === '' ? '' : cmToInch(box.width);
+                            box.height = box.height === '' ? '' : cmToInch(box.height);
+                        }
+                    });
+                    $(this).data('prev', next);
+                    renderBoxes();
+                }).data('prev', 'INCH');
+
+                $('#gofoAddBoxBtn').on('click', function() {
+                    readBoxesFromDom();
+                    if (packageMode === 'whole') {
+                        boxes.push({ style: '', sku: '', label: '', qty: 1, length: '', width: '', height: '', weight: '' });
+                    } else {
+                        boxes.push({ style: '', sku: '', label: 'Mix package', qty: 1, length: '', width: '', height: '', weight: '' });
+                    }
+                    renderBoxes();
+                });
+
+                $modal.on('click', '.gofo-dup-box', function() {
+                    readBoxesFromDom();
+                    const idx = parseInt($(this).data('idx'), 10);
+                    const src = boxes[idx];
+                    if (!src) return;
+                    boxes.splice(idx + 1, 0, $.extend({}, src));
+                    renderBoxes();
+                });
+
+                $('#gofoRepeatAllBtn').on('click', function() {
+                    readBoxesFromDom();
+                    if (!boxes.length) return;
+                    const src = boxes.find(function(b) {
+                        return parseFloat(b.length) > 0 && parseFloat(b.width) > 0 && parseFloat(b.height) > 0 && parseFloat(b.weight) > 0;
+                    }) || boxes[0];
+                    boxes.forEach(function(box) {
+                        box.length = src.length;
+                        box.width = src.width;
+                        box.height = src.height;
+                        box.weight = src.weight;
+                    });
+                    renderBoxes();
+                });
+
+                $modal.on('click', '.gofo-del-box', function() {
+                    readBoxesFromDom();
+                    const idx = parseInt($(this).data('idx'), 10);
+                    if (boxes.length <= 1) {
+                        if (packageMode === 'whole') {
+                            boxes[0] = { style: boxes[0].style || '', sku: '', label: boxes[0].style || '', qty: 1, length: '', width: '', height: '', weight: '' };
+                        } else {
+                            boxes[0] = { style: '', sku: '', label: 'Mix package', qty: boxes[0].qty || 1, length: '', width: '', height: '', weight: '' };
+                        }
+                    } else {
+                        boxes.splice(idx, 1);
+                    }
+                    renderBoxes();
+                });
+
+                $modal.on('input', '.gofo-box-qty', function() {
+                    readBoxesFromDom();
+                });
+
+                $('#gofoRunPriceBtn').on('click', async function() {
+                    readBoxesFromDom();
+                    const $btn = $(this);
+                    const original = $btn.html();
+                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Pricing…');
+                    $('#gofoPriceResult').html('<div class="text-muted">Saving packages and checking GOFO rates…</div>');
+                    try {
+                        const response = await fetch('{{ url_for("order_lookup.gofo_check_price") }}', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                order_number: orderNumber,
+                                package_mode: packageMode,
+                                dim_unit: $('#gofoDimUnit').val() || 'INCH',
+                                boxes: boxes
+                            })
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok || !data.ok) {
+                            throw new Error((data && data.error) || 'Price check failed.');
+                        }
+                        let html = '<div class="small text-muted mb-1">Saved for order ' + esc(orderNumber) +
+                            ' · ' + esc(data.box_count) + ' box(es) · ZIP ' + esc(data.zip) + '</div>';
+                        (data.services || []).forEach(function(svc) {
+                            html += '<div class="gofo-svc"><span>' + esc(svc.label) + '</span>';
+                            if (svc.ok) {
+                                html += '<span class="gofo-price-amount">' + esc(svc.currency || 'USD') + ' ' +
+                                    esc(Number(svc.total).toFixed(2)) +
+                                    (svc.delivery_days != null ? ' · ' + esc(svc.delivery_days) + 'd' : '') +
+                                    '</span>';
+                            } else {
+                                html += '<span class="text-danger">' + esc(svc.error || 'Failed') + '</span>';
+                            }
+                            html += '</div>';
+                        });
+                        $('#gofoPriceResult').html(html);
+                    } catch (err) {
+                        $('#gofoPriceResult').html('<div class="text-danger"><i class="fas fa-exclamation-circle mr-1"></i>' +
+                            esc(err.message || 'Price check failed.') + '</div>');
+                    } finally {
+                        $btn.prop('disabled', false).html(original);
+                    }
+                });
+            })();
+
             $('#printWarehouseLabelBtn').on('click', async function() {
                 const $btn = $(this);
                 const originalHtml = $btn.html();
@@ -2803,6 +3351,62 @@
             }
         });
     </script>
+    {% if header_info and header_info.ship_to_zip and header_info.ship_to_zip != 'N/A' %}
+    <div class="modal fade" id="gofoPriceModal" tabindex="-1" role="dialog" aria-labelledby="gofoPriceModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gofoPriceModalTitle">
+                        <i class="fas fa-dollar-sign mr-2"></i>{{ te('GOFO Check Price') }} — {{ header_info.order_number }}
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="{{ te('Close') }}">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:10px;">
+                        <div>
+                            <div class="small text-muted mb-1">{{ te('Package type') }}</div>
+                            <div class="gofo-mode-toggle" role="group" aria-label="{{ te('Package type') }}">
+                                <button type="button" id="gofoModeMix" data-mode="mix">{{ te('Mix package') }}</button>
+                                <button type="button" id="gofoModeWhole" data-mode="whole">{{ te('Whole box') }}</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="small text-muted mb-1 d-block" for="gofoDimUnit">{{ te('Dimensions') }}</label>
+                            <select id="gofoDimUnit" class="form-control form-control-sm" style="min-width:110px;">
+                                <option value="INCH" selected>inches</option>
+                                <option value="CM">cm</option>
+                            </select>
+                            <div class="small text-muted mt-1">{{ te('Weight always lb') }}</div>
+                        </div>
+                    </div>
+                    <div id="gofoPackageNote" class="small text-muted mb-2"></div>
+                    <div class="gofo-box-toolbar">
+                        <span>Total boxes: <span id="gofoTotalBoxes" class="gofo-total-boxes">0</span></span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="gofoRepeatAllBtn" style="display:none;">
+                            <i class="fas fa-clone mr-1"></i>{{ te('Repeat dims for all') }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="gofoAddBoxBtn">
+                            <i class="fas fa-plus mr-1"></i>{{ te('Add row') }}
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <div id="gofoBoxList"></div>
+                    </div>
+                    <hr>
+                    <div id="gofoPriceResult" class="gofo-price-result" aria-live="polite"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-dismiss="modal">{{ te('Close') }}</button>
+                    <button type="button" class="btn btn-success" id="gofoRunPriceBtn">
+                        <i class="fas fa-calculator mr-1"></i>{{ te('Get price') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     {% if items_html and header_info and header_info.customer_id|string == '00951' %}
     <div class="modal fade" id="etaFashionLabelModal" tabindex="-1" role="dialog" aria-labelledby="etaFashionLabelModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">

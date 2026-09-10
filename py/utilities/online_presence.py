@@ -1,7 +1,7 @@
 """In-memory online presence + session-length logging.
 
-Online time is driven by real Flask requests, not the JS heartbeat.
-An idle tab that only pings /api/presence/heartbeat will time out.
+Online time is driven by real Flask requests and visible-tab heartbeats.
+A hidden or background tab that only pings /api/presence/heartbeat will time out.
 """
 from __future__ import annotations
 
@@ -12,10 +12,12 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from py.utilities.online_log_parser import _fmt_date, _fmt_duration, _fmt_time, _user_color, username_key
+
 _PST = ZoneInfo('America/Los_Angeles')
 _LOCK = threading.RLock()
 _SESSIONS: dict[str, dict[str, Any]] = {}
-# Idle tabs keep sending heartbeats; only real requests refresh last_seen.
+# Idle tabs keep sending heartbeats; only real requests or visible tabs refresh last_seen.
 _IDLE_TIMEOUT_SEC = int(os.getenv('FDC_ONLINE_TIMEOUT_SEC', '180'))
 _online_logger: logging.Logger | None = None
 
@@ -27,19 +29,6 @@ def _now() -> datetime:
 def _fmt_stamp(dt: datetime) -> str:
     local = dt.astimezone(_PST) if getattr(dt, 'tzinfo', None) else dt.replace(tzinfo=_PST)
     return local.strftime('%H:%M:%S %m/%d/%y')
-
-
-def _fmt_duration(start: datetime, end: datetime) -> str:
-    seconds = max(0, int((end - start).total_seconds()))
-    hours, rem = divmod(seconds, 3600)
-    minutes, secs = divmod(rem, 60)
-    if hours and minutes:
-        return f'{hours}小时{minutes}分钟'
-    if hours:
-        return f'{hours}小时'
-    if minutes:
-        return f'{minutes}分钟'
-    return f'{secs}秒'
 
 
 def configure_online_logger(log_path: str) -> None:
@@ -54,7 +43,8 @@ def configure_online_logger(log_path: str) -> None:
 
 
 def _write_session_log(username: str, started: datetime, ended: datetime) -> None:
-    duration = _fmt_duration(started, ended)
+    seconds = max(0, int((ended - started).total_seconds()))
+    duration = _fmt_duration(seconds)
     line = (
         f'{username} -- 在线{duration}，'
         f'from {_fmt_stamp(started)} to {_fmt_stamp(ended)}'
@@ -132,9 +122,12 @@ def mark_offline(session_id: str) -> None:
         _end_session_locked(session_id, use_last_seen=False)
 
 
-def heartbeat(session_id: str, username: str) -> dict[str, Any]:
-    """Keepalive ping only — does not extend online duration."""
-    sweep_stale_sessions()
+def heartbeat(session_id: str, username: str, *, active: bool = False) -> dict[str, Any]:
+    """Keepalive ping. Visible/active tabs extend online duration; hidden tabs do not."""
+    if active:
+        mark_online(session_id, username, wake_ai=False)
+    else:
+        sweep_stale_sessions()
     return {'ok': True, 'session_new': False, 'idle_timeout_sec': _IDLE_TIMEOUT_SEC}
 
 
@@ -156,7 +149,7 @@ def list_online_users() -> list[dict[str, Any]]:
                     'username': raw_username,
                     'since': _fmt_stamp(started),
                     'elapsed_sec': elapsed_sec,
-                    'elapsed_display': _fmt_duration(started, now),
+                    'elapsed_display': _fmt_duration(elapsed_sec),
                     'last_seen': _fmt_stamp(entry.get('last_seen', now)),
                 }
     return sorted(by_user.values(), key=lambda x: str(x['username']).lower())
@@ -164,3 +157,59 @@ def list_online_users() -> list[dict[str, Any]]:
 
 def online_count() -> int:
     return len(list_online_users())
+
+
+def export_open_sessions() -> list[dict[str, Any]]:
+    """Current in-memory sessions, so today's dashboard includes people still online."""
+    sweep_stale_sessions()
+    now = _now()
+    by_user: dict[str, dict[str, Any]] = {}
+    with _LOCK:
+        for entry in _SESSIONS.values():
+            raw_username = (entry.get('username') or 'unknown').strip() or 'unknown'
+            key = username_key(raw_username)
+            started = entry.get('started_at')
+            last_seen = entry.get('last_seen')
+            if not isinstance(started, datetime):
+                continue
+            if not isinstance(last_seen, datetime):
+                last_seen = now
+            current = by_user.get(key)
+            if current is None:
+                by_user[key] = {
+                    'username': raw_username,
+                    'started_at': started,
+                    'last_seen': last_seen,
+                }
+                continue
+            if started < current['started_at']:
+                current['started_at'] = started
+                current['username'] = raw_username
+            if last_seen > current['last_seen']:
+                current['last_seen'] = last_seen
+
+    sessions: list[dict[str, Any]] = []
+    for key, entry in by_user.items():
+        start = entry['started_at']
+        end = now
+        duration_sec = max(0, int((end - start).total_seconds()))
+        sessions.append({
+            'username': entry['username'],
+            'username_key': key,
+            'start': start,
+            'end': end,
+            'start_iso': start.isoformat(),
+            'end_iso': end.isoformat(),
+            'date': _fmt_date(start),
+            'start_time': _fmt_time(start),
+            'end_time': _fmt_time(end),
+            'duration_sec': duration_sec,
+            'duration_display': _fmt_duration(duration_sec),
+            'raw_line': '',
+            'color': _user_color(entry['username']),
+            'is_open': True,
+            'fragment_count': 1,
+            'fragments': [],
+        })
+    sessions.sort(key=lambda s: s['start'])
+    return sessions

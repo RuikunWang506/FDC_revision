@@ -165,7 +165,9 @@ def load_user_activities(
 
 def _activity_in_window(activity: dict[str, Any], start: datetime, end: datetime) -> bool:
     ts = activity['timestamp']
-    return start <= ts <= end
+    # SKU searches are logged in the view; presence is touched just after, so allow a tiny skew.
+    slack = 2.0
+    return (start.timestamp() - slack) <= ts.timestamp() <= (end.timestamp() + slack)
 
 
 def _activity_key(activity: dict[str, Any]) -> tuple[str, str, str]:
@@ -239,3 +241,105 @@ def attach_activities_to_sessions(
             session['gap_activities'] = []
 
     return sessions
+
+
+def _synthetic_session_from_cluster(cluster: list[dict[str, Any]]) -> dict[str, Any]:
+    from py.utilities.online_log_parser import (
+        _fmt_date,
+        _fmt_duration,
+        _fmt_time,
+        _user_color,
+        username_key,
+    )
+
+    first = cluster[0]
+    last = cluster[-1]
+    start = first['timestamp']
+    end = last['timestamp']
+    username = first['username']
+    duration_sec = max(0, int((end - start).total_seconds()))
+    return {
+        'username': username,
+        'username_key': username_key(username),
+        'start': start,
+        'end': end,
+        'start_iso': start.isoformat(),
+        'end_iso': end.isoformat(),
+        'date': _fmt_date(start),
+        'start_time': _fmt_time(start),
+        'end_time': _fmt_time(end),
+        'duration_sec': duration_sec,
+        'duration_display': _fmt_duration(duration_sec),
+        'raw_line': '',
+        'color': _user_color(username),
+        'is_open': False,
+        'from_activity': True,
+        'fragment_count': 1,
+        'fragments': [],
+    }
+
+
+def cover_sessions_with_activities(
+    sessions: list[dict[str, Any]],
+    activities: list[dict[str, Any]],
+    *,
+    gap_sec: int = 180,
+) -> list[dict[str, Any]]:
+    """Expand sessions to cover nearby SKU searches, and add sessions for unmatched actions."""
+    from datetime import timedelta
+
+    from py.utilities.online_log_parser import refresh_session_duration
+
+    if not activities:
+        return sessions
+
+    sessions = sorted(sessions, key=lambda item: (item['username'].lower(), item['start']))
+    gap = timedelta(seconds=max(0, int(gap_sec)))
+    used: set[tuple[str, str, str]] = set()
+    by_user: dict[str, list[dict[str, Any]]] = {}
+    for activity in activities:
+        by_user.setdefault(activity['username'].lower(), []).append(activity)
+    for acts in by_user.values():
+        acts.sort(key=lambda item: item['timestamp'])
+
+    for session in sessions:
+        acts = by_user.get(session['username'].lower(), [])
+        changed = True
+        while changed:
+            changed = False
+            window_start = session['start'] - gap
+            window_end = session['end'] + gap
+            for activity in acts:
+                key = _activity_key(activity)
+                if key in used:
+                    continue
+                ts = activity['timestamp']
+                if window_start <= ts <= window_end:
+                    used.add(key)
+                    if ts < session['start']:
+                        session['start'] = ts
+                        changed = True
+                    if ts > session['end']:
+                        session['end'] = ts
+                        changed = True
+        refresh_session_duration(session)
+
+    leftovers = [a for a in activities if _activity_key(a) not in used]
+    leftover_by_user: dict[str, list[dict[str, Any]]] = {}
+    for activity in leftovers:
+        leftover_by_user.setdefault(activity['username'].lower(), []).append(activity)
+
+    synthetics: list[dict[str, Any]] = []
+    for acts in leftover_by_user.values():
+        acts.sort(key=lambda item: item['timestamp'])
+        cluster = [acts[0]]
+        for nxt in acts[1:]:
+            prev = cluster[-1]['timestamp']
+            if (nxt['timestamp'] - prev).total_seconds() <= gap_sec:
+                cluster.append(nxt)
+            else:
+                synthetics.append(_synthetic_session_from_cluster(cluster))
+                cluster = [nxt]
+        synthetics.append(_synthetic_session_from_cluster(cluster))
+
+    return sessions + synthetics

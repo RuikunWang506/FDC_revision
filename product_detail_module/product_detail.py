@@ -455,6 +455,40 @@ def search_product_data(search_input):
         return None
 
 
+def _has_positive_dims(len_val, wid_val, hei_val) -> bool:
+    try:
+        return float(len_val or 0) > 0 and float(wid_val or 0) > 0 and float(hei_val or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _round_dim(val) -> float:
+    try:
+        return round(float(val or 0), 1)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _masterbox_source_entry(item) -> dict | None:
+    """Build a unique masterbox source row (dims + container + sku) when dims exist."""
+    if not _has_positive_dims(item.get('master_len'), item.get('master_wid'), item.get('master_hei')):
+        return None
+    length = _round_dim(item.get('master_len'))
+    width = _round_dim(item.get('master_wid'))
+    height = _round_dim(item.get('master_hei'))
+    sku = normalize_oms_text(item.get('sku')) or (item.get('sku') or '')
+    container = normalize_oms_text(item.get('container')) or (item.get('container') or '')
+    return {
+        'length': length,
+        'width': width,
+        'height': height,
+        'dimensions': f'{length}×{width}×{height}"',
+        'container': container,
+        'sku': sku,
+        'db': item.get('db') or '',
+    }
+
+
 def group_by_style(results, ocean_pos_by_style=None):
     """
     Groups results by style and organizes colors.
@@ -486,8 +520,42 @@ def group_by_style(results, ocean_pos_by_style=None):
                     'last_activity': item['last_activity'],
                     'create_dt': item['create_dt']
                 },
-                'color_variants': {}
+                'color_variants': {},
+                'masterbox_sources': {},
             }
+        else:
+            # First color alphabetically may have blank masterbox (e.g. T3305 BG).
+            # Prefer the first later color/DB row that actually has dims / weights.
+            parent = grouped[style]['parent_info']
+            if not _has_positive_dims(parent.get('master_len'), parent.get('master_wid'), parent.get('master_hei')) \
+                    and _has_positive_dims(item.get('master_len'), item.get('master_wid'), item.get('master_hei')):
+                parent['master_len'] = item['master_len']
+                parent['master_wid'] = item['master_wid']
+                parent['master_hei'] = item['master_hei']
+            if not _has_positive_dims(parent.get('len'), parent.get('wid'), parent.get('hei')) \
+                    and _has_positive_dims(item.get('len'), item.get('wid'), item.get('hei')):
+                parent['len'] = item['len']
+                parent['wid'] = item['wid']
+                parent['hei'] = item['hei']
+                parent['dimensions'] = f"{item['len']}x{item['wid']}x{item['hei']}"
+            if not (parent.get('box_wt') or 0) and (item.get('box_wt') or 0):
+                parent['box_wt'] = item['box_wt']
+            if not (parent.get('pc_wt') or 0) and (item.get('pc_wt') or 0):
+                parent['pc_wt'] = item['pc_wt']
+            if not (parent.get('case_qty') or 0) and (item.get('case_qty') or 0):
+                parent['case_qty'] = item['case_qty']
+
+        source = _masterbox_source_entry(item)
+        if source:
+            # Unique by dims + container + sku (ignore FDC/EFAS duplicate rows)
+            src_key = (
+                source['length'],
+                source['width'],
+                source['height'],
+                (source['container'] or '').upper(),
+                (source['sku'] or '').upper(),
+            )
+            grouped[style]['masterbox_sources'].setdefault(src_key, source)
         
         # Create color key for aggregation
         color_norm = normalize_oms_text(item.get('color')) if item.get('color') else ''
@@ -566,6 +634,12 @@ def group_by_style(results, ocean_pos_by_style=None):
             }
             
             style_entry['colors'].append(color_entry)
+
+        # In-stock first (highest stock), out-of-stock / zero-stock (red) rows last
+        style_entry['colors'].sort(
+            key=lambda c: c['totals']['combined'].get('stock', 0),
+            reverse=True
+        )
         
         style_entry['totals'] = style_totals
         if style_totals['combined'].get('incoming'):
@@ -573,6 +647,16 @@ def group_by_style(results, ocean_pos_by_style=None):
             style_entry['ocean_pos'] = list((ocean_pos_by_style or {}).get(style_key) or [])
         else:
             style_entry['ocean_pos'] = []
+
+        sources = list(data.get('masterbox_sources', {}).values())
+        sources.sort(key=lambda s: (
+            s.get('length') or 0,
+            s.get('width') or 0,
+            s.get('height') or 0,
+            (s.get('container') or '').upper(),
+            (s.get('sku') or '').upper(),
+        ))
+        style_entry['masterbox_sources'] = sources
         result.append(style_entry)
     
     return result

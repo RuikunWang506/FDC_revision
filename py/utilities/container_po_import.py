@@ -1,9 +1,10 @@
 """Import container PO lines into FDC only (pur_ord, plog, bin_pur)."""
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -14,8 +15,17 @@ from py.utilities.inventory_adjustment import erp_date, erp_log_time, pad_char
 from py.utilities.style_efas_transfer import CONTAINER_CSV_DIR, _decimal
 
 DEFAULT_WHS = "01"
-# PUR_CD=1 lines are container PO imports; PUR_CD=2 are OMS bin allocations on receive.
+# PUR_CD=1 lines are container PO imports.
+# PUR_CD=2 are OMS receive allocations: same PO_QTY as CD=1, RCVD_QTY=0, plus a
+# second plog batch (LOG_QTY=po, HDL_CHG=0) dated at receive time.
 PO_LINE_PUR_CD = 1
+RECEIVE_ALLOC_PUR_CD = 2
+_RECEIVE_TIMES_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "output",
+    "boat_cache",
+    "receive_times.json",
+)
 VENDOR_FALLBACK = {"F": "50005", "L": "00005"}
 STANDARD_VENDOR_IDS = frozenset(VENDOR_FALLBACK.values())
 
@@ -487,6 +497,302 @@ def _insert_bin_pur_line(
     )
 
 
+def _table_data_columns(cursor, table_name: str) -> list[str]:
+    cursor.execute(
+        """
+        SELECT c.COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS c
+        WHERE c.TABLE_SCHEMA = 'dbo'
+          AND c.TABLE_NAME = ?
+          AND ISNULL(
+              COLUMNPROPERTY(
+                  OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME),
+                  c.COLUMN_NAME,
+                  'IsIdentity'
+              ),
+              0
+          ) = 0
+          AND ISNULL(
+              COLUMNPROPERTY(
+                  OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME),
+                  c.COLUMN_NAME,
+                  'IsComputed'
+              ),
+              0
+          ) = 0
+        ORDER BY c.ORDINAL_POSITION
+        """,
+        (table_name,),
+    )
+    return [str(row[0]) for row in cursor.fetchall()]
+
+
+def _existing_receive_batch_num(cursor, container_number: str) -> int | None:
+    normalized = str(container_number).strip().upper()
+    cursor.execute(
+        """
+        SELECT MAX(batch_num)
+        FROM (
+            SELECT batch_num
+            FROM dbo.bin_pur
+            WHERE RTRIM(pur_num) = ?
+              AND pur_cd = ?
+              AND ISNULL(batch_num, 0) > 0
+            UNION ALL
+            SELECT batch_num
+            FROM dbo.plog
+            WHERE RTRIM(pur_num) = ?
+              AND pur_cd = ?
+              AND ISNULL(batch_num, 0) > 0
+        ) t
+        """,
+        (normalized, RECEIVE_ALLOC_PUR_CD, normalized, RECEIVE_ALLOC_PUR_CD),
+    )
+    row = cursor.fetchone()
+    if not row or row[0] is None:
+        return None
+    return int(row[0])
+
+
+def _next_oms_receive_batch_num(cursor) -> int:
+    cursor.execute(
+        f"""
+        SELECT ISNULL(MAX(batch_num), 0)
+        FROM (
+            SELECT batch_num
+            FROM dbo.bin_pur
+            WHERE pur_cd = {RECEIVE_ALLOC_PUR_CD}
+              AND ISNULL(batch_num, 0) > 0
+            UNION ALL
+            SELECT batch_num
+            FROM dbo.plog
+            WHERE pur_cd = {RECEIVE_ALLOC_PUR_CD}
+              AND ISNULL(batch_num, 0) > 0
+        ) t
+        """
+    )
+    return int(cursor.fetchone()[0] or 0) + 1
+
+
+def _cd1_fully_received(cursor, container_number: str) -> bool:
+    cursor.execute(
+        """
+        SELECT SUM(ISNULL(po_qty, 0)), SUM(ISNULL(rcvd_qty, 0))
+        FROM dbo.bin_pur
+        WHERE RTRIM(pur_num) = ?
+          AND pur_cd = ?
+        """,
+        (str(container_number).strip().upper(), PO_LINE_PUR_CD),
+    )
+    row = cursor.fetchone()
+    if not row:
+        return False
+    po_qty = _decimal(row[0])
+    rcvd_qty = _decimal(row[1])
+    return po_qty > 0 and rcvd_qty >= po_qty
+
+
+def _copy_bin_pur_receive_rows(cursor, container_number: str, batch_num: int) -> int:
+    normalized = str(container_number).strip().upper()
+    cols = _table_data_columns(cursor, "bin_pur")
+    select_parts: list[str] = []
+    params: list[Any] = []
+    for col in cols:
+        key = col.upper()
+        if key == "PUR_CD":
+            select_parts.append(str(RECEIVE_ALLOC_PUR_CD))
+        elif key == "BATCH_NUM":
+            select_parts.append("?")
+            params.append(batch_num)
+        elif key == "RCVD_QTY":
+            select_parts.append("0")
+        else:
+            select_parts.append(f"src.{col}")
+    params.append(normalized)
+    cursor.execute(
+        f"""
+        INSERT INTO dbo.bin_pur ({", ".join(cols)})
+        SELECT {", ".join(select_parts)}
+        FROM dbo.bin_pur src
+        WHERE RTRIM(src.pur_num) = ?
+          AND src.pur_cd = {PO_LINE_PUR_CD}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.bin_pur dst
+              WHERE RTRIM(dst.pur_num) = RTRIM(src.pur_num)
+                AND dst.pur_cd = {RECEIVE_ALLOC_PUR_CD}
+                AND RTRIM(dst.prod_cd) = RTRIM(src.prod_cd)
+                AND ISNULL(dst.nt_num, 0) = ISNULL(src.nt_num, 0)
+          )
+        """,
+        params,
+    )
+    return int(cursor.rowcount or 0)
+
+
+def _copy_plog_receive_rows(
+    cursor,
+    container_number: str,
+    *,
+    batch_num: int,
+    erp_today: int,
+    log_time: int,
+) -> int:
+    normalized = str(container_number).strip().upper()
+    cols = _table_data_columns(cursor, "plog")
+    select_parts: list[str] = []
+    params: list[Any] = []
+    for col in cols:
+        key = col.upper()
+        if key == "LOG_DATE":
+            select_parts.append("?")
+            params.append(erp_today)
+        elif key == "LOG_TIME":
+            select_parts.append("?")
+            params.append(log_time)
+        elif key == "INVS_NUM":
+            select_parts.append("?")
+            params.append(pad_char(normalized, 10))
+        elif key == "PUR_CD":
+            select_parts.append(str(RECEIVE_ALLOC_PUR_CD))
+        elif key == "HDL_CHG":
+            select_parts.append("0")
+        elif key == "EST_DT":
+            select_parts.append("?")
+            params.append(batch_num)
+        elif key == "PUR_LNT":
+            select_parts.append("' '")
+        elif key == "BATCH_NUM":
+            select_parts.append("?")
+            params.append(batch_num)
+        elif key == "CAL_SEL":
+            select_parts.append("3")
+        elif key == "AVG_COST":
+            select_parts.append("ISNULL(src.BASE_COST, 0)")
+        else:
+            select_parts.append(f"src.{col}")
+    params.append(normalized)
+    cursor.execute(
+        f"""
+        INSERT INTO dbo.plog ({", ".join(cols)})
+        SELECT {", ".join(select_parts)}
+        FROM dbo.plog src
+        WHERE RTRIM(src.pur_num) = ?
+          AND src.pur_cd = {PO_LINE_PUR_CD}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM dbo.plog dst
+              WHERE RTRIM(dst.pur_num) = RTRIM(src.pur_num)
+                AND dst.pur_cd = {RECEIVE_ALLOC_PUR_CD}
+                AND RTRIM(dst.prod_cd) = RTRIM(src.prod_cd)
+                AND ISNULL(dst.nt_num, 0) = ISNULL(src.nt_num, 0)
+          )
+        """,
+        params,
+    )
+    return int(cursor.rowcount or 0)
+
+
+def _delete_oms_receive_rows(cursor, container_number: str) -> tuple[int, int]:
+    normalized = str(container_number).strip().upper()
+    cursor.execute(
+        """
+        DELETE FROM dbo.bin_pur
+        WHERE RTRIM(pur_num) = ?
+          AND pur_cd = ?
+        """,
+        (normalized, RECEIVE_ALLOC_PUR_CD),
+    )
+    bin_deleted = int(cursor.rowcount or 0)
+    cursor.execute(
+        """
+        DELETE FROM dbo.plog
+        WHERE RTRIM(pur_num) = ?
+          AND pur_cd = ?
+        """,
+        (normalized, RECEIVE_ALLOC_PUR_CD),
+    )
+    plog_deleted = int(cursor.rowcount or 0)
+    return bin_deleted, plog_deleted
+
+
+def _erp_datetime_from_serial(erp_dt: int) -> datetime:
+    return datetime(2023, 1, 1) + timedelta(days=int(erp_dt) - 81088)
+
+
+def _lookup_container_receive_at(cursor, container_number: str) -> datetime:
+    """Best clock for a historical receive: packing-slip cache, else LASTRCV_DT, else now."""
+    normalized = str(container_number).strip().upper()
+    try:
+        if os.path.isfile(_RECEIVE_TIMES_PATH):
+            with open(_RECEIVE_TIMES_PATH, encoding="utf-8") as handle:
+                store = json.load(handle)
+            info = ((store or {}).get("containers") or {}).get(normalized) or {}
+            iso = str(info.get("sort") or "").strip()
+            if iso:
+                return datetime.strptime(iso[:19], "%Y-%m-%dT%H:%M:%S")
+    except Exception:
+        pass
+
+    cursor.execute(
+        """
+        SELECT MIN(id.lastrcv_dt)
+        FROM dbo.bin_pur bp
+        INNER JOIN dbo.inv_data id
+            ON RTRIM(id.prod_cd) = RTRIM(bp.prod_cd)
+           AND RTRIM(id.whs_num) = ?
+        WHERE RTRIM(bp.pur_num) = ?
+          AND bp.pur_cd = ?
+          AND ISNULL(bp.rcvd_qty, 0) > 0
+          AND id.lastrcv_dt IS NOT NULL
+          AND CAST(id.lastrcv_dt AS INT) > 0
+        """,
+        (DEFAULT_WHS, normalized, PO_LINE_PUR_CD),
+    )
+    row = cursor.fetchone()
+    if row and row[0]:
+        return _erp_datetime_from_serial(int(row[0]))
+    return datetime.now()
+
+
+def _ensure_oms_receive_pattern(
+    cursor,
+    container_number: str,
+    *,
+    received_at: datetime | None = None,
+    insert_plog: bool | None = None,
+) -> dict[str, Any]:
+    """Insert missing native OMS receive rows (PUR_CD=2 bin_pur + plog). No stock change."""
+    normalized = str(container_number).strip().upper()
+    when = received_at or datetime.now()
+    batch_num = _existing_receive_batch_num(cursor, normalized)
+    allocated_batch = False
+    if batch_num is None:
+        batch_num = _next_oms_receive_batch_num(cursor)
+        allocated_batch = True
+
+    bin_inserted = _copy_bin_pur_receive_rows(cursor, normalized, batch_num)
+    should_insert_plog = (
+        _cd1_fully_received(cursor, normalized) if insert_plog is None else insert_plog
+    )
+    plog_inserted = 0
+    if should_insert_plog:
+        plog_inserted = _copy_plog_receive_rows(
+            cursor,
+            normalized,
+            batch_num=batch_num,
+            erp_today=erp_date(cursor, when),
+            log_time=erp_log_time(cursor, when),
+        )
+    if allocated_batch and bin_inserted == 0 and plog_inserted == 0:
+        batch_num = 0
+    return {
+        "batch_num": batch_num,
+        "bin_pur_inserted": bin_inserted,
+        "plog_inserted": plog_inserted,
+    }
+
+
 def delete_container_po_from_fdc(container_number: str) -> dict[str, Any]:
     """Remove container PO header and lines from FDC (pur_ord, plog, bin_pur)."""
     normalized = str(container_number).strip().upper()
@@ -673,10 +979,11 @@ def _sync_plog_received_for_skus(cursor, container_number: str, skus: list[str])
             SET hdl_chg = ISNULL(log_qty, 0)
             WHERE RTRIM(pur_num) = ?
               AND RTRIM(prod_cd) = ?
+              AND pur_cd = ?
               AND ISNULL(hdl_chg, 0) = 0
               AND ISNULL(log_qty, 0) > 0
             """,
-            (normalized, sku_key),
+            (normalized, sku_key, PO_LINE_PUR_CD),
         )
         updated += int(cursor.rowcount or 0)
     return updated
@@ -696,9 +1003,10 @@ def _sync_plog_ocean_for_skus(cursor, container_number: str, skus: list[str]) ->
             SET hdl_chg = 0
             WHERE RTRIM(pur_num) = ?
               AND RTRIM(prod_cd) = ?
+              AND pur_cd = ?
               AND ISNULL(hdl_chg, 0) <> 0
             """,
-            (normalized, sku_key),
+            (normalized, sku_key, PO_LINE_PUR_CD),
         )
         updated += int(cursor.rowcount or 0)
     return updated
@@ -744,15 +1052,24 @@ def _sync_plog_for_fully_received_container(cursor, container_number: str) -> in
 
 
 def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
-    """Receive open PO lines at 827: bin_pur RCVD_QTY → PO_QTY and update inv_data stock."""
+    """Receive open PO lines at 827 the way native OMS does.
+
+    Sets PUR_CD=1 rcvd_qty and inv_data stock, flips original plog.hdl_chg,
+    then inserts PUR_CD=2 allocation rows (rcvd=0) and a second plog batch
+    dated now with HDL_CHG=0 so Hist-Received is not doubled.
+    """
     normalized = str(container_number).strip().upper()
+    received_at = datetime.now()
     result: dict[str, Any] = {
         "success": False,
         "container": normalized,
         "lines_received": 0,
         "qty_received": 0.0,
         "plog_synced": 0,
-        "received_date": datetime.now().strftime("%m/%d/%Y"),
+        "bin_pur_alloc_inserted": 0,
+        "plog_receive_inserted": 0,
+        "receive_batch_num": 0,
+        "received_date": received_at.strftime("%m/%d/%Y"),
         "already_landed": False,
         "errors": [],
     }
@@ -779,16 +1096,22 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         )
         lines = cursor.fetchall()
         if not lines:
-            # Already landed in bin_pur — still repair plog if mark-landed skipped it earlier.
+            # Already landed in bin_pur — repair ocean hdl_chg and missing OMS receive rows.
             plog_synced = _sync_plog_for_fully_received_container(cursor, normalized)
-            if plog_synced:
+            pattern = _ensure_oms_receive_pattern(
+                cursor, normalized, received_at=_lookup_container_receive_at(cursor, normalized)
+            )
+            if plog_synced or pattern["bin_pur_inserted"] or pattern["plog_inserted"]:
                 conn.commit()
             result["success"] = True
             result["already_landed"] = True
             result["plog_synced"] = plog_synced
+            result["bin_pur_alloc_inserted"] = pattern["bin_pur_inserted"]
+            result["plog_receive_inserted"] = pattern["plog_inserted"]
+            result["receive_batch_num"] = pattern["batch_num"]
             return result
 
-        erp_today = erp_date(cursor)
+        erp_today = erp_date(cursor, received_at)
         lines_received = 0
         qty_received = Decimal("0")
         affected_skus: list[str] = []
@@ -808,10 +1131,11 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
                 UPDATE dbo.bin_pur
                 SET rcvd_qty = po_qty
                 WHERE RTRIM(pur_num) = ?
+                  AND pur_cd = ?
                   AND RTRIM(prod_cd) = ?
                   AND ISNULL(rcvd_qty, 0) < ISNULL(po_qty, 0)
                 """,
-                (normalized, sku),
+                (normalized, PO_LINE_PUR_CD, sku),
             )
 
             cursor.execute(
@@ -837,6 +1161,9 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             qty_received += receive_delta
 
         plog_synced = _sync_plog_received_for_skus(cursor, normalized, affected_skus)
+        pattern = _ensure_oms_receive_pattern(
+            cursor, normalized, received_at=received_at, insert_plog=True
+        )
         _recalc_on_order_qty_for_skus(cursor, affected_skus)
 
         conn.commit()
@@ -844,6 +1171,9 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         result["lines_received"] = lines_received
         result["qty_received"] = float(qty_received)
         result["plog_synced"] = plog_synced
+        result["bin_pur_alloc_inserted"] = pattern["bin_pur_inserted"]
+        result["plog_receive_inserted"] = pattern["plog_inserted"]
+        result["receive_batch_num"] = pattern["batch_num"]
         return result
     except Exception as exc:
         conn.rollback()
@@ -854,7 +1184,7 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
 
 
 def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
-    """Undo 827 receive: zero bin_pur RCVD_QTY and restore inv_data on-order stock."""
+    """Undo 827 receive: remove OMS receive rows, zero CD1 RCVD_QTY, restore stock."""
     normalized = str(container_number).strip().upper()
     result: dict[str, Any] = {
         "success": False,
@@ -862,6 +1192,8 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         "lines_reverted": 0,
         "qty_reverted": 0.0,
         "plog_synced": 0,
+        "bin_pur_alloc_deleted": 0,
+        "plog_receive_deleted": 0,
         "already_ocean": False,
         "errors": [],
     }
@@ -885,7 +1217,12 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
             (normalized, PO_LINE_PUR_CD),
         )
         lines = cursor.fetchall()
+        bin_deleted, plog_deleted = _delete_oms_receive_rows(cursor, normalized)
+        result["bin_pur_alloc_deleted"] = bin_deleted
+        result["plog_receive_deleted"] = plog_deleted
         if not lines:
+            if bin_deleted or plog_deleted:
+                conn.commit()
             result["success"] = True
             result["already_ocean"] = True
             return result
@@ -906,10 +1243,11 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
                 UPDATE dbo.bin_pur
                 SET rcvd_qty = 0
                 WHERE RTRIM(pur_num) = ?
+                  AND pur_cd = ?
                   AND RTRIM(prod_cd) = ?
                   AND ISNULL(rcvd_qty, 0) > 0
                 """,
-                (normalized, sku),
+                (normalized, PO_LINE_PUR_CD, sku),
             )
 
             cursor.execute(
@@ -1036,6 +1374,112 @@ def backfill_plog_hdl_chg_for_landed_containers(
         conn.close()
 
 
+def _landed_containers_missing_oms_receive(cursor) -> list[str]:
+    cursor.execute(
+        f"""
+        SELECT RTRIM(bp.pur_num)
+        FROM dbo.bin_pur bp
+        WHERE bp.pur_cd = {PO_LINE_PUR_CD}
+          AND (
+              RTRIM(bp.pur_num) LIKE 'F[0-9]%'
+              OR RTRIM(bp.pur_num) LIKE 'L[0-9]%'
+          )
+        GROUP BY RTRIM(bp.pur_num)
+        HAVING SUM(ISNULL(bp.rcvd_qty, 0)) > 0
+           AND (
+               NOT EXISTS (
+                   SELECT 1
+                   FROM dbo.bin_pur alloc
+                   WHERE RTRIM(alloc.pur_num) = RTRIM(bp.pur_num)
+                     AND alloc.pur_cd = {RECEIVE_ALLOC_PUR_CD}
+               )
+               OR NOT EXISTS (
+                   SELECT 1
+                   FROM dbo.plog recv
+                   WHERE RTRIM(recv.pur_num) = RTRIM(bp.pur_num)
+                     AND recv.pur_cd = {RECEIVE_ALLOC_PUR_CD}
+               )
+           )
+        """
+    )
+    return [str(row[0]).strip().upper() for row in cursor.fetchall() if row[0]]
+
+
+def backfill_oms_receive_pattern_for_landed_containers(
+    container_numbers: list[str] | None = None,
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Insert missing native OMS receive rows for boat-landed containers.
+
+    Does not change inv_data stock or LASTRCV_DT. Receive plog dates use packing-slip
+    / mark-landed cache when present, otherwise LASTRCV_DT at midnight.
+    """
+    result: dict[str, Any] = {
+        "success": False,
+        "dry_run": dry_run,
+        "containers_checked": 0,
+        "containers_fixed": 0,
+        "bin_pur_inserted": 0,
+        "plog_inserted": 0,
+        "fixed": [],
+        "skipped": [],
+        "errors": [],
+    }
+
+    conn = get_sql_server_connection_fdc()
+    try:
+        cursor = conn.cursor()
+        if container_numbers:
+            targets = sorted(
+                {str(c).strip().upper() for c in container_numbers if str(c).strip()}
+            )
+        else:
+            targets = _landed_containers_missing_oms_receive(cursor)
+
+        result["containers_checked"] = len(targets)
+        for container in targets:
+            try:
+                if not _po_exists(cursor, container):
+                    result["skipped"].append({"container": container, "reason": "no_po"})
+                    continue
+                received_at = _lookup_container_receive_at(cursor, container)
+                pattern = _ensure_oms_receive_pattern(
+                    cursor, container, received_at=received_at
+                )
+                if pattern["bin_pur_inserted"] or pattern["plog_inserted"]:
+                    result["containers_fixed"] += 1
+                    result["bin_pur_inserted"] += pattern["bin_pur_inserted"]
+                    result["plog_inserted"] += pattern["plog_inserted"]
+                    result["fixed"].append(
+                        {
+                            "container": container,
+                            "received_at": received_at.strftime("%Y-%m-%d %H:%M:%S"),
+                            **pattern,
+                        }
+                    )
+                    if not dry_run:
+                        conn.commit()
+                else:
+                    result["skipped"].append(
+                        {"container": container, "reason": "already_complete"}
+                    )
+            except Exception as exc:
+                conn.rollback()
+                result["errors"].append(f"{container}: {exc}")
+
+        if dry_run:
+            conn.rollback()
+        result["success"] = not result["errors"]
+        return result
+    except Exception as exc:
+        conn.rollback()
+        result["errors"].append(str(exc))
+        return result
+    finally:
+        conn.close()
+
+
 def repair_doubled_receive_stock(container_number: str) -> dict[str, Any]:
     """Undo duplicate stock from PUR_CD=2 bin_pur rows created alongside PO import lines."""
     normalized = str(container_number).strip().upper()
@@ -1115,7 +1559,10 @@ def repair_doubled_receive_stock(container_number: str) -> dict[str, Any]:
 
 
 def cleanup_orphan_bin_pur_rows(container_number: str) -> dict[str, Any]:
-    """Remove PUR_CD<>1 bin_pur allocation stubs (rcvd=0) left by OMS native receive."""
+    """Remove PUR_CD<>1 bin_pur stubs that have no matching PO line.
+
+    Native OMS receive allocations (PUR_CD=2, rcvd=0, same SKU as PUR_CD=1) are kept.
+    """
     normalized = str(container_number).strip().upper()
     result: dict[str, Any] = {
         "success": False,
@@ -1133,8 +1580,16 @@ def cleanup_orphan_bin_pur_rows(container_number: str) -> dict[str, Any]:
             WHERE RTRIM(pur_num) = ?
               AND pur_cd <> ?
               AND ISNULL(rcvd_qty, 0) = 0
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM dbo.bin_pur cd1
+                  WHERE RTRIM(cd1.pur_num) = RTRIM(bin_pur.pur_num)
+                    AND cd1.pur_cd = ?
+                    AND RTRIM(cd1.prod_cd) = RTRIM(bin_pur.prod_cd)
+                    AND ISNULL(cd1.nt_num, 0) = ISNULL(bin_pur.nt_num, 0)
+              )
             """,
-            (normalized, PO_LINE_PUR_CD),
+            (normalized, PO_LINE_PUR_CD, PO_LINE_PUR_CD),
         )
         result["bin_pur_deleted"] = int(cursor.rowcount or 0)
         conn.commit()

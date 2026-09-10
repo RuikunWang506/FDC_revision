@@ -259,6 +259,67 @@
             margin-bottom: .35rem;
             font-size: .85rem;
         }
+        #hubToastStack {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 2000;
+            width: min(380px, calc(100vw - 24px));
+            pointer-events: none;
+        }
+        .hub-toast {
+            pointer-events: auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(30, 58, 95, .22);
+            padding: .75rem 2.1rem .75rem .9rem;
+            margin-bottom: .65rem;
+            border-left: 5px solid #28a745;
+            opacity: 0;
+            transform: translateX(18px);
+            transition: opacity .2s ease, transform .2s ease;
+            position: relative;
+        }
+        .hub-toast.show {
+            opacity: 1;
+            transform: none;
+        }
+        .hub-toast-info { border-left-color: #17a2b8; }
+        .hub-toast-danger { border-left-color: #dc3545; }
+        .hub-toast-success { border-left-color: #28a745; }
+        .hub-toast .close {
+            position: absolute;
+            top: .4rem;
+            right: .55rem;
+            font-size: 1.15rem;
+        }
+        .hub-toast-title {
+            font-weight: 700;
+            font-size: .88rem;
+            line-height: 1.25;
+            margin-bottom: .15rem;
+        }
+        .hub-toast-body {
+            font-size: .8rem;
+            line-height: 1.35;
+            color: #334;
+        }
+        .hub-toast-meta {
+            margin-top: .2rem;
+            color: #5a6570;
+        }
+        .hub-toast .zh {
+            display: inline;
+            margin-left: .3rem;
+            font-size: .85em;
+            opacity: .8;
+        }
+        tr.row-pending { opacity: .7; }
+        tr.row-updated { animation: hubRowFlash 1.4s ease; }
+        @keyframes hubRowFlash {
+            0% { background: #d4edda; }
+            100% { background: transparent; }
+        }
     </style>
 </head>
 <body>
@@ -357,6 +418,7 @@
                             <th>Received<span class="zh">收货</span></th>
                             <th>Written Time<span class="zh">写入时间</span></th>
                             <th>PO Created<span class="zh">建 PO 时间</span></th>
+                            <th>Receive Time<span class="zh">收货时间</span></th>
                             <th>MSRP<span class="zh">零售价</span></th>
                             <th>Actions<span class="zh">操作</span></th>
                         </tr>
@@ -441,6 +503,7 @@
                                     <li><strong>Received 收货</strong> — RCD date from the Google sheet (when received at 827).</li>
                                     <li><strong>{{ te('Written Time') }}</strong> — when the row was written on the Google sheet.</li>
                                     <li><strong>{{ te('PO Created') }}</strong> — OMS PO date/time from FDC (<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>{{ te('). Blank if no PO exists yet.') }}</li>
+                                    <li><strong>Receive Time 收货时间</strong> — when the PO was received into OMS. Packing-slip / mark-landed activity log (clock time) first; if missing, OMS <code>inv_data.LASTRCV_DT</code> date only. Landed rows sort newest first by this column.</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
@@ -456,9 +519,9 @@
                                 <h6>{{ te('Actions by status') }}</h6>
                                 <ul>
                                     <li><strong>{{ te('New → Process') }}</strong> — reads the Dropbox container file, opens the style preview grid, then imports styles (FDC + EFAS) and PO (FDC only) after you confirm.</li>
-                                    <li><strong>{{ te('New → Files') }}</strong> — download the original source file only.</li>
+                                    <li><strong>{{ te('New → Files') }}</strong> — download the original source file or Packing List.</li>
                                     <li><strong>{{ te('Ocean → PackingList / Receive') }}</strong> — opens the packing list in a new tab, then asks whether the container arrived at 827. Answer <strong>{{ te('Yes') }}</strong> to receive into OMS and update the sheet RCD column.</li>
-                                    <li><strong>{{ te('Ocean / Landed → Files') }}</strong> — download PO CSV, Styles CSV, or Original.</li>
+                                    <li><strong>{{ te('Ocean / Landed → Files') }}</strong> — download PO CSV, Styles CSV, Original, or Packing List.</li>
                                     <li><strong>{{ te('Ocean / Landed → Edit') }}</strong> — <em>{{ te('Delete PO') }}</em> removes OMS records; <em>{{ te('Reprocess') }}</em> re-runs import preview; <em>{{ te('Un-landed') }}</em> (landed only) reverses 827 receive and moves back to ocean.</li>
                                     <li><strong>{{ te('MSRP column') }}</strong> — Excel only: <em>{{ te('OK') }}</em> (all Price1 filled) or <em>{{ te('Need Ken') }}</em> (any Price1 missing).</li>
                                     <li><strong>{{ te('Ocean / Landed → Update MSRP') }}</strong> — next to Edit when Excel MSRP is OK and any PO SKU in OMS still has $0 retail; pushes Price1 to FDC + EFAS.</li>
@@ -469,7 +532,7 @@
                                 <ul>
                                     <li>{{ te('Yellow rows = color names auto-converted to abbreviations — review before confirming.') }}</li>
                                     <li>{{ te('You can edit Style, Color, Item#, Cost, Retail, and PO Qty in the grid.') }}</li>
-                                    <li>Click <strong>{{ te('Confirm Import') }}</strong> only after the data looks correct.</li>
+                                    <li>Click <strong>{{ te('Confirm Import') }}</strong> only after the data looks correct. Confirm vendor closes the popups immediately; a corner toast reports the result and that row updates on its own.</li>
                                 </ul>
                             </div>
                             <div class="guide-section mb-0">
@@ -503,6 +566,7 @@
                                     <li><strong>Received 收货</strong> — Google 表 RCD 收货日期（827 到货）。</li>
                                     <li><strong>Written Time 写入时间</strong> — Google 表上该行的写入时间。</li>
                                     <li><strong>PO Created 建 PO 时间</strong> — FDC OMS 中 PO 的日期/时间（<code>{{ te('pur_ord') }}</code> + <code>{{ te('plog') }}</code>）。尚未建 PO 时显示空白。</li>
+                                    <li><strong>Receive Time 收货时间</strong> — OMS 收货时间：优先装箱单下载 / 标记已到货日志（含时钟）；没有日志时用 <code>inv_data.LASTRCV_DT</code> 日期。Landed 列表按此列从新到旧排序。</li>
                                 </ul>
                             </div>
                             <div class="guide-section">
@@ -518,9 +582,9 @@
                                 <h6>各状态操作</h6>
                                 <ul>
                                     <li><strong>New → Process 处理</strong> — 读取 Dropbox 货柜文件，打开款式预览表，确认后导入款式（FDC + EFAS）和 PO（仅 FDC）。</li>
-                                    <li><strong>New → Files 文件</strong> — 仅下载原始源文件。</li>
+                                    <li><strong>New → Files 文件</strong> — 下载原始源文件或装箱单。</li>
                                     <li><strong>Ocean → PackingList / Receive 装箱单/收货</strong> — 新窗口打开装箱单，然后询问是否已在 827 到货。选 <strong>{{ te('Yes') }}</strong> 将在 OMS 收货并更新 Google 表 RCD 列。</li>
-                                    <li><strong>{{ te('Ocean / Landed → Files 文件') }}</strong> — 下载 PO CSV、Styles CSV 或 Original 原文件。</li>
+                                    <li><strong>{{ te('Ocean / Landed → Files 文件') }}</strong> — 下载 PO CSV、Styles CSV、Original 原文件或装箱单。</li>
                                     <li><strong>{{ te('Ocean / Landed → Edit 编辑') }}</strong> — <em>Delete PO 删除 PO</em> 清除 OMS 记录；<em>Reprocess 重新处理</em> 重新打开导入预览；<em>Un-landed 取消到货</em>（仅 Landed）撤销 827 收货并回到在途状态。</li>
                                     <li><strong>MSRP 列</strong> — 仅看 Excel：<em>{{ te('OK') }}</em>（Price1 齐全）或 <em>{{ te('Need Ken') }}</em>（Price1 有缺失）。</li>
                                     <li><strong>Update MSRP 更新零售价</strong> — 在 Edit 旁，Excel 为 OK 且该 PO 仍有 SKU 在 OMS 零售价为 $0 时显示；从 Excel Price1 写入 FDC + EFAS。</li>
@@ -531,7 +595,7 @@
                                 <ul>
                                     <li>黄色行 = 颜色名称已自动转换为缩写，确认前请核对。</li>
                                     <li>可在表格中修改 Style、Color、Item#、Cost、Retail、PO Qty。</li>
-                                    <li>数据无误后再点击 <strong>Confirm Import 确认导入</strong>。</li>
+                                    <li>数据无误后再点击 <strong>Confirm Import 确认导入</strong>。确认供应商后弹窗立即关闭，右上角提示结果，该行单独更新，可继续处理下一个货柜。</li>
                                 </ul>
                             </div>
                             <div class="guide-section mb-0">
@@ -680,6 +744,7 @@
         </div>
     </div>
 
+    <div id="hubToastStack" aria-live="polite" aria-atomic="true"></div>
     {% include 'footer.html' %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -688,7 +753,7 @@
         var activeFilter = 'all';
         var currentPage = 1;
         var pageSize = 25;
-        var importPreviewState = { container: '', rows: [], defaultVendorId: '', pendingVendorId: '' };
+        var importPreviewState = { container: '', rows: [], defaultVendorId: '', pendingVendorId: '', pendingVendorName: '' };
         var editActionsState = { container: '', actionMode: '', msrpStatus: '', inOms: false };
         var landedConfirmState = { container: '' };
         var shipmentSelectedFile = null;
@@ -899,9 +964,12 @@
         function openFilesModal(container, items) {
             $('#filesActionsContainer').text(container);
             var html = items.map(function(item) {
-                var style = item.type === 'po' ? 'success' : (item.type === 'styles' ? 'primary' : 'secondary');
+                var style = item.type === 'po' ? 'success' : (item.type === 'styles' ? 'primary' : (item.type === 'packslip' ? 'info' : 'secondary'));
+                var dlAttr = item.downloadName
+                    ? ' download="' + escapeHtml(item.downloadName) + '"'
+                    : ' download';
                 return (
-                    '<a href="' + escapeHtml(item.href) + '" class="btn btn-outline-' + style + ' btn-block mb-2" download>' +
+                    '<a href="' + escapeHtml(item.href) + '" class="btn btn-outline-' + style + ' btn-block mb-2"' + dlAttr + '>' +
                     escapeHtml(item.label) +
                     (item.label_zh ? '<span class="zh">' + escapeHtml(item.label_zh) + '</span>' : '') +
                     '</a>'
@@ -921,19 +989,27 @@
                     label_zh: labelZh || ''
                 };
             };
+            var packslipFile = {
+                type: 'packslip',
+                href: '/boat/packslip/' + encodeURIComponent(c),
+                label: 'Packing List',
+                label_zh: '装箱单',
+                downloadName: c + '_Packslip.xlsx'
+            };
             var html = '<div class="action-cell"><div class="action-row">';
 
             if (row.action_mode === 'new') {
                 html += btn('btn-warning process-btn', LABEL_HTML.process, 'data-container="' + c + '"');
                 if (row.dropbox_available) {
-                    html += filesButton(c, [dl('original', 'Original', '原文件')]);
+                    html += filesButton(c, [dl('original', 'Original', '原文件'), packslipFile]);
                 }
             } else if (row.action_mode === 'ocean') {
                 html += btn('btn-info packslip-btn', LABEL_HTML.packslip, 'data-container="' + c + '"');
                 html += filesButton(c, [
                     dl('po', 'PO CSV', '采购单 CSV'),
                     dl('styles', 'Styles CSV', '款式 CSV'),
-                    dl('original', 'Original', '原文件')
+                    dl('original', 'Original', '原文件'),
+                    packslipFile
                 ]);
                 html += btn('btn-primary edit-open-btn', LABEL_HTML.edit,
                     'data-container="' + c + '" data-action-mode="ocean" data-msrp-status="' +
@@ -945,7 +1021,8 @@
                 html += filesButton(c, [
                     dl('po', 'PO CSV', '采购单 CSV'),
                     dl('styles', 'Styles CSV', '款式 CSV'),
-                    dl('original', 'Original', '原文件')
+                    dl('original', 'Original', '原文件'),
+                    packslipFile
                 ]);
                 html += btn('btn-primary edit-open-btn', LABEL_HTML.edit,
                     'data-container="' + c + '" data-action-mode="landed" data-msrp-status="' +
@@ -979,12 +1056,25 @@
             return isNaN(n) ? -1 : n;
         }
 
+        function compareReceiveTimeDesc(a, b) {
+            var sa = a.received_sort || '';
+            var sb = b.received_sort || '';
+            if (sa && sb && sa !== sb) return sa < sb ? 1 : -1;
+            if (sa && !sb) return -1;
+            if (!sa && sb) return 1;
+            return 0;
+        }
+
         function compareHubRows(a, b) {
             var rankA = actionModeSortOrder[a.action_mode];
             var rankB = actionModeSortOrder[b.action_mode];
             if (rankA == null) rankA = 99;
             if (rankB == null) rankB = 99;
             if (rankA !== rankB) return rankA - rankB;
+            if (a.action_mode === 'landed') {
+                var rec = compareReceiveTimeDesc(a, b);
+                if (rec !== 0) return rec;
+            }
             return fdcContainerSortNumber(b.container) - fdcContainerSortNumber(a.container);
         }
 
@@ -999,7 +1089,13 @@
                 }
                 return true;
             });
-            if (activeFilter === 'all') {
+            if (activeFilter === 'landed') {
+                rows.sort(function(a, b) {
+                    var rec = compareReceiveTimeDesc(a, b);
+                    if (rec !== 0) return rec;
+                    return fdcContainerSortNumber(b.container) - fdcContainerSortNumber(a.container);
+                });
+            } else if (activeFilter === 'all') {
                 rows.sort(compareHubRows);
             }
             return rows;
@@ -1080,29 +1176,49 @@
 
             if (!pageRows.length) {
                 tbody.append(
-                    '<tr><td colspan="9" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
+                    '<tr><td colspan="10" class="text-center text-muted py-4">No containers match this filter.</td></tr>'
                 );
             }
 
             pageRows.forEach(function(row) {
-                var tr = $('<tr></tr>').addClass('row-' + row.action_mode);
-                tr.append($('<td></td>').html(
-                    '<a href="https://www.fdcef.com/container_search?container_id=' + encodeURIComponent(row.container) +
-                    '" target="_blank" rel="noopener"><strong>' +
-                    escapeHtml(row.container) + '</strong></a>'
-                ));
-                tr.append($('<td></td>').html(bolCell(row)));
-                tr.append($('<td></td>').html(etdEtaCell(row)));
-                tr.append($('<td></td>').html(statusBadge(row)));
-                tr.append($('<td></td>').html(row.rcd ? escapeHtml(row.rcd) : '<span class="text-muted">—</span>'));
-                tr.append($('<td></td>').html(datetimeCell(row.written_date, row.written_time)));
-                tr.append($('<td></td>').html(datetimeCell(row.processed_date, row.processed_time)));
-                tr.append($('<td></td>').html(msrpBadge(row)));
-                tr.append($('<td></td>').html(buildActions(row)));
-                tbody.append(tr);
+                tbody.append(buildHubTableRow(row));
             });
 
             renderPagination(totalRows);
+        }
+
+        function buildHubTableRow(row) {
+            var tr = $('<tr></tr>')
+                .addClass('row-' + row.action_mode)
+                .attr('data-container', row.container);
+            if (row._pending) tr.addClass('row-pending');
+            tr.append($('<td></td>').html(
+                '<a href="https://www.fdcef.com/container_search?container_id=' + encodeURIComponent(row.container) +
+                '" target="_blank" rel="noopener"><strong>' +
+                escapeHtml(row.container) + '</strong></a>'
+            ));
+            tr.append($('<td></td>').html(bolCell(row)));
+            tr.append($('<td></td>').html(etdEtaCell(row)));
+            tr.append($('<td></td>').html(row._pending
+                ? '<span class="status-badge status-waiting">' + zhUnder('Importing…', '导入中…') + '</span>'
+                : statusBadge(row)));
+            tr.append($('<td></td>').html(row.rcd ? escapeHtml(row.rcd) : '<span class="text-muted">—</span>'));
+            tr.append($('<td></td>').html(datetimeCell(row.written_date, row.written_time)));
+            tr.append($('<td></td>').html(datetimeCell(row.processed_date, row.processed_time)));
+            tr.append($('<td></td>').html(datetimeCell(row.received_date, row.received_time)));
+            tr.append($('<td></td>').html(msrpBadge(row)));
+            tr.append($('<td></td>').html(buildActions(row)));
+            return tr;
+        }
+
+        function findHubRow(container) {
+            var key = String(container || '').trim().toUpperCase();
+            for (var i = 0; i < allRows.length; i++) {
+                if (String(allRows[i].container || '').trim().toUpperCase() === key) {
+                    return allRows[i];
+                }
+            }
+            return null;
         }
 
         function updateCounts(counts) {
@@ -1111,6 +1227,60 @@
             $('#countOcean').text(counts.ocean || 0);
             $('#countLanded').text(counts.landed || 0);
             $('#countSpecial').text(counts.special || 0);
+        }
+
+        function recomputeCounts() {
+            updateCounts({
+                total: allRows.length,
+                new: allRows.filter(function(r) { return r.action_mode === 'new'; }).length,
+                ocean: allRows.filter(function(r) { return r.action_mode === 'ocean'; }).length,
+                landed: allRows.filter(function(r) { return r.action_mode === 'landed'; }).length,
+                special: allRows.filter(function(r) { return r.is_special; }).length
+            });
+        }
+
+        function patchHubRow(container, nextRow, opts) {
+            var key = String(container || '').trim().toUpperCase();
+            for (var i = 0; i < allRows.length; i++) {
+                if (String(allRows[i].container || '').trim().toUpperCase() === key) {
+                    allRows[i] = nextRow;
+                    break;
+                }
+            }
+            recomputeCounts();
+            var $tr = $('#hubTableBody tr[data-container="' + key.replace(/"/g, '') + '"]');
+            if (!$tr.length) return;
+            var $next = buildHubTableRow(nextRow);
+            if (opts && opts.flash) $next.addClass('row-updated');
+            $tr.replaceWith($next);
+        }
+
+        function setHubRowPending(container, pending) {
+            var row = findHubRow(container);
+            if (!row) return;
+            row._pending = !!pending;
+            patchHubRow(container, row, { flash: false });
+        }
+
+        function locallyPromoteImportedRow(container) {
+            var row = findHubRow(container);
+            if (!row) return null;
+            var next = Object.assign({}, row);
+            next._pending = false;
+            next.in_oms = true;
+            next.can_process = false;
+            next.status_key = 'ocean';
+            next.status_label = 'Ocean';
+            next.action_mode = 'ocean';
+            next.has_styles_csv = true;
+            next.has_po_csv = true;
+            var now = new Date();
+            var mm = String(now.getMonth() + 1).padStart(2, '0');
+            var dd = String(now.getDate()).padStart(2, '0');
+            next.processed_date = next.processed_date || (mm + '/' + dd + '/' + now.getFullYear());
+            next.processed_time = next.processed_time || now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            next.show_update_msrp = next.msrp_status === 'ok';
+            return next;
         }
 
         function loadData(forceRefresh) {
@@ -1211,10 +1381,31 @@
             });
         }
 
+        function clearHubModalLock() {
+            ['#vendorConfirmModal', '#importPreviewModal'].forEach(function(sel) {
+                var $m = $(sel);
+                var inst = $m.data('bs.modal');
+                if (inst) {
+                    inst._isShown = false;
+                    inst._isTransitioning = false;
+                }
+                try { $m.modal('dispose'); } catch (e) {}
+                $m.removeClass('show')
+                    .removeAttr('aria-modal')
+                    .attr('aria-hidden', 'true')
+                    .css({ display: 'none', paddingRight: '' });
+            });
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open').css({ paddingRight: '', overflow: '' });
+            $(document).off('focusin.bs.modal');
+        }
+
         function openPreview(container, preview) {
+            clearHubModalLock();
             importPreviewState.container = container;
             importPreviewState.rows = preview.slice();
             importPreviewState.pendingVendorId = '';
+            importPreviewState.pendingVendorName = '';
             $('#importPreviewContainer').text(container);
             renderPreviewRows(importPreviewState.rows);
             loadImportVendorDefaults(container);
@@ -1235,17 +1426,97 @@
             return fallback || xhr.statusText || 'Request failed';
         }
 
+        function closeImportModals(done) {
+            clearHubModalLock();
+            if (done) done();
+        }
+
+        function showHubToast(opts) {
+            var type = opts.type || 'success';
+            var delay = opts.delay != null ? opts.delay : (type === 'danger' ? 9000 : 6500);
+            var $el = $('<div class="hub-toast hub-toast-' + type + '" role="status"></div>');
+            var html = '<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+            if (opts.title) html += '<div class="hub-toast-title">' + opts.title + '</div>';
+            if (opts.body) html += '<div class="hub-toast-body">' + opts.body + '</div>';
+            $el.html(html);
+            $('#hubToastStack').append($el);
+            requestAnimationFrame(function() { $el.addClass('show'); });
+            var hideTimer = setTimeout(function() { hideToast($el); }, delay);
+            $el.find('.close').on('click', function() {
+                clearTimeout(hideTimer);
+                hideToast($el);
+            });
+        }
+
+        function hideToast($el) {
+            $el.removeClass('show');
+            setTimeout(function() { $el.remove(); }, 220);
+        }
+
+        function countList(obj, key) {
+            var list = obj && obj[key];
+            return Array.isArray(list) ? list.length : 0;
+        }
+
+        function showImportFinishToast(container, vendorId, vendorName, res) {
+            var styles = res.styles || {};
+            var fdc = styles.fdc || {};
+            var efas = styles.efas || {};
+            var po = res.po || {};
+            var skuCount = styles.total_skus || 0;
+            var poLines = countList(po, 'inserted_lines');
+            var poNote;
+            if (po.skipped) poNote = 'PO skipped';
+            else if (po.repaired) poNote = 'PO synced ' + (po.repaired_lines || 0) + ' row(s)';
+            else if (poLines) poNote = 'PO ' + poLines + ' line(s)';
+            else poNote = 'PO not imported';
+            var body = '<div>' + zhUnder('Vendor', '供应商') + ' <strong>' + escapeHtml(vendorId || po.vendor_id || '') + '</strong>';
+            if (vendorName) body += ' · ' + escapeHtml(vendorName);
+            body += '</div>';
+            body += '<div class="hub-toast-meta">' + skuCount + ' SKU · FDC ' +
+                countList(fdc, 'inserted') + '/' + countList(fdc, 'updated') +
+                ' · EFAS ' + countList(efas, 'inserted') + '/' + countList(efas, 'updated') +
+                ' · ' + poNote + '</div>';
+            showHubToast({
+                type: 'success',
+                title: zhUnder('Imported ' + container, '已导入 ' + container),
+                body: body,
+                delay: 7000
+            });
+        }
+
+        function applyImportedHubRow(container, serverRow) {
+            var next = serverRow ? Object.assign({}, findHubRow(container) || {}, serverRow) : locallyPromoteImportedRow(container);
+            if (!next) return;
+            next._pending = false;
+            patchHubRow(container, next, { flash: true });
+        }
+
+        function resetImportButtons() {
+            var nonStandard = $('#vendorConfirmWarning').is(':visible');
+            $('#confirmImportBtn').prop('disabled', false).html(LABEL_HTML.confirmImport);
+            $('#vendorConfirmProceedBtn').prop('disabled', false).html(
+                nonStandard ? LABEL_HTML.yesContinueVendor : LABEL_HTML.confirmAndImport
+            );
+        }
+
         function submitImport(vendorId) {
             var container = importPreviewState.container;
+            var vendorName = importPreviewState.pendingVendorName || ($('#vendorConfirmName').text() || '').trim();
             var rows = collectPreviewRows();
             if (!rows.length) {
                 alert('No rows');
                 return;
             }
-            var $btn = $('#confirmImportBtn');
-            var $proceedBtn = $('#vendorConfirmProceedBtn');
-            $btn.prop('disabled', true).text('Importing…');
-            $proceedBtn.prop('disabled', true);
+            resetImportButtons();
+            closeImportModals();
+            setHubRowPending(container, true);
+            showHubToast({
+                type: 'info',
+                title: zhUnder('Importing ' + container, '正在导入 ' + container),
+                body: zhUnder('You can process the next container now.', '可以继续处理下一个货柜。'),
+                delay: 4000
+            });
             $.ajax({
                 url: '/boat/confirm_import/' + encodeURIComponent(container),
                 method: 'POST',
@@ -1253,26 +1524,31 @@
                 data: JSON.stringify({ rows: rows, vendor_id: vendorId }),
                 success: function(res) {
                     if (res.success) {
-                        $('#vendorConfirmModal').modal('hide');
-                        $('#importPreviewModal').modal('hide');
-                        loadData(true);
-                        alert(res.message || 'Import complete');
+                        applyImportedHubRow(container, res.row);
+                        showImportFinishToast(container, vendorId, vendorName, res);
                     } else {
-                        alert('Error: ' + (res.error || res.message));
+                        setHubRowPending(container, false);
+                        showHubToast({
+                            type: 'danger',
+                            title: zhUnder('Import failed — ' + container, '导入失败 — ' + container),
+                            body: escapeHtml(res.error || res.message || 'Import failed')
+                        });
                     }
-                    $btn.prop('disabled', false).html(LABEL_HTML.confirmImport);
-                    $proceedBtn.prop('disabled', false);
                 },
                 error: function(xhr) {
-                    alert('Failed: ' + (xhr.responseJSON && xhr.responseJSON.error || xhr.statusText));
-                    $btn.prop('disabled', false).html(LABEL_HTML.confirmImport);
-                    $proceedBtn.prop('disabled', false);
+                    setHubRowPending(container, false);
+                    showHubToast({
+                        type: 'danger',
+                        title: zhUnder('Import failed — ' + container, '导入失败 — ' + container),
+                        body: escapeHtml(xhr.responseJSON && xhr.responseJSON.error || xhr.statusText || 'Import failed')
+                    });
                 }
             });
         }
 
         function showVendorConfirm(vendorInfo) {
             importPreviewState.pendingVendorId = vendorInfo.vendor_id;
+            importPreviewState.pendingVendorName = vendorInfo.vendor_name || '';
             $('#vendorConfirmId').text(vendorInfo.vendor_id);
             $('#vendorConfirmName').text(vendorInfo.vendor_name || '(unknown)');
             var nonStandard = !vendorInfo.is_standard;

@@ -37,6 +37,9 @@ class StyleRow:
     ut_len: Decimal | None = None
     ut_wi: Decimal | None = None
     ut_hi: Decimal | None = None
+    case_len: Decimal | None = None
+    case_wi: Decimal | None = None
+    case_hi: Decimal | None = None
 
 
 @dataclass
@@ -135,6 +138,9 @@ def parse_container_styles_csv(csv_path: str) -> list[StyleRow]:
                 ut_len=_optional_decimal(record.get("Unit Length")),
                 ut_wi=_optional_decimal(record.get("Unit Width")),
                 ut_hi=_optional_decimal(record.get("Unit Height")),
+                case_len=_optional_decimal(record.get("Case Length")),
+                case_wi=_optional_decimal(record.get("Case Width")),
+                case_hi=_optional_decimal(record.get("Case Height")),
             )
         )
     return rows
@@ -178,7 +184,10 @@ def fetch_style_rows_from_fdc(style_codes: list[str]) -> list[StyleRow]:
                 RTRIM(i.UNIT_COLOR),
                 idt.ut_len,
                 idt.ut_wi,
-                idt.UT_hi
+                idt.UT_hi,
+                idt.CASE_LEN,
+                idt.CASE_WI,
+                idt.CASE_HI
             FROM dbo.inv AS i
             LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
             WHERE EXISTS (
@@ -205,6 +214,9 @@ def fetch_style_rows_from_fdc(style_codes: list[str]) -> list[StyleRow]:
                     ut_len=_decimal(row[11]) if row[11] is not None else None,
                     ut_wi=_decimal(row[12]) if row[12] is not None else None,
                     ut_hi=_decimal(row[13]) if row[13] is not None else None,
+                    case_len=_decimal(row[14]) if row[14] is not None else None,
+                    case_wi=_decimal(row[15]) if row[15] is not None else None,
+                    case_hi=_decimal(row[16]) if row[16] is not None else None,
                 )
             )
         return rows
@@ -241,7 +253,10 @@ def fetch_style_rows_from_efas(style_codes: list[str]) -> list[StyleRow]:
                 RTRIM(i.UNIT_COLOR),
                 idt.ut_len,
                 idt.ut_wi,
-                idt.UT_hi
+                idt.UT_hi,
+                idt.CASE_LEN,
+                idt.CASE_WI,
+                idt.CASE_HI
             FROM dbo.inv AS i
             LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
             WHERE EXISTS (
@@ -279,7 +294,10 @@ def fetch_style_rows_by_skus_from_efas(skus: list[str]) -> list[StyleRow]:
                 RTRIM(i.UNIT_COLOR),
                 idt.ut_len,
                 idt.ut_wi,
-                idt.UT_hi
+                idt.UT_hi,
+                idt.CASE_LEN,
+                idt.CASE_WI,
+                idt.CASE_HI
             FROM dbo.inv AS i
             LEFT JOIN dbo.inv_detl AS idt ON i.PROD_CD = idt.prod_cd
             WHERE RTRIM(i.PROD_CD) IN ({placeholders})
@@ -310,6 +328,9 @@ def _style_rows_from_cursor(cursor) -> list[StyleRow]:
                 ut_len=_decimal(row[11]) if row[11] is not None else None,
                 ut_wi=_decimal(row[12]) if row[12] is not None else None,
                 ut_hi=_decimal(row[13]) if row[13] is not None else None,
+                case_len=_decimal(row[14]) if row[14] is not None else None,
+                case_wi=_decimal(row[15]) if row[15] is not None else None,
+                case_hi=_decimal(row[16]) if row[16] is not None else None,
             )
         )
     return rows
@@ -472,16 +493,22 @@ def _insert_inv_data(cursor, row: StyleRow, *, updt_by: str, erp_today: int) -> 
 
 def _insert_inv_detl(cursor, row: StyleRow, *, swap_hw: bool) -> None:
     ut_len, ut_hi, ut_wi = _detl_dimensions(row, swap_hw=swap_hw)
+    case_len = row.case_len if row.case_len is not None else Decimal("0")
+    case_wi = row.case_wi if row.case_wi is not None else Decimal("0")
+    case_hi = row.case_hi if row.case_hi is not None else Decimal("0")
     cursor.execute(
         """
-        INSERT INTO dbo.inv_detl (PROD_CD, UT_LEN, UT_HI, UT_WI)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO dbo.inv_detl (PROD_CD, UT_LEN, UT_HI, UT_WI, CASE_LEN, CASE_WI, CASE_HI)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             pad_char(row.prod_cd, 21),
             ut_len,
             ut_hi,
             ut_wi,
+            case_len,
+            case_wi,
+            case_hi,
         ),
     )
 
@@ -495,6 +522,14 @@ def _detl_dimensions(row: StyleRow, *, swap_hw: bool) -> tuple[Decimal, Decimal,
         ut_hi = row.ut_hi if row.ut_hi is not None else Decimal("0")
         ut_wi = row.ut_wi if row.ut_wi is not None else Decimal("0")
     return ut_len, ut_hi, ut_wi
+
+
+def _case_dimensions(row: StyleRow) -> tuple[Decimal, Decimal, Decimal]:
+    return (
+        row.case_len if row.case_len is not None else Decimal("0"),
+        row.case_wi if row.case_wi is not None else Decimal("0"),
+        row.case_hi if row.case_hi is not None else Decimal("0"),
+    )
 
 
 def _update_inv(cursor, row: StyleRow, *, is_efas: bool) -> None:
@@ -565,14 +600,28 @@ def _has_inv_detl(cursor, prod_cd: str) -> bool:
 def _upsert_inv_detl(cursor, row: StyleRow, *, swap_hw: bool) -> None:
     if _has_inv_detl(cursor, row.prod_cd):
         ut_len, ut_hi, ut_wi = _detl_dimensions(row, swap_hw=swap_hw)
-        cursor.execute(
-            """
-            UPDATE dbo.inv_detl
-            SET UT_LEN = ?, UT_HI = ?, UT_WI = ?
-            WHERE RTRIM(prod_cd) = ?
-            """,
-            (ut_len, ut_hi, ut_wi, row.prod_cd.strip()),
+        has_case = (
+            row.case_len is not None or row.case_wi is not None or row.case_hi is not None
         )
+        if has_case:
+            case_len, case_wi, case_hi = _case_dimensions(row)
+            cursor.execute(
+                """
+                UPDATE dbo.inv_detl
+                SET UT_LEN = ?, UT_HI = ?, UT_WI = ?, CASE_LEN = ?, CASE_WI = ?, CASE_HI = ?
+                WHERE RTRIM(prod_cd) = ?
+                """,
+                (ut_len, ut_hi, ut_wi, case_len, case_wi, case_hi, row.prod_cd.strip()),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE dbo.inv_detl
+                SET UT_LEN = ?, UT_HI = ?, UT_WI = ?
+                WHERE RTRIM(prod_cd) = ?
+                """,
+                (ut_len, ut_hi, ut_wi, row.prod_cd.strip()),
+            )
         return
     _insert_inv_detl(cursor, row, swap_hw=swap_hw)
 
@@ -948,6 +997,148 @@ def delete_skus_for_container(
         raise
     finally:
         conn.close()
+
+
+def update_case_dimensions_in_database(
+    cursor,
+    prod_cd: str,
+    case_len: Decimal,
+    case_wi: Decimal,
+    case_hi: Decimal,
+) -> str:
+    """Update or insert CASE_LEN/WI/HI on inv_detl. Returns updated|inserted|missing."""
+    sku = prod_cd.strip()
+    cursor.execute(
+        "SELECT 1 FROM dbo.inv WHERE RTRIM(PROD_CD) = ?",
+        (sku,),
+    )
+    if not cursor.fetchone():
+        return "missing"
+
+    if _has_inv_detl(cursor, sku):
+        cursor.execute(
+            """
+            UPDATE dbo.inv_detl
+            SET CASE_LEN = ?, CASE_WI = ?, CASE_HI = ?
+            WHERE RTRIM(prod_cd) = ?
+            """,
+            (case_len, case_wi, case_hi, sku),
+        )
+        return "updated"
+
+    cursor.execute(
+        """
+        INSERT INTO dbo.inv_detl (PROD_CD, UT_LEN, UT_HI, UT_WI, CASE_LEN, CASE_WI, CASE_HI)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            pad_char(sku, 21),
+            Decimal("0"),
+            Decimal("0"),
+            Decimal("0"),
+            case_len,
+            case_wi,
+            case_hi,
+        ),
+    )
+    return "inserted"
+
+
+def update_case_dimensions_dual(
+    case_updates: dict[str, tuple[Decimal, Decimal, Decimal]],
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Write masterbox L/W/H into FDC + EFAS inv_detl for the given SKU map."""
+    if not case_updates:
+        return {
+            "success": False,
+            "error": "No case dimensions to update",
+            "updated_fdc": [],
+            "updated_efas": [],
+            "inserted_fdc": [],
+            "inserted_efas": [],
+            "missing": [],
+            "errors": [],
+            "dry_run": dry_run,
+        }
+
+    updated_fdc: list[str] = []
+    updated_efas: list[str] = []
+    inserted_fdc: list[str] = []
+    inserted_efas: list[str] = []
+    missing: list[str] = []
+    errors: list[str] = []
+
+    for target, connect_fn, updated_bucket, inserted_bucket in (
+        ("fdc", get_sql_server_connection_fdc, updated_fdc, inserted_fdc),
+        ("efas", get_sql_server_connection_oms_ef, updated_efas, inserted_efas),
+    ):
+        conn = connect_fn()
+        try:
+            cursor = conn.cursor()
+            for prod_cd, dims in case_updates.items():
+                sku = prod_cd.strip()
+                case_len, case_wi, case_hi = dims
+                if dry_run:
+                    cursor.execute(
+                        "SELECT 1 FROM dbo.inv WHERE RTRIM(PROD_CD) = ?",
+                        (sku,),
+                    )
+                    if cursor.fetchone():
+                        updated_bucket.append(sku)
+                    else:
+                        missing.append(f"{sku} ({target})")
+                    continue
+                status = update_case_dimensions_in_database(
+                    cursor, sku, case_len, case_wi, case_hi
+                )
+                if status == "updated":
+                    updated_bucket.append(sku)
+                elif status == "inserted":
+                    inserted_bucket.append(sku)
+                else:
+                    missing.append(f"{sku} ({target})")
+            if not dry_run:
+                conn.commit()
+        except Exception as exc:
+            conn.rollback()
+            errors.append(f"{target}: {exc}")
+        finally:
+            conn.close()
+
+    return {
+        "success": not errors,
+        "updated_fdc": sorted(set(updated_fdc)),
+        "updated_efas": sorted(set(updated_efas)),
+        "inserted_fdc": sorted(set(inserted_fdc)),
+        "inserted_efas": sorted(set(inserted_efas)),
+        "missing": sorted(set(missing)),
+        "errors": errors,
+        "dry_run": dry_run,
+        "sku_count": len(case_updates),
+    }
+
+
+def case_dimension_updates_from_styles_csv(
+    container_number: str,
+) -> dict[str, tuple[Decimal, Decimal, Decimal]]:
+    """Build SKU → (CASE_LEN, CASE_WI, CASE_HI) from a container styles CSV."""
+    rows = fetch_style_rows_from_container_csv(container_number)
+    updates: dict[str, tuple[Decimal, Decimal, Decimal]] = {}
+    for row in rows:
+        if row.case_len is None and row.case_wi is None and row.case_hi is None:
+            continue
+        if not (
+            (row.case_len or 0) > 0 or (row.case_wi or 0) > 0 or (row.case_hi or 0) > 0
+        ):
+            continue
+        updates[row.prod_cd.strip()] = (
+            row.case_len if row.case_len is not None else Decimal("0"),
+            row.case_wi if row.case_wi is not None else Decimal("0"),
+            row.case_hi if row.case_hi is not None else Decimal("0"),
+        )
+    return updates
 
 
 def backfill_container_styles(

@@ -254,10 +254,15 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% if s.is_open %}
+                                <span class="badge-frag">{{ _('log.online.still_online') }}</span>
+                                {% endif %}
                                 {% if s.fragment_count and s.fragment_count > 1 %}
                                 <span class="badge-frag">{{ s.fragment_count }} {{ _('log.online.fragments_merged') }}</span>
                                 <span class="session-expand-hint">{{ _('log.online.expand') }}</span>
                                 {% elif s.activity_count %}
+                                <span class="session-expand-hint">{{ _('log.online.expand') }}</span>
+                                {% elif s.is_open %}
                                 <span class="session-expand-hint">{{ _('log.online.expand') }}</span>
                                 {% else %}
                                 <span class="text-muted">—</span>

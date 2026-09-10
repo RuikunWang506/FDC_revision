@@ -224,6 +224,27 @@ def _throttled(uid: str, method: str, path: str) -> bool:
 
 
 def register_navigation_audit(app: Flask) -> None:
+    def _touch_if_staff():
+        uid = _username()
+        if not uid:
+            return
+        try:
+            from py.utilities.presence import touch_from_request
+
+            touch_from_request()
+        except Exception:
+            pass
+
+    @app.before_request
+    def _touch_online_presence():
+        method = (request.method or "GET").upper()
+        path = request.path or ""
+        endpoint = request.endpoint or ""
+        if _should_skip(path, endpoint, method):
+            return None
+        _touch_if_staff()
+        return None
+
     @app.after_request
     def _record_endpoint_access(response: Any) -> Any:
         method = (request.method or "GET").upper()
@@ -234,12 +255,7 @@ def register_navigation_audit(app: Flask) -> None:
 
         uid = _username()
         if uid:
-            try:
-                from py.utilities.presence import touch_from_request
-
-                touch_from_request()
-            except Exception:
-                pass
+            _touch_if_staff()
             # Page visits belong in online duration, not User Activity.
             return response
 
