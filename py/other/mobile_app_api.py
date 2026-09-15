@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import math
 import re
+from datetime import date, datetime
+from decimal import Decimal
 from functools import wraps
 from io import StringIO
 from typing import Any, Dict, List, Optional
@@ -17,8 +19,24 @@ from py.utilities.setting import Config
 
 mobile_app_bp = Blueprint("mobile_app", __name__, url_prefix="/api/mobile")
 
-NATIVE_TOOL_IDS = frozenset({"item_lookup", "order_lookup"})
+NATIVE_TOOL_IDS = frozenset(
+    {
+        "item_lookup",
+        "bag_style_viewer",
+        "v7_listcreator",
+        "master_image_viewer",
+        "image_upload",
+        "order_lookup",
+        "customer",
+        "invoice_lookup",
+        "loris_fedex",
+        "fdcef_container_search",
+        "print_center",
+        "mobile_scanner",
+    }
+)
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
+_OCEAN_KEYS = {"\U0001f6a2", "ocean", "Unnamed: 7"}
 
 
 def strip_html(value: Any) -> str:
@@ -26,9 +44,32 @@ def strip_html(value: Any) -> str:
     return _HTML_TAG_RE.sub("", text).replace("\xa0", " ").strip()
 
 
+def _origin() -> str:
+    return (getattr(Config, "PUBLIC_APP_ORIGIN", None) or "https://www.fdcef.com").rstrip("/")
+
+
+def _abs_url(path: Any) -> str:
+    text = str(path or "").strip()
+    if not text:
+        return ""
+    if text.startswith("http://") or text.startswith("https://"):
+        return text
+    if not text.startswith("/"):
+        text = "/" + text
+    return _origin() + text
+
+
 def _json_cell(value: Any) -> Any:
     if value is None:
         return None
+    if isinstance(value, Decimal):
+        value = float(value)
+    if isinstance(value, datetime):
+        return value.isoformat(sep=" ", timespec="seconds")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
     try:
         if pd.isna(value):
             return None
@@ -40,18 +81,78 @@ def _json_cell(value: Any) -> Any:
         if isinstance(value, float) and value.is_integer():
             return int(value)
         return value
+    if isinstance(value, bool):
+        return value
     text = strip_html(value)
     return text
 
 
+def _jsonify_obj(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(k): _jsonify_obj(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonify_obj(v) for v in value]
+    return _json_cell(value)
+
+
+def _clean_inventory_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for key, value in row.items():
+        name = str(key)
+        if name in _OCEAN_KEYS or "\U0001f6a2" in name:
+            name = "ocean"
+        out[name] = _json_cell(value)
+    return out
+
+
+def _sum_column(rows: List[Dict[str, Any]], *names: str) -> float:
+    total = 0.0
+    for row in rows:
+        for name in names:
+            raw = row.get(name)
+            if raw in (None, "", "N/A"):
+                continue
+            try:
+                total += float(raw)
+                break
+            except (TypeError, ValueError):
+                continue
+    return total
+
+
+def _flask_json(view_fn, *args, **kwargs):
+    """Call an existing Flask view and normalize {ok, ...} JSON."""
+    result = view_fn(*args, **kwargs)
+    if isinstance(result, tuple):
+        response = result[0]
+        status = result[1] if len(result) > 1 else getattr(response, "status_code", 200)
+    else:
+        response = result
+        status = getattr(response, "status_code", 200)
+    data = response.get_json(silent=True) if hasattr(response, "get_json") else None
+    if not isinstance(data, dict):
+        return result
+    if "ok" not in data:
+        if "success" in data:
+            data["ok"] = bool(data.get("success"))
+        elif "error" in data and data.get("error"):
+            data["ok"] = False
+        else:
+            data["ok"] = int(status) < 400
+    return jsonify(data), status
+
+
 def _records_from_html_table(html: str, extra_headers: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    if not html:
+    if not html or "<table" not in html.lower():
         return []
     wrapped = html
     if extra_headers:
         head = "".join(f"<th>{h}</th>" for h in extra_headers)
         wrapped = f"<table><thead><tr>{head}</tr></thead><tbody>{html}</tbody></table>"
-    df = pd.read_html(StringIO(wrapped))[0]
+    try:
+        df = pd.read_html(StringIO(wrapped))[0]
+    except Exception:
+        return []
     out = []
     for row in df.to_dict(orient="records"):
         out.append({str(k): _json_cell(v) for k, v in row.items()})
@@ -201,7 +302,9 @@ def mobile_item_lookup():
         from py.utilities.logging_setup import log_user_action
 
         user_input = query.lower().strip().rstrip(",")
-        excel_html, _, _, _, _, user_input = generate_excel(user_input)
+        excel_html, history_html, purchase_html, adjustment_html, _, user_input = generate_excel(
+            user_input
+        )
         rows: List[Dict[str, Any]] = []
         df = None
         if excel_html:
@@ -217,14 +320,30 @@ def mobile_item_lookup():
                     .str.lower()
                     .replace({"oms_ef": "E_FAS", "omsdata_fdc": "FDC"})
                 )
-            rows = [{str(k): _json_cell(v) for k, v in rec.items()} for rec in df.to_dict(orient="records")]
+            rows = [_clean_inventory_row(rec) for rec in df.to_dict(orient="records")]
 
         images = _item_images(user_input, df)
         log_user_action(
             f"***{session.get('username')}***__@@@search SKU@@@__ {user_input} [mobile]",
             session.get("username"),
         )
-        return jsonify({"ok": True, "query": user_input, "rows": rows, "images": images})
+        return jsonify(
+            {
+                "ok": True,
+                "query": user_input,
+                "rows": rows,
+                "history": _records_from_html_table(history_html or ""),
+                "purchases": _records_from_html_table(purchase_html or ""),
+                "adjustments": _records_from_html_table(adjustment_html or ""),
+                "images": images,
+                "totals": {
+                    "stock": _sum_column(rows, "Stock"),
+                    "sold": _sum_column(rows, "Sold"),
+                    "avail": _sum_column(rows, "Avail"),
+                    "ocean": _sum_column(rows, "ocean"),
+                },
+            }
+        )
     except Exception as exc:
         current_app.logger.exception("mobile item_lookup failed")
         return jsonify({"ok": False, "error": str(exc)}), 500
@@ -238,7 +357,7 @@ def _item_images(user_input: str, df) -> List[Dict[str, str]]:
         from py.utilities.models import ImageAsset
 
         search_terms, image_match_mode = _resolve_image_search_terms(user_input, df)
-        origin = (getattr(Config, "PUBLIC_APP_ORIGIN", None) or "https://www.fdcef.com").rstrip("/")
+        origin = _origin()
         images: List[Dict[str, str]] = []
         db = py.utilities.models.SessionLocal()
         try:
@@ -348,3 +467,427 @@ def mobile_order_lookup():
     except Exception as exc:
         current_app.logger.exception("mobile order_lookup failed")
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/invoice_lookup", methods=["GET"])
+@_json_login_required
+@_require_tool("invoice_lookup")
+def mobile_invoice_lookup():
+    raw = (request.args.get("q") or request.args.get("invoice_number") or "").strip()
+    if not raw:
+        return jsonify({"ok": False, "error": "Enter an invoice number"}), 400
+    try:
+        from py.order.invoice_lookup import generate_invoice
+        from py.utilities.logging_setup import log_user_action
+
+        preferred = (request.args.get("db") or "").strip() or None
+        header_info, items_html = generate_invoice(raw, preferred_db=preferred)
+        if not header_info:
+            return jsonify({"ok": False, "error": f"No invoice {raw}"}), 404
+        log_user_action(
+            f"***{session.get('username')}***__@@@search invoice@@@__ {raw} [mobile]",
+            session.get("username"),
+        )
+        return jsonify(
+            {
+                "ok": True,
+                "invoice_number": header_info.get("invoice_number") or raw,
+                "header": {str(k): _json_cell(v) for k, v in header_info.items()},
+                "items": _records_from_html_table(items_html or ""),
+            }
+        )
+    except Exception as exc:
+        current_app.logger.exception("mobile invoice_lookup failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/customer", methods=["GET"])
+@_json_login_required
+@_require_tool("customer")
+def mobile_customer_search():
+    query = (request.args.get("q") or "").strip()
+    try:
+        from py.other.customer import fetch_customer_matches
+
+        results, null_results, errors = fetch_customer_matches(query or None)
+        return jsonify(
+            {
+                "ok": True,
+                "query": query,
+                "customers": _jsonify_obj(results),
+                "without_orders": _jsonify_obj(null_results),
+                "errors": errors,
+            }
+        )
+    except Exception as exc:
+        current_app.logger.exception("mobile customer search failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/customer/<customer_id>", methods=["GET"])
+@_json_login_required
+@_require_tool("customer")
+def mobile_customer_details(customer_id):
+    from py.other.customer import customer_details
+
+    return _flask_json(customer_details, customer_id)
+
+
+@mobile_app_bp.route("/bag_style/meta", methods=["GET"])
+@_json_login_required
+@_require_tool("bag_style_viewer")
+def mobile_bag_style_meta():
+    from py.other.bag_style_viewer import fetch_all_descriptions
+
+    return jsonify({"ok": True, "descriptions": fetch_all_descriptions()})
+
+
+@mobile_app_bp.route("/bag_style", methods=["GET"])
+@_json_login_required
+@_require_tool("bag_style_viewer")
+def mobile_bag_style():
+    description = (request.args.get("description") or request.args.get("q") or "").strip()
+    stock_filter = (request.args.get("stock_filter") or "").strip() or None
+    color_filter = (request.args.get("color_filter") or "").strip() or None
+    hide_zero = (request.args.get("hide_zero") or "").strip().lower() in ("1", "true", "yes")
+    if not description:
+        return jsonify({"ok": False, "error": "Choose a description"}), 400
+    try:
+        from py.other.bag_style_viewer import resolve_bag_style_viewer_results
+
+        results, err = resolve_bag_style_viewer_results(
+            [description],
+            [],
+            stock_filter=stock_filter,
+            color_filter=color_filter,
+            hide_zero_skus=hide_zero,
+        )
+        if err:
+            return jsonify({"ok": False, "error": err}), 400
+        trimmed = []
+        for item in results[:80]:
+            row = _jsonify_obj(item)
+            if isinstance(row, dict) and row.get("image"):
+                row["image"] = _abs_url(row["image"])
+            trimmed.append(row)
+        return jsonify(
+            {
+                "ok": True,
+                "description": description,
+                "count": len(results),
+                "styles": trimmed,
+            }
+        )
+    except Exception as exc:
+        current_app.logger.exception("mobile bag_style failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/bag_style/stock/<style>", methods=["GET"])
+@_json_login_required
+@_require_tool("bag_style_viewer")
+def mobile_bag_style_stock(style):
+    from py.other.bag_style_viewer import get_detailed_stock_for_style
+
+    detailed = get_detailed_stock_for_style((style or "").upper())
+    total_quantity = sum(item.get("quantity") or 0 for item in detailed)
+    total_ocean = sum(item.get("ocean") or 0 for item in detailed)
+    return jsonify(
+        {
+            "ok": True,
+            "style": (style or "").upper(),
+            "total_quantity": total_quantity,
+            "total_ocean": total_ocean,
+            "total": total_quantity + total_ocean,
+            "details": _jsonify_obj(detailed),
+        }
+    )
+
+
+@mobile_app_bp.route("/list_creator", methods=["GET"])
+@_json_login_required
+@_require_tool("v7_listcreator")
+def mobile_list_creator():
+    from py.other.bag_style_viewer import fetch_all_descriptions
+    from py.Toolkits.V7listcreator import listcreator_html_jobs_api
+
+    jobs_resp, status = _flask_json(listcreator_html_jobs_api)
+    data = jobs_resp.get_json(silent=True) if hasattr(jobs_resp, "get_json") else {}
+    if not isinstance(data, dict):
+        data = {"ok": False, "error": "Could not load jobs"}
+        status = 500
+    data["descriptions"] = fetch_all_descriptions()
+    data["ok"] = bool(data.get("ok", True))
+    return jsonify(data), status
+
+
+@mobile_app_bp.route("/list_creator/filter", methods=["POST"])
+@_json_login_required
+@_require_tool("v7_listcreator")
+def mobile_list_creator_filter():
+    from py.Toolkits.V7listcreator import quick_filter_styles
+
+    return _flask_json(quick_filter_styles)
+
+
+@mobile_app_bp.route("/images", methods=["GET"])
+@_json_login_required
+@_require_tool("master_image_viewer")
+def mobile_master_images():
+    sku = (request.args.get("q") or request.args.get("sku") or "").strip()
+    if not sku:
+        return jsonify({"ok": False, "error": "Enter a SKU or style"}), 400
+    try:
+        from py.other.master_image_viewer import find_images_by_sku
+        from py.utilities.customer_purchase_access import (
+            FEATURE_MASTER_IMAGE_VIEWER,
+            json_forbidden_if_customer_purchase_denied,
+        )
+
+        denied = json_forbidden_if_customer_purchase_denied(
+            session.get("username"), sku, FEATURE_MASTER_IMAGE_VIEWER
+        )
+        if denied:
+            return denied
+        results = find_images_by_sku(sku)
+        if isinstance(results, dict) and results.get("error"):
+            return jsonify({"ok": False, "error": results["error"]}), 400
+        groups = []
+        grouped = results if isinstance(results, dict) else {}
+        for key, label in (
+            ("dam_catalog", "Catalog"),
+            ("dam_dropbox", "Dropbox"),
+            ("dam_big_picture", "Big picture"),
+            ("dam_other", "Other"),
+            ("china_ftp", "China FTP"),
+        ):
+            images = []
+            for asset in grouped.get(key) or []:
+                if not isinstance(asset, dict):
+                    continue
+                images.append(
+                    {
+                        "id": asset.get("id") or asset.get("filename") or "",
+                        "sku": asset.get("sku") or sku,
+                        "filename": asset.get("filename") or "",
+                        "source": asset.get("source") or key,
+                        "url": _abs_url(asset.get("url")),
+                        "full_url": _abs_url(asset.get("full_url") or asset.get("url")),
+                    }
+                )
+            if images:
+                groups.append({"id": key, "label": label, "images": images})
+        return jsonify(
+            {
+                "ok": True,
+                "sku": grouped.get("sku") or sku.upper(),
+                "total": grouped.get("total_count") or sum(len(g["images"]) for g in groups),
+                "groups": groups,
+            }
+        )
+    except Exception as exc:
+        current_app.logger.exception("mobile master images failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/upload_catalog", methods=["POST"])
+@_json_login_required
+@_require_tool("image_upload")
+def mobile_upload_catalog():
+    from py.utilities.image_upload_routes import upload_bulk_catalog
+
+    return _flask_json(upload_bulk_catalog)
+
+
+@mobile_app_bp.route("/upload_catalog/process", methods=["POST"])
+@_json_login_required
+@_require_tool("image_upload")
+def mobile_upload_catalog_process():
+    from py.utilities.image_upload_routes import process_bulk_catalog
+
+    return _flask_json(process_bulk_catalog)
+
+
+@mobile_app_bp.route("/loris/orders", methods=["GET"])
+@_json_login_required
+@_require_tool("loris_fedex")
+def mobile_loris_orders():
+    from py.loris.lori_automation import get_orders
+
+    return _flask_json(get_orders)
+
+
+@mobile_app_bp.route("/loris/orders/<po_number>", methods=["GET"])
+@_json_login_required
+@_require_tool("loris_fedex")
+def mobile_loris_order_items(po_number):
+    from py.loris.lori_automation import get_order_items
+
+    return _flask_json(get_order_items, po_number)
+
+
+@mobile_app_bp.route("/container", methods=["GET"])
+@_json_login_required
+@_require_tool("fdcef_container_search")
+def mobile_container():
+    container_id = (request.args.get("q") or request.args.get("container_id") or "").strip().upper()
+    try:
+        from product_detail_module.product_detail import (
+            fetch_combined_inventory,
+            get_db_connections,
+            group_container_by_style,
+        )
+
+        ocean_containers = []
+        arrived_containers = []
+        latest_containers = []
+        try:
+            from py.Toolkits.boat import sidebar_container_lists
+
+            ocean_containers, arrived_containers = sidebar_container_lists()
+        except Exception as list_err:
+            current_app.logger.warning("mobile container lists: %s", list_err)
+
+        conn_fdc, conn_oms_ef = get_db_connections()
+        container_data = []
+        style_groups = []
+        grand_totals = None
+        po_date = None
+        is_arrived = False
+        boat_row = {}
+        try:
+            if conn_fdc:
+                cursor = conn_fdc.cursor()
+                cursor.execute(
+                    """
+                    SELECT DISTINCT TOP 5 PUR_NUM, LOG_DATE
+                    FROM plog
+                    WHERE PUR_NUM IS NOT NULL AND PUR_NUM != ''
+                    AND PUR_NUM NOT LIKE 'L%'
+                    ORDER BY LOG_DATE DESC
+                    """
+                )
+                latest_containers = [row[0] for row in cursor.fetchall()]
+                cursor.close()
+            if not arrived_containers:
+                arrived_containers = [
+                    {"id": str(c or "").strip(), "eta": ""}
+                    for c in latest_containers
+                    if str(c or "").strip()
+                ]
+            if container_id and conn_fdc:
+                cursor = conn_fdc.cursor()
+                cursor.execute(
+                    """
+                    SELECT
+                        pl.prod_cd as sku,
+                        LEFT(pl.prod_cd, CHARINDEX(' ', pl.prod_cd + ' ') - 1) as style,
+                        pl.pur_num as po_num,
+                        RIGHT('0' + CAST(MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        RIGHT('0' + CAST(DAY(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                        CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', pl.log_date) - 81088, '20230101')) AS VARCHAR) AS po_date,
+                        CASE WHEN ISNULL(pl.hdl_chg, 0) > 0 THEN pl.hdl_chg ELSE pl.log_qty END as container_qty,
+                        ISNULL(i.RETAIL_PRS, 0) as price,
+                        ISNULL(pl.hdl_chg, 0) as hdl_chg
+                    FROM plog pl
+                    LEFT JOIN dbo.inv i ON pl.prod_cd = i.PROD_CD
+                    WHERE RTRIM(pl.pur_num) = ?
+                    AND (ISNULL(pl.hdl_chg, 0) > 0 OR ISNULL(pl.log_qty, 0) > 0)
+                    ORDER BY style, pl.prod_cd
+                    """,
+                    [container_id],
+                )
+                columns = [column[0] for column in cursor.description]
+                rows = cursor.fetchall()
+                cursor.close()
+                seen = set()
+                for row in rows:
+                    row_dict = dict(zip(columns, row))
+                    sku = (row_dict.get("sku") or "").strip()
+                    if not sku or sku in seen:
+                        continue
+                    seen.add(sku)
+                    container_data.append(row_dict)
+                    if float(row_dict.get("hdl_chg") or 0) > 0:
+                        is_arrived = True
+                    if not po_date:
+                        po_date = row_dict.get("po_date")
+                inventory = fetch_combined_inventory(list(seen), conn_fdc, conn_oms_ef)
+                for item in container_data:
+                    inv = inventory.get((item.get("sku") or "").strip(), {})
+                    item["catalog"] = inv.get("catalog") or "N/A"
+                    item["color"] = inv.get("color") or "-"
+                    item["available"] = inv.get("stock", 0)
+                    item["in_warehouse"] = inv.get("available", 0)
+                    item["sold_reserved"] = inv.get("sold", 0)
+                style_groups, grand_totals = group_container_by_style(container_data)
+                for group in style_groups:
+                    if group.get("image_url"):
+                        group["image_url"] = _abs_url(group["image_url"])
+            if container_id:
+                try:
+                    from py.Toolkits.boat import lookup_boat_hub_row
+
+                    boat_row = lookup_boat_hub_row(container_id) or {}
+                except Exception as boat_err:
+                    current_app.logger.warning("mobile boat row: %s", boat_err)
+        finally:
+            if conn_fdc:
+                conn_fdc.close()
+            if conn_oms_ef:
+                conn_oms_ef.close()
+
+        return jsonify(
+            {
+                "ok": True,
+                "container_id": container_id,
+                "po_date": po_date,
+                "is_arrived": is_arrived,
+                "items": _jsonify_obj(container_data[:300]),
+                "style_groups": _jsonify_obj(style_groups),
+                "totals": _jsonify_obj(grand_totals) if grand_totals else None,
+                "boat": _jsonify_obj(boat_row),
+                "ocean": _jsonify_obj(ocean_containers)[:40],
+                "arrived": _jsonify_obj(arrived_containers)[:40],
+            }
+        )
+    except Exception as exc:
+        current_app.logger.exception("mobile container failed")
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@mobile_app_bp.route("/print/status", methods=["GET"])
+@_json_login_required
+@_require_tool("print_center")
+def mobile_print_status():
+    from py.other.print_center import print_center_status
+
+    return _flask_json(print_center_status)
+
+
+@mobile_app_bp.route("/print", methods=["POST"])
+@_json_login_required
+@_require_tool("print_center")
+def mobile_print():
+    from py.other.print_center import print_center_print
+
+    return _flask_json(print_center_print)
+
+
+@mobile_app_bp.route("/scan", methods=["POST"])
+@_json_login_required
+@_require_tool("mobile_scanner")
+def mobile_scan():
+    body = request.get_json(silent=True) or {}
+    sku = str(body.get("sku") or "").strip()
+    upc = str(body.get("upc") or "").strip()
+    if sku:
+        from py.other.mobile_scanner import mobile_scanner_resolve_sku
+
+        return _flask_json(mobile_scanner_resolve_sku)
+    if upc:
+        from py.other.mobile_scanner import mobile_scanner_resolve_upc
+
+        return _flask_json(mobile_scanner_resolve_upc)
+    return jsonify({"ok": False, "error": "Scan a barcode or enter a SKU"}), 400
+

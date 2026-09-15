@@ -3,11 +3,17 @@ import Foundation
 enum APIError: LocalizedError {
     case message(String)
     case http(Int)
+    case notJSON(Int)
 
     var errorDescription: String? {
         switch self {
         case .message(let text): return text
         case .http(let code): return "Server error (\(code))"
+        case .notJSON(let code):
+            if code == 404 {
+                return "API not on fdcef.com yet. Pull git on the office PC and restart Flask."
+            }
+            return "Server did not return JSON (HTTP \(code))."
         }
     }
 }
@@ -23,7 +29,7 @@ final class APIClient {
         config.httpCookieStorage = .shared
         config.httpCookieAcceptPolicy = .always
         config.httpShouldSetCookies = true
-        config.timeoutIntervalForRequest = 45
+        config.timeoutIntervalForRequest = 90
         session = URLSession(configuration: config)
     }
 
@@ -59,21 +65,128 @@ final class APIClient {
     }
 
     func itemLookup(query: String) async throws -> ItemLookupResponse {
-        var comps = URLComponents(url: url("/api/mobile/item_lookup"), resolvingAgainstBaseURL: false)!
-        comps.queryItems = [URLQueryItem(name: "q", value: query)]
-        let data = try await request(url: comps.url!, method: "GET")
-        let decoded = try JSONDecoder().decode(ItemLookupResponse.self, from: data)
-        if decoded.ok { return decoded }
-        throw APIError.message(decoded.error ?? "Lookup failed")
+        try await get("/api/mobile/item_lookup", query: ["q": query])
     }
 
     func orderLookup(query: String) async throws -> OrderLookupResponse {
-        var comps = URLComponents(url: url("/api/mobile/order_lookup"), resolvingAgainstBaseURL: false)!
-        comps.queryItems = [URLQueryItem(name: "q", value: query)]
+        try await get("/api/mobile/order_lookup", query: ["q": query])
+    }
+
+    func invoiceLookup(query: String) async throws -> InvoiceLookupResponse {
+        try await get("/api/mobile/invoice_lookup", query: ["q": query])
+    }
+
+    func customerSearch(query: String) async throws -> CustomerSearchResponse {
+        try await get("/api/mobile/customer", query: ["q": query])
+    }
+
+    func customerDetails(id: String, db: String) async throws -> CustomerDetailsResponse {
+        try await get("/api/mobile/customer/\(id)", query: ["db": db])
+    }
+
+    func bagMeta() async throws -> BagMetaResponse {
+        try await get("/api/mobile/bag_style/meta")
+    }
+
+    func bagStyles(description: String, stock: String, color: String) async throws -> BagStyleResponse {
+        var q = ["description": description]
+        if !stock.isEmpty { q["stock_filter"] = stock }
+        if !color.isEmpty { q["color_filter"] = color }
+        return try await get("/api/mobile/bag_style", query: q)
+    }
+
+    func listCreator() async throws -> ListCreatorResponse {
+        try await get("/api/mobile/list_creator")
+    }
+
+    func listFilter(descriptions: [String], stock: String) async throws -> ListFilterResponse {
+        var body: [String: Any] = ["descriptions": descriptions]
+        if !stock.isEmpty { body["stock_filter"] = stock }
+        return try await post("/api/mobile/list_creator/filter", json: body)
+    }
+
+    func masterImages(query: String) async throws -> MasterImageResponse {
+        try await get("/api/mobile/images", query: ["q": query])
+    }
+
+    func uploadCatalog(files: [(filename: String, data: Data)]) async throws -> UploadPreviewResponse {
+        let payload = files.map { (name: "catalog_files", filename: $0.filename, mime: "image/jpeg", data: $0.data) }
+        let data = try await upload(path: "/api/mobile/upload_catalog", fields: [:], files: payload)
+        return try decode(UploadPreviewResponse.self, data: data)
+    }
+
+    func processCatalog(sessionId: String, images: [UploadImage]) async throws -> PrintResultResponse {
+        let payload: [[String: String]] = images.map { ["path": $0.path, "sku": $0.sku] }
+        return try await post("/api/mobile/upload_catalog/process", json: [
+            "session_id": sessionId,
+            "images": payload,
+        ])
+    }
+
+    func lorisOrders() async throws -> LorisOrdersResponse {
+        try await get("/api/mobile/loris/orders")
+    }
+
+    func lorisItems(po: String) async throws -> LorisItemsResponse {
+        try await get("/api/mobile/loris/orders/\(po)")
+    }
+
+    func container(query: String) async throws -> ContainerResponse {
+        try await get("/api/mobile/container", query: ["q": query])
+    }
+
+    func printStatus() async throws -> PrintStatusResponse {
+        try await get("/api/mobile/print/status")
+    }
+
+    func printFile(target: String, orientation: String, copies: Int, filename: String, data: Data) async throws -> PrintResultResponse {
+        let mime = filename.lowercased().hasSuffix(".pdf") ? "application/pdf" : "image/jpeg"
+        let raw = try await upload(
+            path: "/api/mobile/print",
+            fields: [
+                "target": target,
+                "orientation": orientation,
+                "copies": String(copies),
+            ],
+            files: [(name: "file", filename: filename, mime: mime, data: data)]
+        )
+        return try decode(PrintResultResponse.self, data: raw)
+    }
+
+    func scan(sku: String? = nil, upc: String? = nil) async throws -> ScanResponse {
+        var body: [String: String] = [:]
+        if let sku, !sku.isEmpty { body["sku"] = sku }
+        if let upc, !upc.isEmpty { body["upc"] = upc }
+        return try await post("/api/mobile/scan", json: body)
+    }
+
+    private func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
+        var comps = URLComponents(url: url(path), resolvingAgainstBaseURL: false)!
+        if !query.isEmpty {
+            comps.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
         let data = try await request(url: comps.url!, method: "GET")
-        let decoded = try JSONDecoder().decode(OrderLookupResponse.self, from: data)
-        if decoded.ok { return decoded }
-        throw APIError.message(decoded.error ?? "Order not found")
+        return try decode(T.self, data: data)
+    }
+
+    private func post<T: Decodable>(_ path: String, json: Any) async throws -> T {
+        let body = try JSONSerialization.data(withJSONObject: json)
+        let data = try await request(path: path, method: "POST", body: body, sendCSRF: true)
+        return try decode(T.self, data: data)
+    }
+
+    private func decode<T: Decodable>(_ type: T.Type, data: Data) throws -> T {
+        do {
+            return try JSONDecoder().decode(type, from: data)
+        } catch {
+            if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let message = (obj["error"] as? String) ?? (obj["message"] as? String)
+                if let message, !message.isEmpty {
+                    throw APIError.message(message)
+                }
+            }
+            throw error
+        }
     }
 
     private func url(_ path: String) -> URL {
@@ -95,8 +208,45 @@ final class APIClient {
         if sendCSRF, !csrf.isEmpty {
             req.setValue(csrf, forHTTPHeaderField: "X-CSRF-Token")
         }
+        return try await send(req)
+    }
+
+    private func upload(path: String, fields: [String: String], files: [(name: String, filename: String, mime: String, data: Data)]) async throws -> Data {
+        let boundary = "fdc-\(UUID().uuidString)"
+        var req = URLRequest(url: url(path))
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if !csrf.isEmpty {
+            req.setValue(csrf, forHTTPHeaderField: "X-CSRF-Token")
+        }
+        var body = Data()
+        for (key, value) in fields {
+            body.append("--\(boundary)\r\n")
+            body.append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n")
+            body.append("\(value)\r\n")
+        }
+        for file in files {
+            body.append("--\(boundary)\r\n")
+            body.append("Content-Disposition: form-data; name=\"\(file.name)\"; filename=\"\(file.filename)\"\r\n")
+            body.append("Content-Type: \(file.mime)\r\n\r\n")
+            body.append(file.data)
+            body.append("\r\n")
+        }
+        body.append("--\(boundary)--\r\n")
+        req.httpBody = body
+        return try await send(req)
+    }
+
+    private func send(_ req: URLRequest) async throws -> Data {
         let (data, response) = try await session.data(for: req)
-        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let http = response as? HTTPURLResponse
+        let code = http?.statusCode ?? 0
+        let type = (http?.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
+        let looksJSON = type.contains("json") || data.first == UInt8(ascii: "{") || data.first == UInt8(ascii: "[")
+        if !looksJSON {
+            throw APIError.notJSON(code)
+        }
         if code == 401 {
             throw APIError.message("Login required")
         }
@@ -104,5 +254,13 @@ final class APIClient {
             return data
         }
         throw APIError.http(code)
+    }
+}
+
+private extension Data {
+    mutating func append(_ string: String) {
+        if let data = string.data(using: .utf8) {
+            append(data)
+        }
     }
 }

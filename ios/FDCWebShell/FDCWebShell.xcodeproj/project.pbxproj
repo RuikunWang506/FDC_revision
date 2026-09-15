@@ -19,6 +19,8 @@
 		A1000000000000000000000A /* ItemLookupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* ItemLookupView.swift */; };
 		A1000000000000000000000B /* OrderLookupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000023 /* OrderLookupView.swift */; };
 		A1000000000000000000000C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000024 /* Theme.swift */; };
+		A1000000000000000000000D /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000025 /* Components.swift */; };
+		A1000000000000000000000E /* ToolScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000026 /* ToolScreens.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +38,8 @@
 		A10000000000000000000022 /* ItemLookupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemLookupView.swift; sourceTree = "<group>"; };
 		A10000000000000000000023 /* OrderLookupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderLookupView.swift; sourceTree = "<group>"; };
 		A10000000000000000000024 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A10000000000000000000025 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		A10000000000000000000026 /* ToolScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolScreens.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +75,8 @@
 				A10000000000000000000018 /* Models.swift */,
 				A10000000000000000000013 /* AppConfig.swift */,
 				A10000000000000000000024 /* Theme.swift */,
+				A10000000000000000000025 /* Components.swift */,
+				A10000000000000000000026 /* ToolScreens.swift */,
 				A10000000000000000000014 /* Assets.xcassets */,
 				A10000000000000000000015 /* Info.plist */,
 			);
@@ -166,6 +172,8 @@
 				A1000000000000000000000A /* ItemLookupView.swift in Sources */,
 				A1000000000000000000000B /* OrderLookupView.swift in Sources */,
 				A1000000000000000000000C /* Theme.swift in Sources */,
+				A1000000000000000000000D /* Components.swift in Sources */,
+				A1000000000000000000000E /* ToolScreens.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

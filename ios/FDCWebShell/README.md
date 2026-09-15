@@ -2,14 +2,24 @@
 
 Native SwiftUI client for https://www.fdcef.com. Flask stays on the server; the phone app talks JSON (`/api/mobile/...`), not a website in a WebView.
 
-## What is native today
+## Native tools
 
-- Sign in / log out
-- Home tool list (same permissions as the website)
-- SKU / style lookup
-- Sales order lookup
+These match the website cards and permissions:
 
-Other dashboard tools are listed as “Not on iOS yet”. They still live on the website.
+- SKU / style lookup (inventory, history, purchases, adjustments, images)
+- Bag Style Viewer
+- List Creator
+- Master Image Viewer
+- Smart Image Upload
+- Sales Orders
+- Customer Analytics
+- Invoice Lookup
+- Loris Automation
+- Container Hub
+- 打印中心
+- Mobile barcode scanner
+
+Other dashboard tools still show on the home screen as web-only.
 
 ## Mac + $99
 

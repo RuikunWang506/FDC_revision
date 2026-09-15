@@ -19,6 +19,10 @@ class MobileAppApiTests(unittest.TestCase):
     def test_native_tools(self):
         self.assertIn("item_lookup", NATIVE_TOOL_IDS)
         self.assertIn("order_lookup", NATIVE_TOOL_IDS)
+        self.assertIn("bag_style_viewer", NATIVE_TOOL_IDS)
+        self.assertIn("print_center", NATIVE_TOOL_IDS)
+        self.assertIn("mobile_scanner", NATIVE_TOOL_IDS)
+        self.assertGreaterEqual(len(NATIVE_TOOL_IDS), 12)
 
     def test_yeti_tools_mark_native(self):
         class _App:
@@ -33,7 +37,16 @@ class MobileAppApiTests(unittest.TestCase):
         ids = {t["id"] for t in tools}
         self.assertIn("item_lookup", ids)
         native = {t["id"] for t in tools if t["native"]}
-        self.assertEqual(native, {"item_lookup", "order_lookup"})
+        self.assertTrue({"item_lookup", "order_lookup"}.issubset(native))
+        self.assertTrue(native.issubset(NATIVE_TOOL_IDS))
+
+    def test_records_skip_plain_html(self):
+        from py.other.mobile_app_api import _clean_inventory_row, _records_from_html_table
+
+        self.assertEqual(_records_from_html_table("<p>No item history</p>"), [])
+        row = _clean_inventory_row({"SKU": "ABC", "\U0001f6a2": 12, "Avail": 3})
+        self.assertEqual(row["ocean"], 12)
+        self.assertEqual(row["Avail"], 3)
 
     def test_login_is_csrf_and_public(self):
         self.assertIn("mobile_app.mobile_login", CSRF_EXEMPT_ENDPOINTS)

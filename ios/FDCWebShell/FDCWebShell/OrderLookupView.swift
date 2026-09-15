@@ -6,73 +6,92 @@ struct OrderLookupView: View {
     @State private var error: String?
     @State private var busy = false
 
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                TextField("Order or PO", text: $query)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.numbersAndPunctuation)
-                    .submitLabel(.search)
-                    .onSubmit { Task { await search() } }
-                Button("Search") { Task { await search() } }
-                    .disabled(busy || query.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .foregroundStyle(FDCTheme.cyan)
-            }
-            .padding(16)
+    private let headerKeys: [(String, String)] = [
+        ("Customer", "customer"),
+        ("Customer ID", "customer_id"),
+        ("Invoice", "invoice_number"),
+        ("PO", "po_number"),
+        ("Amount", "order_amount"),
+        ("Paid", "paid_amount"),
+        ("Discount", "discount"),
+        ("Shipping", "shipping_charge"),
+        ("Handling", "handling_fee"),
+        ("Tax", "tax_amount"),
+        ("Salesman", "salesman"),
+        ("Terms", "terms"),
+        ("Status", "order_status"),
+        ("Type", "order_type"),
+        ("Priority", "priority"),
+        ("Order date", "order_date"),
+        ("Ship date", "ship_date"),
+        ("Cancel", "cancel_date"),
+        ("Ship via", "ship_method"),
+        ("Tracking", "tracking_number"),
+        ("Ship name", "ship_customer_name"),
+        ("Address", "ship_address_1"),
+        ("City", "ship_to_city"),
+        ("State", "ship_to_state"),
+        ("ZIP", "ship_to_zip"),
+        ("Phone", "phone"),
+        ("Email", "email"),
+        ("Notes", "notes"),
+        ("DB", "database"),
+    ]
 
-            if busy { ProgressView().tint(FDCTheme.cyan).padding() }
-            if let error { Text(error).foregroundStyle(.orange).padding(.horizontal) }
+    var body: some View {
+        VStack(spacing: 12) {
+            FDCSearchBar(placeholder: "Order or PO", text: $query, keyboard: .numbersAndPunctuation) {
+                Task { await search() }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+
+            if busy { ProgressView().tint(FDCTheme.cyan) }
+            if let error { StatusBanner(text: error).padding(.horizontal, 16) }
 
             if let result {
                 List {
                     Section {
-                        headerBlock(result)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(result.orderNumber ?? "").font(.title3.weight(.bold))
+                            if let totals = result.totals {
+                                Text("Qty \(totals.qty ?? 0)  ·  Boxes \(totals.boxes ?? 0)  ·  Wt \(totals.weight.map { String(format: "%g", $0) } ?? "—")")
+                                    .font(.footnote)
+                                    .foregroundStyle(FDCTheme.mint)
+                            }
+                            KVGrid(row: result.header ?? [:], keys: headerKeys)
+                        }
+                        .listRowBackground(FDCTheme.card)
                     }
                     Section("Lines") {
                         ForEach(Array((result.items ?? []).enumerated()), id: \.offset) { _, item in
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text(item.text("SKU")).font(.headline)
                                 Text(item.text("Descrip")).font(.footnote).foregroundStyle(FDCTheme.muted)
-                                HStack {
-                                    Text("Qty \(item.text("Qty"))")
-                                    Spacer()
-                                    Text(item.text("Location").isEmpty ? "—" : item.text("Location"))
-                                }
-                                .font(.subheadline)
+                                KVGrid(row: item, keys: [
+                                    ("Line", "line"),
+                                    ("Qty", "Qty"),
+                                    ("Price", "price"),
+                                    ("Per box", "per_box"),
+                                    ("Boxes", "Boxes"),
+                                    ("Location", "Location"),
+                                    ("Stock", "Stock"),
+                                    ("Weight", "Weight"),
+                                ])
                             }
                             .listRowBackground(FDCTheme.card)
                         }
                     }
                 }
                 .scrollContentBackground(.hidden)
-            } else {
-                Spacer()
+            } else if !busy {
+                EmptyHint(text: "Look up an order number or PO")
             }
+            Spacer(minLength: 0)
         }
         .fdcScreen()
         .navigationTitle("Sales Orders")
-    }
-
-    @ViewBuilder
-    private func headerBlock(_ result: OrderLookupResponse) -> some View {
-        let header = result.header ?? [:]
-        VStack(alignment: .leading, spacing: 8) {
-            Text(result.orderNumber ?? "").font(.title3.weight(.bold))
-            Text(header.text("customer_name").isEmpty ? header.text("Customer") : header.text("customer_name"))
-            Text([
-                header.text("ship_to_city"),
-                header.text("ship_to_state"),
-                header.text("ship_to_zip"),
-            ].filter { !$0.isEmpty && $0 != "N/A" }.joined(separator: ", "))
-                .foregroundStyle(FDCTheme.muted)
-            if let totals = result.totals {
-                Text("Qty \(totals.qty ?? 0)  ·  Boxes \(totals.boxes ?? 0)  ·  Wt \(totals.weight.map { String($0) } ?? "—")")
-                    .font(.footnote)
-                    .foregroundStyle(FDCTheme.mint)
-            }
-        }
-        .listRowBackground(FDCTheme.card)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func search() async {
