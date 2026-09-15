@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify,redirect,session,render_template,url_for,current_app
 import pyodbc
-import pandas as pd
 import re
 import calendar
 from datetime import datetime, date, timedelta
@@ -161,6 +160,115 @@ OMS_ORDER_DATE_FORMATTED = (
     "RIGHT('0' + CAST(DAY(" + OMS_ORDER_DATE_EXPR + ") AS VARCHAR), 2) + '/' + "
     "CAST(YEAR(" + OMS_ORDER_DATE_EXPR + ") AS VARCHAR)"
 )
+NOT_INVOICED = 'not invoiced'
+
+
+def format_oms_invoice_number(invs_num):
+    """Match order lookup: blank/0 invoice numbers display as 'not invoiced'."""
+    if invs_num is None:
+        return NOT_INVOICED
+    text = str(invs_num).strip()
+    if not text or text.lower() in ('nan', 'none', 'nat', '0', NOT_INVOICED):
+        return NOT_INVOICED
+    try:
+        number = int(float(text))
+    except (TypeError, ValueError):
+        return text
+    if number <= 0:
+        return NOT_INVOICED
+    return str(number)
+
+
+def order_lookup_amount(ord_amt=0, handl_fee=0):
+    """Same order amount as /order_lookup: ORD_AMT + HANDL_FEE."""
+    try:
+        base = float(ord_amt or 0)
+    except (TypeError, ValueError):
+        base = 0.0
+    try:
+        handling = float(handl_fee or 0)
+    except (TypeError, ValueError):
+        handling = 0.0
+    return round(base + handling, 2)
+
+
+def _parse_mdy(date_text):
+    try:
+        return datetime.strptime(str(date_text), '%m/%d/%Y')
+    except Exception:
+        return None
+
+
+def _iso_sort_date(date_text):
+    parsed = _parse_mdy(date_text)
+    return parsed.strftime('%Y-%m-%d') if parsed else ''
+
+
+def _as_int(value, default=0):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_money(value):
+    try:
+        return round(float(value if value is not None else 0), 2)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _clean_text(value):
+    if value is None:
+        return ''
+    return str(value).strip()
+
+
+CUSTOMER_EDITABLE_FIELDS = {
+    'customer_name': 'CUS_NM',
+    'customer_type': 'CUS_TYPE',
+    'phone_1': 'PHONE',
+    'phone_2': 'PHONE_2',
+    'phone_3': 'PHONE_3',
+    'fax': 'PHONE_4',
+    'email': 'EMAIL_ADR',
+    'web': 'WEB_ADR',
+    'billing_address_1': 'ADDRESS',
+    'billing_address_2': 'ADDRESS2',
+    'billing_city': 'CITY',
+    'billing_state': 'STATE',
+    'billing_zip': 'ZIP',
+    'billing_country': 'COUNTRY',
+    'shipping_address_1': 'SHP_ADDRESS',
+    'shipping_address_2': 'SHP_ADDRESS2',
+    'shipping_city': 'SHP_CITY',
+    'shipping_state': 'SHP_STATE',
+    'shipping_zip': 'SHP_ZIP',
+    'shipping_country': 'SHP_COUNTRY',
+    'ship_via': 'SHIP_DESC',
+    'ship_type': 'SHIP_SPE',
+    'sales_rep_1': 'SALES_NUM',
+    'sales_rep_2': 'SALES_NUM2',
+    'sales_rep_3': 'SALES_NUM3',
+    'sales_rep_4': 'SALES_NUM4',
+    'department': 'DEPT_NUM',
+    'terms': 'TERM',
+    'terms_description': 'TERM_DESC',
+}
+CUSTOMER_FIELD_MAX_LEN = 80
+
+
+def customer_column_for_field(field):
+    """Return a whitelisted OMS customer column, or None if the field is not editable."""
+    key = _clean_text(field)
+    return CUSTOMER_EDITABLE_FIELDS.get(key)
+
+
+def normalize_customer_field_value(value, max_len=CUSTOMER_FIELD_MAX_LEN):
+    text = '' if value is None else str(value).strip()
+    if len(text) > max_len:
+        raise ValueError(f'Value exceeds {max_len} characters')
+    return text
 
 
 def _subtract_months(dt, months):
@@ -286,14 +394,8 @@ def fetch_past_orders_window(customer_id, database_origin, period_index=0, month
         for ord_num, details in unique_order_numbers.items()
     ]
 
-    def _parse_date(date_text):
-        try:
-            return datetime.strptime(str(date_text), '%m/%d/%Y')
-        except Exception:
-            return None
-
     orders_list.sort(
-        key=lambda item: _parse_date(item.get('date')) or datetime.min,
+        key=lambda item: _parse_mdy(item.get('date')) or datetime.min,
         reverse=True,
     )
 
@@ -384,14 +486,8 @@ def fetch_unique_order_numbers(customer_id, database_origin):
         for ord_num, details in unique_order_numbers.items()
     ]
 
-    def _parse_date(date_text):
-        try:
-            return datetime.strptime(str(date_text), '%m/%d/%Y')
-        except Exception:
-            return None
-
     unique_order_numbers_list.sort(
-        key=lambda item: _parse_date(item.get('date')) or datetime.min,
+        key=lambda item: _parse_mdy(item.get('date')) or datetime.min,
         reverse=True,
     )
 
@@ -406,6 +502,82 @@ def fetch_unique_order_numbers(customer_id, database_origin):
     }
     return unique_order_numbers_list, customer_summary
 
+
+def database_label(database):
+    if database == 'omsdata_FDC':
+        return 'FDC'
+    if database == 'oms_EF':
+        return 'E-Fashion'
+    return database or ''
+
+
+def sort_customer_rows(rows):
+    """Sort customer search rows by name, then ID, then database."""
+    return sorted(
+        rows or [],
+        key=lambda row: (
+            (row.get('cus_nm') or '').lower(),
+            (row.get('cus_id') or '').lower(),
+            (row.get('database_origin') or ''),
+        ),
+    )
+
+
+def fetch_customer_matches(search_term=None):
+    """Return (with_orders, without_orders, errors) across OMS databases."""
+    term = (search_term or '').strip()
+    results = []
+    null_results = []
+    errors = []
+
+    for database in ('omsdata_FDC', 'oms_EF'):
+        try:
+            conn = _connect_sql_server(database)
+            cursor = conn.cursor()
+            query = """
+                SELECT
+                    LTRIM(RTRIM(c.cus_nm)) AS cus_nm,
+                    LTRIM(RTRIM(c.cus_id)) AS cus_id,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
+                    o.ord_num
+                FROM customer c
+                LEFT JOIN (
+                    SELECT cus_id, MAX(ord_num) AS max_ord_num
+                    FROM orders
+                    GROUP BY cus_id
+                ) AS max_orders ON c.cus_id = max_orders.cus_id
+                LEFT JOIN orders o ON max_orders.cus_id = o.cus_id AND max_orders.max_ord_num = o.ord_num
+            """
+            params = []
+            if term:
+                query += " WHERE c.cus_nm LIKE ? OR c.cus_id LIKE ?"
+                like = '%' + term + '%'
+                params = [like, like]
+            query += " ORDER BY c.cus_nm"
+            cursor.execute(query, params)
+            for row in cursor.fetchall():
+                item = {
+                    'cus_nm': _clean_text(row[0]),
+                    'cus_id': _clean_text(row[1]),
+                    'formatted_ord_dt': _clean_text(row[2]) or '',
+                    'max_ord_num': _clean_text(row[3]) if row[3] is not None else '',
+                    'database_origin': database,
+                    'source_label': database_label(database),
+                }
+                if item['formatted_ord_dt'] and item['max_ord_num']:
+                    results.append(item)
+                else:
+                    null_results.append(item)
+            cursor.close()
+            conn.close()
+        except Exception as exc:
+            errors.append(f'{database}: {exc}')
+
+    return sort_customer_rows(results), sort_customer_rows(null_results), errors
+
+
 @customer_bp.route('/customer', methods=['GET'])
 @login_required
 def customer_home():
@@ -418,78 +590,44 @@ def customer_home():
 @login_required
 def check_customer():
     current_user = session['username']
-    data = request.get_json()
+    data = request.get_json() or {}
     customer_name = data.get('customer_name', '')
-    # Get username from request if available, otherwise use session
     username_from_request = data.get('username')
     if username_from_request:
         current_user = username_from_request
-        
+
     current_app.logger.info("***%s***__@@@search customer@@@__ %s", current_user, data)
-    results = []
-    null_results = []  # List to hold rows with null values
-    databases = ['omsdata_FDC', 'oms_EF']
-
-    for database in databases:
-        try:
-            conn = pyodbc.connect(
-                f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
-            )
-            cursor = conn.cursor()
-            # Updated query to search by both customer name OR customer ID
-            query = f"""
-                SELECT
-                    c.cus_nm,
-                    c.cus_id,
-                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                    CAST(YEAR(DATEADD(DAY, CAST(o.ord_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_ord_dt,
-                    o.ord_num
-                FROM
-                    customer c
-                LEFT JOIN (
-                    SELECT
-                        cus_id,
-                        MAX(ord_num) AS max_ord_num
-                    FROM
-                        orders
-                    GROUP BY
-                        cus_id
-                ) AS max_orders ON c.cus_id = max_orders.cus_id
-                LEFT JOIN orders o ON max_orders.cus_id = o.cus_id AND max_orders.max_ord_num = o.ord_num
-                WHERE
-                    c.cus_nm LIKE ? OR c.cus_id LIKE ?
-            """
-            cursor.execute(query, ('%' + customer_name + '%', '%' + customer_name + '%'))
-            rows = cursor.fetchall()
-
-            for row in rows:
-                if row[2] is not None and row[3] is not None:  # Check if formatted_ord_dt and max_ord_num are not null
-                    results.append({
-                        'cus_nm': row[0],
-                        'cus_id': row[1],
-                        'formatted_ord_dt': row[2],
-                        'max_ord_num': row[3],
-                        'database_origin': database
-                    })
-                else:
-                    null_results.append({
-                        'cus_nm': row[0],
-                        'cus_id': row[1],
-                        'formatted_ord_dt': row[2],
-                        'max_ord_num': row[3],
-                        'database_origin': database
-                    })
-
-            cursor.close()
-            conn.close()
-        except Exception as e:
-            return jsonify({"success": False, "message": str(e)})
-
+    results, null_results, errors = fetch_customer_matches(customer_name)
+    if errors and not results and not null_results:
+        return jsonify({"success": False, "message": errors[0]})
     return jsonify({
         "success": True,
         "data": results,
-        "null_data": null_results  # Return the null results as a separate key
+        "null_data": null_results,
+        "errors": errors,
+    })
+
+
+@customer_bp.route('/list_customers', methods=['POST'])
+@login_required
+def list_customers():
+    current_user = session['username']
+    data = request.get_json() or {}
+    search_term = (data.get('customer_name') or data.get('q') or '').strip()
+    username_from_request = data.get('username')
+    if username_from_request:
+        current_user = username_from_request
+
+    current_app.logger.info("***%s***__@@@list customers@@@__ %s", current_user, search_term or '*')
+    results, null_results, errors = fetch_customer_matches(search_term or None)
+    if errors and not results and not null_results:
+        return jsonify({"success": False, "message": errors[0]})
+    return jsonify({
+        "success": True,
+        "data": results,
+        "null_data": null_results,
+        "errors": errors,
+        "mode": "list",
     })
 
 @customer_bp.route('/customer_details/<customer_id>', methods=['GET'])
@@ -572,16 +710,25 @@ def customer_details(customer_id):
                 customer_display_name = customer_profile.get('customer_name', '') or customer_display_name
 
             query = f"""
-                SELECT 
-                ol.ord_num,
-                RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
-                CAST(YEAR(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_olg_dt,
-                ol.prod_cd,
-                ol.order_qty,
-                ol.unit_prs
+                SELECT
+                    ol.ord_num,
+                    RIGHT('0' + CAST(MONTH(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    RIGHT('0' + CAST(DAY(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR), 2) + '/' +
+                    CAST(YEAR(DATEADD(DAY, CAST(ol.olg_dt AS INT) - 81088, '20230101')) AS VARCHAR) AS formatted_olg_dt,
+                    ol.prod_cd,
+                    ol.order_qty,
+                    ol.unit_prs,
+                    ol.ut_desc,
+                    ol.comm_ln,
+                    ol.pc_unit,
+                    o.ord_amt,
+                    o.handl_fee,
+                    o.misc_chg,
+                    o.INVS_NUM,
+                    o.PO_NUM
                 FROM ord_log ol
                 JOIN customer c ON ol.cus_id = c.cus_id
+                LEFT JOIN orders o ON ol.ord_num = o.ord_num
                 WHERE c.cus_id = ?
             """
             cursor.execute(query, (customer_id,))
@@ -590,36 +737,42 @@ def customer_details(customer_id):
             for row in rows:
                 ord_num = row[0]
                 formatted_date = row[1]
-                prod_cd = row[2]
-                order_qty = int(row[3] or 0)
-                unit_prs = round(float(row[4]) if row[4] is not None else 0.0, 2)
+                prod_cd = _clean_text(row[2])
+                order_qty = _as_int(row[3], 0)
+                unit_prs = _as_money(row[4])
+                description = _clean_text(row[5])
+                line_num = _as_int(row[6], 0)
+                per_box = _as_int(row[7], 0)
+                invoice_number = format_oms_invoice_number(row[11])
+                po_number = _clean_text(row[12])
+                order_amount = order_lookup_amount(row[8], row[9])
+                misc_chg = _as_money(row[10])
+                ord_amt = _as_money(row[8])
+                handl_fee = _as_money(row[9])
 
-                # Append to results for order history
                 results.append((ord_num, formatted_date, prod_cd, order_qty, unit_prs))
 
-                # Calculate total for unique order numbers
                 if ord_num:
                     if ord_num not in unique_order_numbers:
-                        # Query to get ord_amt and handl_fee for the current order number
-                        order_query = f"""
-                            SELECT ord_amt, handl_fee,misc_chg 
-                            FROM orders 
-                            WHERE ord_num = ?
-                        """
-                        cursor.execute(order_query, (ord_num,))
-                        order_row = cursor.fetchone()
-                        if order_row:
-                            ord_amt = order_row[0] or 0
-                            handl_fee = order_row[1] or 0
-                            misc_chg = order_row[2] or 0
-                            total = ord_amt + handl_fee+misc_chg
-                            unique_order_numbers[ord_num] = {
-                                'date': formatted_date,
-                                'ord_amt': ord_amt,
-                                'handl_fee': handl_fee,
-                                'misc_chg': misc_chg,
-                                'total': total
-                            }
+                        unique_order_numbers[ord_num] = {
+                            'date': formatted_date,
+                            'ord_amt': ord_amt,
+                            'handl_fee': handl_fee,
+                            'misc_chg': misc_chg,
+                            'order_amount': order_amount,
+                            'total': order_amount,
+                            'invoice_number': invoice_number,
+                            'po_number': po_number,
+                            'items': [],
+                        }
+                    unique_order_numbers[ord_num]['items'].append({
+                        'line': line_num,
+                        'sku': prod_cd,
+                        'description': description,
+                        'qty': order_qty,
+                        'price': unit_prs,
+                        'per_box': per_box,
+                    })
 
                 if prod_cd:
                     if prod_cd not in unique_product_data:
@@ -632,70 +785,58 @@ def customer_details(customer_id):
         except Exception as e:
             return jsonify({"success": False, "message": str(e)})
 
-    # Prepare the DataFrame for order history
-    history_columns = ['order#', 'Date', 'sku', 'Quantity', 'Price']
-    history_df = pd.DataFrame.from_records(results, columns=history_columns)
-
-    # Add hyperlinks
-    history_df['order#'] = history_df['order#'].apply(lambda x: f'<a href="{url_for("order_lookup.order_lookup", order_number=x)}" target="_blank">{x}</a>')
-
-    # Modify the sku column to use the new URL format
-    history_df['sku'] = history_df['sku'].apply(lambda x: f'<a href="/item_lookup/{x}" target="_blank">{x}</a>')
-    history_html_table = history_df.to_html(
-        index=False,
-        classes="table table-bordered table-striped",
-        table_id="customer_details_table",
-        float_format="{:.2f}".format,
-        escape=False
-    )
     product_summary_rows = []
     for prod_cd, data in unique_product_data.items():
-        prices = ' ,'.join(map(str, data['prices']))
-        product_summary_rows.append(f"<tr><td><a href='/item_lookup/{prod_cd}' target='_blank'>{prod_cd}</a></td><td>{data['total_qty']}</td><td>{prices}</td></tr>")
-    
-    product_summary_html = f"""
-        <h4>Product Summary:</h4>
-        <table id='product_summary_table' class='table table-bordered table-striped'>
-            <thead>
-                <tr>
-                    <th>SKU</th>
-                    <th>ordered</th>
-                    <th>Prices</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(product_summary_rows)}
-            </tbody>
-        </table>
-    """
+        prices = sorted(data['prices'])
+        product_summary_rows.append({
+            'sku': prod_cd,
+            'total_qty': data['total_qty'],
+            'prices': prices,
+        })
+    product_summary_rows.sort(key=lambda row: (-int(row.get('total_qty') or 0), str(row.get('sku') or '')))
 
-    # Prepare unique order numbers for response
-    unique_order_numbers_list = [
-    {
-        'order_number': ord_num,
-        'date': details['date'],
-        'ord_amt': details['ord_amt'],
-        'handl_fee': details['handl_fee'],
-        'misc_chg': details['misc_chg'],
-        'total': details['total'],
-        'order_lookup_url': url_for('order_lookup.order_lookup', order_number=ord_num)  # Add URL for order lookup
-    }
-    for ord_num, details in unique_order_numbers.items()
-]
+    unique_order_numbers_list = []
+    for ord_num, details in unique_order_numbers.items():
+        invoice_number = details.get('invoice_number') or NOT_INVOICED
+        items = details.get('items') or []
+        items.sort(key=lambda item: (item.get('line') or 0, str(item.get('sku') or '')))
+        unique_order_numbers_list.append({
+            'order_number': ord_num,
+            'date': details['date'],
+            'date_sort': _iso_sort_date(details['date']),
+            'ord_amt': details['ord_amt'],
+            'handl_fee': details['handl_fee'],
+            'misc_chg': details['misc_chg'],
+            'order_amount': details.get('order_amount', details.get('total', 0)),
+            'total': details.get('order_amount', details.get('total', 0)),
+            'invoice_number': invoice_number,
+            'po_number': details.get('po_number') or '',
+            'invoiced': invoice_number != NOT_INVOICED,
+            'invoice_lookup_url': (
+                url_for(
+                    'invoice_lookup.invoice_lookup',
+                    invoice_number=invoice_number,
+                    db=database_origin,
+                )
+                if invoice_number != NOT_INVOICED
+                else ''
+            ),
+            'order_lookup_url': url_for('order_lookup.order_lookup', order_number=ord_num),
+            'items': items,
+        })
 
-    def _parse_date(date_text):
-        try:
-            return datetime.strptime(str(date_text), '%m/%d/%Y')
-        except Exception:
-            return None
+    unique_order_numbers_list.sort(
+        key=lambda item: _parse_mdy(item.get('date')) or datetime.min,
+        reverse=True,
+    )
 
-    order_dates = [_parse_date(item.get('date')) for item in unique_order_numbers_list]
+    order_dates = [_parse_mdy(item.get('date')) for item in unique_order_numbers_list]
     order_dates = [d for d in order_dates if d is not None]
     total_orders = len(unique_order_numbers_list)
     total_order_lines = len(results)
     total_skus = len(unique_product_data)
     total_qty = sum(item.get('total_qty', 0) for item in unique_product_data.values())
-    total_revenue = round(sum(float(item.get('total', 0) or 0) for item in unique_order_numbers_list), 2)
+    total_revenue = round(sum(float(item.get('order_amount', 0) or 0) for item in unique_order_numbers_list), 2)
     avg_order_value = round((total_revenue / total_orders), 2) if total_orders else 0
 
     customer_summary = {
@@ -714,9 +855,60 @@ def customer_details(customer_id):
 
     return jsonify({
         "success": True,
-        "data": history_html_table,
-        "product_summary": product_summary_html,
-        "unique_order_numbers": unique_order_numbers_list,  # Send the correct structure
+        "data": "",
+        "product_summary": "",
+        "product_summary_rows": product_summary_rows,
+        "unique_order_numbers": unique_order_numbers_list,
         "customer_summary": customer_summary,
         "customer_profile": customer_profile
     })
+
+
+@customer_bp.route('/update_customer_field', methods=['POST'])
+@login_required
+def update_customer_field():
+    data = request.get_json(silent=True) or {}
+    customer_id = _clean_text(data.get('customer_id'))
+    database = _clean_text(data.get('database') or data.get('db'))
+    field = _clean_text(data.get('field'))
+    column = customer_column_for_field(field)
+    if not customer_id or database not in ('omsdata_FDC', 'oms_EF') or not column:
+        return jsonify({'success': False, 'message': 'Invalid customer field update'}), 400
+    try:
+        value = normalize_customer_field_value(data.get('value'))
+    except ValueError as exc:
+        return jsonify({'success': False, 'message': str(exc)}), 400
+
+    current_user = session.get('username') or 'unknown'
+    try:
+        conn = _connect_sql_server(database)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT TOP 1 LTRIM(RTRIM(CUS_ID)) FROM customer WHERE LTRIM(RTRIM(CUS_ID)) = ?",
+            (customer_id,),
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'success': False, 'message': 'Customer not found'}), 404
+        cursor.execute(
+            f"UPDATE customer SET {column} = ? WHERE LTRIM(RTRIM(CUS_ID)) = ?",
+            (value, customer_id),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as exc:
+        current_app.logger.error(
+            "***{}***__@@@customer field update failed@@@__ {} {} {}: {}".format(
+                current_user, database, customer_id, field, exc
+            )
+        )
+        return jsonify({'success': False, 'message': 'Failed to save customer field'}), 500
+
+    current_app.logger.info(
+        "***{}***__@@@updated customer field@@@__ {} {} {} -> {}".format(
+            current_user, database, customer_id, field, value
+        )
+    )
+    return jsonify({'success': True, 'field': field, 'value': value, 'column': column})

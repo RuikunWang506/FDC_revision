@@ -119,6 +119,7 @@
             overflow: hidden;
         }
         .pd-panel.history-section { margin: 0 0 12px; }
+        .pd-mobile-extra-specs { display: none; }
         .pd-panel .history-header,
         .history-header {
             background: #5b6ee8;
@@ -1364,6 +1365,37 @@
                 align-items: center;
             }
 
+            .pd-mobile-extra-specs {
+                display: block;
+            }
+            .pd-extra-specs-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .pd-mobile-extra-specs .si-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px 12px;
+                padding: 10px 12px;
+                border-left: 3px solid #c7d2fe;
+                background: #fafbff;
+                border-radius: 0 8px 8px 0;
+                margin: 0;
+            }
+            .pd-mobile-extra-specs .si-group-title {
+                display: block;
+                grid-column: 1 / -1;
+                margin-bottom: 0;
+            }
+            .pd-mobile-extra-specs .si-field {
+                display: block;
+                margin-bottom: 0;
+            }
+            .pd-mobile-extra-specs .si-group > .si-field:last-child:nth-child(even) {
+                grid-column: 1 / -1;
+            }
+
             .modules-container,
             .history-modules-container {
                 grid-template-columns: 1fr !important;
@@ -1928,6 +1960,102 @@
 
             <!-- Product Data Display -->
             {% if product_data %}
+
+        {% macro pd_style_spec_groups(style_group, include_basic=false) %}
+                            {% if include_basic %}
+                            <div class="si-group">
+                                <div class="si-group-title">{{ te('BASIC') }}</div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Style') }}</span>
+                                    <div class="si-value">{{ style_group.parent_info.style }}</div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Design') }}</span>
+                                    <div class="si-value">
+                                        {% if (style_group.description or '')|is_container_desc %}
+                                        {{ style_group.description | linkify_container_desc }}
+                                        {% if not is_tiktok_view %}
+                                        <span class="sku-detail-badge editable" onclick="openDescriptionEdit('{{ style_group.parent_info.style }}', '{{ style_group.description or 'N/A' }}', event)" title="{{ te('Edit') }}"></span>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="sku-detail-badge editable" onclick="openDescriptionEdit('{{ style_group.parent_info.style }}', '{{ style_group.description or 'N/A' }}', event)">{{ style_group.description or 'N/A' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="si-group">
+                                <div class="si-group-title">{{ te('Masterbox') }} / {{ te('Bag_Size') }}</div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Case Qty') }}</span>
+                                    <div class="si-value">{{ style_group.parent_info.case_qty or 'N/A' }}</div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Box Wt') }}</span>
+                                    <div class="si-value">{% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Masterbox') }} {{ te('Dimensions') }}</span>
+                                    {% if style_group.masterbox_sources %}
+                                    <div class="si-value masterbox-dims-clickable"
+                                         title="Click to see unique masterbox dimensions by container / SKU"
+                                         onclick="openMasterboxSourcesPopup('{{ style_group.parent_info.style }}', event)"
+                                         data-sources='{{ style_group.masterbox_sources | tojson }}'>
+                                        {% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}
+                                        <span class="si-loc-edit">{{ style_group.masterbox_sources | length }}</span>
+                                    </div>
+                                    {% else %}
+                                    <div class="si-value">{% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Bag_Size') }} {{ te('Dimensions') }}</span>
+                                    <div class="si-value">{% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Piece Wt') }}</span>
+                                    <div class="si-value">{% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</div>
+                                </div>
+                            </div>
+
+                            <div class="si-group">
+                                <div class="si-group-title">{{ te('INFO') }}</div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Location') }}</span>
+                                    <div class="si-value" onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer;">
+                                        <span class="si-loc-edit">{{ te('Edit') }}</span>
+                                        {% if style_group.location %}
+                                            {% set locations = style_group.location.split(',') %}
+                                            {% for loc in locations %}
+                                            <span class="si-chip">{{ loc.strip() }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ te('N/A') }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">{{ te('Created Date') }}</span>
+                                    <div class="si-value">{{ style_group.parent_info.create_dt or 'N/A' }}</div>
+                                </div>
+                                <div class="si-field">
+                                    <span class="si-label">OMS_Description</span>
+                                    <div class="si-value">
+                                    {% if style_group.oms_description %}
+                                        {% if style_group.oms_description is string %}
+                                            {{ style_group.oms_description | linkify_container_desc }}
+                                        {% else %}
+                                            {% for desc in style_group.oms_description %}
+                                            {{ desc | linkify_container_desc }}{% if not loop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+        {% endmacro %}
         
         <!-- Products Display -->
         {% for style_group in product_data %}
@@ -2020,77 +2148,7 @@
                                 {% endif %}
                             </div>
 
-                            <div class="si-group">
-                                <div class="si-group-title">{{ te('Masterbox') }} / {{ te('Bag_Size') }}</div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Case Qty') }}</span>
-                                    <div class="si-value">{{ style_group.parent_info.case_qty or 'N/A' }}</div>
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Box Wt') }}</span>
-                                    <div class="si-value">{% if style_group.parent_info.box_wt %}{{ "%.1f" | format(style_group.parent_info.box_wt) }} lb{% else %}N/A{% endif %}</div>
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Masterbox') }} {{ te('Dimensions') }}</span>
-                                    {% if style_group.masterbox_sources %}
-                                    <div class="si-value masterbox-dims-clickable"
-                                         title="Click to see unique masterbox dimensions by container / SKU"
-                                         onclick="openMasterboxSourcesPopup('{{ style_group.parent_info.style }}', event)"
-                                         data-sources='{{ style_group.masterbox_sources | tojson }}'>
-                                        {% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}
-                                        <span class="si-loc-edit">{{ style_group.masterbox_sources | length }}</span>
-                                    </div>
-                                    {% else %}
-                                    <div class="si-value">{% if style_group.parent_info.master_len %}{{ "%.1f" | format(style_group.parent_info.master_len) }}×{{ "%.1f" | format(style_group.parent_info.master_wid) }}×{{ "%.1f" | format(style_group.parent_info.master_hei) }}"{% else %}N/A{% endif %}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Bag_Size') }} {{ te('Dimensions') }}</span>
-                                    <div class="si-value">{% if style_group.parent_info.len %}{{ "%.1f" | format(style_group.parent_info.len) }}×{{ "%.1f" | format(style_group.parent_info.wid) }}×{{ "%.1f" | format(style_group.parent_info.hei) }}"{% else %}N/A{% endif %}</div>
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Piece Wt') }}</span>
-                                    <div class="si-value">{% if style_group.parent_info.pc_wt %}{{ "%.2f" | format(style_group.parent_info.pc_wt) }} lb{% else %}N/A{% endif %}</div>
-                                </div>
-                            </div>
-
-                            <div class="si-group">
-                                <div class="si-group-title">{{ te('INFO') }}</div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Location') }}</span>
-                                    <div class="si-value" onclick="openLocationPopup('{{ style_group.parent_info.style }}', event)" style="cursor: pointer;">
-                                        <span class="si-loc-edit">{{ te('Edit') }}</span>
-                                        {% if style_group.location %}
-                                            {% set locations = style_group.location.split(',') %}
-                                            {% for loc in locations %}
-                                            <span class="si-chip">{{ loc.strip() }}</span>
-                                            {% endfor %}
-                                        {% else %}
-                                            {{ te('N/A') }}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">{{ te('Created Date') }}</span>
-                                    <div class="si-value">{{ style_group.parent_info.create_dt or 'N/A' }}</div>
-                                </div>
-                                <div class="si-field">
-                                    <span class="si-label">OMS_Description</span>
-                                    <div class="si-value">
-                                    {% if style_group.oms_description %}
-                                        {% if style_group.oms_description is string %}
-                                            {{ style_group.oms_description | linkify_container_desc }}
-                                        {% else %}
-                                            {% for desc in style_group.oms_description %}
-                                            {{ desc | linkify_container_desc }}{% if not loop.last %}, {% endif %}
-                                            {% endfor %}
-                                        {% endif %}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                    </div>
-                                </div>
-                            </div>
+                            {{ pd_style_spec_groups(style_group) }}
                         </div>
                     </div>
                 </div>
@@ -2342,6 +2400,22 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="history-section pd-panel pd-mobile-extra-specs">
+                <div class="history-header collapsed" onclick="togglePdPanel(this)">
+                    <div>
+                        <i class="fas fa-chevron-down"></i>
+                        <i class="fas fa-ruler-combined"></i>
+                        {{ te('Masterbox') }} / {{ te('Bag_Size') }}
+                        <span class="pd-panel-kicker">{{ style_group.style }}</span>
+                    </div>
+                </div>
+                <div class="history-content pd-panel-content" style="display: none;">
+                    <div class="pd-extra-specs-grid">
+                        {{ pd_style_spec_groups(style_group, include_basic=true) }}
                     </div>
                 </div>
             </div>

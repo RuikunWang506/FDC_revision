@@ -643,6 +643,21 @@
         </a>
         {%- endif %}
 
+        {%- if tool_allowed('box_price_checker') %}
+        <a href="/box_price_checker" class="tool-card" data-category="admin" data-tool="box_price_checker">
+          <div class="card-header">
+            <i class="fas fa-box-open"></i>
+            <h3>{{ _('tool.box_price_checker.title') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'box_price_checker')"></i>
+          </div>
+          <p>{{ _('tool.box_price_checker.desc') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
+
         {%- if tool_allowed('audit') %}
         <a href="/audit" class="tool-card" data-category="admin" data-tool="audit">
           <div class="card-header">

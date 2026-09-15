@@ -35,30 +35,35 @@
         }
 
         .page-shell {
-            max-width: 1550px;
+            max-width: 1480px;
             margin: 0 auto;
-            padding: 20px 18px 32px;
+            padding: 12px 16px 28px;
         }
 
         .hero-card {
             background: linear-gradient(135deg, #0f3c99, #2563eb 60%, #38bdf8);
             color: #fff;
-            border-radius: 18px;
-            padding: 18px 22px;
-            box-shadow: 0 16px 32px rgba(30, 64, 175, 0.25);
-            margin-bottom: 16px;
+            border-radius: 16px;
+            padding: 14px 18px;
+            box-shadow: 0 12px 24px rgba(30, 64, 175, 0.22);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .hero-card h1 {
             margin: 0;
-            font-size: 1.9rem;
+            font-size: 1.45rem;
             font-weight: 700;
             letter-spacing: 0.2px;
         }
 
         .hero-sub {
-            margin-top: 6px;
-            font-size: 0.95rem;
+            margin: 0;
+            font-size: 0.88rem;
             opacity: 0.95;
         }
 
@@ -73,80 +78,157 @@
         }
 
         .search-card {
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
         }
 
         .search-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
             flex-wrap: wrap;
         }
 
         #customerNameInput {
             flex: 1;
-            min-width: 240px;
+            min-width: 220px;
             border: 1px solid #bfcae8;
             border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 1rem;
+            padding: 9px 12px;
+            font-size: 0.98rem;
             background: #fbfdff;
         }
 
-        #checkCustomerButton {
+        #checkCustomerButton,
+        #listCustomerButton {
             border-radius: 10px;
-            padding: 10px 16px;
+            padding: 9px 14px;
             font-weight: 600;
+            white-space: nowrap;
+        }
+
+        #checkCustomerButton {
             border: none;
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #fff;
+        }
+
+        #listCustomerButton {
+            background: #fff;
+            color: #1d4ed8;
+            border: 1px solid #9db7ef;
         }
 
         .results-card {
-            padding: 14px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
         }
 
-        #customerResults table,
-        #nullEntries table {
-            width: 100%;
-            margin-top: 12px;
-            border-collapse: collapse;
+        .results-card.is-compact .results-groups {
+            display: none;
         }
 
-        #customerResults th,
-        #customerResults td,
-        #nullEntries th,
-        #nullEntries td {
-            padding: 9px 10px;
-            text-align: center;
-            border: 1px solid #e4ebf7;
-            font-size: 0.92rem;
+        .results-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
-        #customerResults th,
-        #nullEntries th {
-            position: sticky;
-            top: 0;
-            z-index: 3;
-            background: #f2f6ff;
-            color: #1b3470;
+        .results-head h4 {
+            margin: 0;
+            color: #14306c;
             font-weight: 700;
         }
 
-        #customerResults tr:nth-child(even),
-        #nullEntries tr:nth-child(even) {
-            background-color: #f8fbff;
+        .results-meta {
+            color: var(--muted);
+            font-size: 0.86rem;
+            font-weight: 600;
         }
-        
+
+        .results-toggle {
+            border: 1px solid #c3d4f8;
+            background: #fff;
+            color: #20407d;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .results-groups {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .result-group {
+            min-width: 0;
+            border: 1px solid #e4ebf7;
+            border-radius: 12px;
+            background: #fbfdff;
+            padding: 10px;
+        }
+
+        .result-group h5 {
+            margin: 0 0 8px;
+            color: #1b3470;
+            font-size: 0.92rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .result-group .count-pill {
+            background: #eef4ff;
+            border-radius: 999px;
+            padding: 1px 8px;
+            font-size: 0.78rem;
+        }
+
+        #withOrdersTable,
+        #withoutOrdersTable {
+            width: 100% !important;
+        }
+
+        #withOrdersTable th,
+        #withOrdersTable td,
+        #withoutOrdersTable th,
+        #withoutOrdersTable td {
+            padding: 7px 8px;
+            text-align: left;
+            border: 1px solid #e4ebf7;
+            font-size: 0.86rem;
+        }
+
+        .customer-id-link {
+            color: #1d4ed8;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .customer-id-link:hover {
+            text-decoration: underline;
+        }
+
+        tr.selected-customer {
+            background: #e7f0ff !important;
+        }
+
         .details-container {
             display: grid;
-            grid-template-columns: 1.1fr 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 12px;
         }
 
         .customer-info-panel {
-            margin-top: 20px;
+            margin-top: 0;
         }
         
         .details-section {
@@ -164,6 +246,7 @@
 
         .customer-info-panel .details-section {
             padding: 14px;
+            overflow: visible;
         }
 
         .info-tabs {
@@ -226,6 +309,86 @@
             word-break: break-word;
         }
 
+        .info-edit-hint {
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin: -4px 0 10px;
+        }
+
+        .info-card.is-editable {
+            cursor: text;
+            position: relative;
+        }
+
+        .info-card.is-editable:hover {
+            background: #eef6ff;
+            outline: 2px solid #93c5fd;
+        }
+
+        .info-card.is-editing {
+            background: #fffbeb;
+            outline: 2px solid #f59e0b;
+            z-index: 6;
+        }
+
+        .info-edit-input {
+            width: 100%;
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 0.96rem;
+            font-weight: 600;
+            box-sizing: border-box;
+        }
+
+        .info-edit-popup {
+            position: absolute;
+            right: 8px;
+            bottom: -16px;
+            display: flex;
+            gap: 6px;
+            z-index: 7;
+            background: #fff;
+            border: 1px solid #c3d4f8;
+            border-radius: 999px;
+            padding: 4px 6px;
+            box-shadow: 0 8px 18px rgba(23, 45, 103, 0.16);
+        }
+
+        .info-save-btn,
+        .info-cancel-btn {
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .info-save-btn {
+            border: none;
+            background: #1d4ed8;
+            color: #fff;
+        }
+
+        .info-save-btn:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        .info-cancel-btn {
+            background: #fff;
+            color: #334155;
+            border: 1px solid #d6e1f6;
+        }
+
+        .info-edit-error {
+            color: #b91c1c;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
         .table.dataTable thead th,
         table.dataTable thead th {
             background: #f2f6ff;
@@ -240,9 +403,15 @@
             color: #20407d !important;
         }
         
+        @media (max-width: 1100px) {
+            .results-groups {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 992px) {
             .hero-card h1 {
-                font-size: 1.5rem;
+                font-size: 1.28rem;
             }
 
             .details-section {
@@ -252,6 +421,179 @@
             .details-container {
                 grid-template-columns: 1fr;
             }
+        }
+
+        .orders-section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .section-toggle-head {
+            cursor: pointer;
+            user-select: none;
+            border-radius: 10px;
+            padding: 4px 2px;
+        }
+
+        .section-toggle-head:hover h4 {
+            color: #16356e;
+        }
+
+        .section-toggle-head h4::before {
+            content: '▶';
+            display: inline-block;
+            margin-right: 8px;
+            color: #3b5aaa;
+            font-size: 0.82rem;
+            transition: transform 0.15s ease;
+        }
+
+        .details-section:not(.is-collapsed) .section-toggle-head h4::before {
+            transform: rotate(90deg);
+        }
+
+        .details-section.is-collapsed .section-body {
+            display: none;
+        }
+
+        .details-section.is-collapsed .orders-section-head,
+        .details-section.is-collapsed .section-toggle-head {
+            margin-bottom: 0;
+        }
+
+        .order-item-filter,
+        .order-section-search {
+            border: 1px solid #bfcae8;
+            border-radius: 8px;
+            padding: 6px 10px;
+            min-width: 220px;
+            font-size: 0.86rem;
+            background: #fff;
+        }
+
+        .order-search-haystack {
+            display: none;
+        }
+
+        .orders-section-head h4 {
+            margin-bottom: 4px;
+        }
+
+        .orders-hint {
+            color: var(--muted);
+            font-size: 0.86rem;
+            font-weight: 500;
+        }
+
+        .orders-total-pill {
+            background: #eef4ff;
+            border: 1px solid #cddcf8;
+            color: #1b3470;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        #orderNumbersTable tbody tr.order-summary-row {
+            cursor: pointer;
+        }
+
+        #orderNumbersTable tbody tr.order-summary-row:hover {
+            background: #eef5ff;
+        }
+
+        #orderNumbersTable tbody tr.order-summary-row.shown {
+            background: #e7f0ff;
+        }
+
+        .order-num-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .order-num-cell::before {
+            content: '▶';
+            color: #3b5aaa;
+            width: 12px;
+            display: inline-block;
+            transition: transform 0.15s ease;
+        }
+
+        tr.order-summary-row.shown .order-num-cell::before {
+            transform: rotate(90deg);
+        }
+
+        .invoice-link {
+            color: #1d4ed8;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .invoice-link:hover {
+            text-decoration: underline;
+        }
+
+        .invoice-missing {
+            color: #b45309;
+            font-weight: 700;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 0.82rem;
+        }
+
+        .order-expand {
+            background: #f8fbff;
+            border: 1px solid #dbe6f8;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .order-expand-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .order-expand-meta a {
+            color: #1d4ed8;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .order-expand-table {
+            margin-bottom: 0;
+            background: #fff;
+        }
+
+        .order-expand-table th {
+            background: #f2f6ff;
+            color: #1b3470;
+            font-size: 0.82rem;
+        }
+
+        .order-expand-empty {
+            color: var(--muted);
+            margin: 8px 0 0;
+        }
+
+        td.order-detail-child {
+            padding: 10px 12px !important;
+            background: #f4f8ff !important;
+            text-align: left;
         }
         /* Loading overlay styles */
         .loading-overlay {
@@ -294,53 +636,54 @@
     </div>
     <div class="hero-card">
         <h1>{{ te('Customer V2') }}</h1>
-        <div class="hero-sub">{{ te('Search customers, inspect profile details, and review order behavior in one view.') }}</div>
+        <div class="hero-sub">{{ te('Search or list customers, then open a profile and order history.') }}</div>
     </div>
 
     <div class="search-card">
         <div class="search-row">
             <input type="text" id="customerNameInput" placeholder="{{ te('Search by customer name or customer ID') }}">
-            <button id="checkCustomerButton" class="btn btn-primary" onclick="checkCustomerId()">{{ te('Find Customer') }}</button>
+            <button id="checkCustomerButton" class="btn btn-primary" type="button" onclick="checkCustomerId()">{{ te('Find Customer') }}</button>
+            <button id="listCustomerButton" class="btn" type="button" onclick="listCustomers()">{{ te('List Customer') }}</button>
         </div>
     </div>
     
-    <div id="resultsSection" class="mt-3 results-card" style="display: none;">
-        <!-- Matched Results -->
-        <div id="customerResults" class="justify-content-center text-center">
+    <div id="resultsSection" class="results-card" style="display: none;">
+        <div class="results-head">
             <h4>{{ te('Matched Results') }}</h4>
-            <table class="table table-bordered table-striped justify-content-center text-center">
-                <thead>
-                    <tr>
-                        <th>{{ te('Customer Name') }}</th>
-                        <th>{{ te('Customer ID') }}</th>
-                        <th>{{ te('Order Date') }}</th>
-                        <th>{{ te('Order #') }}</th>
-                        <th>{{ te('Source') }}</th>
-                    </tr>
-                </thead>
-                <tbody id="customerResultsBody"></tbody>
-            </table>
+            <div class="results-meta" id="resultsMeta"></div>
+            <button type="button" class="results-toggle" id="toggleResultsBtn">{{ te('Hide list') }}</button>
         </div>
-    
-        <!-- Null Entries -->
-        <h4 id="nullEntriesHeader" class="mt-4" style="cursor: pointer; color: #007bff;">
-            ▶ Customers Without Valid Orders
-        </h4>
-        
-        <!-- Null Entries Table (initially hidden) -->
-        <div id="nullEntriesTable" style="display: none;">
-            <table class="table table-bordered table-striped justify-content-center text-center">
-                <thead>
-                    <tr>
-                        <th>{{ te('Customer Name') }}</th>
-                        <th>{{ te('Customer ID') }}</th>
-                        <th>{{ te('Order Date') }}</th>
-                        <th>{{ te('Order #') }}</th>
-                        <th>{{ te('Source') }}</th>
-                    </tr>
-                </thead>
-                <tbody id="nullEntriesBody"></tbody>
-            </table>
+        <div class="results-groups" id="resultsGroups">
+            <section class="result-group">
+                <h5>{{ te('With valid orders') }} <span class="count-pill" id="withOrdersCount">0</span></h5>
+                <table id="withOrdersTable" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>{{ te('Customer Name') }}</th>
+                            <th>{{ te('Customer ID') }}</th>
+                            <th>{{ te('Order Date') }}</th>
+                            <th>{{ te('Order #') }}</th>
+                            <th>{{ te('Source') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+            <section class="result-group">
+                <h5>{{ te('Without valid orders') }} <span class="count-pill" id="withoutOrdersCount">0</span></h5>
+                <table id="withoutOrdersTable" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>{{ te('Customer Name') }}</th>
+                            <th>{{ te('Customer ID') }}</th>
+                            <th>{{ te('Order Date') }}</th>
+                            <th>{{ te('Order #') }}</th>
+                            <th>{{ te('Source') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
         </div>
     </div>
 
@@ -373,103 +716,518 @@
         function hideLoading() {
             document.getElementById('loadingOverlay').style.display = 'none';
         }
+
+        const customerPageText = {
+            orders: {{ te('Orders') | tojson }},
+            total: {{ te('Total') | tojson }},
+            clickToExpand: {{ te('Click a row to expand order details') | tojson }},
+            order: {{ te('Order') | tojson }},
+            date: {{ te('Date') | tojson }},
+            invoice: {{ te('Invoice') | tojson }},
+            orderAmount: {{ te('Order Amount') | tojson }},
+            notInvoiced: {{ te('not invoiced') | tojson }},
+            productSummary: {{ te('Product Summary') | tojson }},
+            sku: {{ te('SKU') | tojson }},
+            ordered: {{ te('ordered') | tojson }},
+            prices: {{ te('Prices') | tojson }},
+            openOrderLookup: {{ te('Open in Order Lookup') | tojson }},
+            po: {{ te('PO') | tojson }},
+            line: {{ te('Line') | tojson }},
+            description: {{ te('Description') | tojson }},
+            qty: {{ te('Qty') | tojson }},
+            price: {{ te('Price') | tojson }},
+            noItems: {{ te('No line items') | tojson }},
+            withOrders: {{ te('With valid orders') | tojson }},
+            withoutOrders: {{ te('Without valid orders') | tojson }},
+            hideList: {{ te('Hide list') | tojson }},
+            showList: {{ te('Show list') | tojson }},
+            listingCustomers: {{ te('Listing customers...') | tojson }},
+            searchingCustomers: {{ te('Searching for customer...') | tojson }},
+            searchWithinOrder: {{ te('Search within this order') | tojson }},
+            searchOrdersAndSkus: {{ te('Search orders and SKUs') | tojson }},
+            clickToOpenSection: {{ te('Click the header to expand. Search box also matches SKUs inside orders.') | tojson }},
+            clickToExpandSection: {{ te('Click the header to expand.') | tojson }},
+            doubleClickToEdit: {{ te('Double-click a field to edit') | tojson }},
+            save: {{ te('Save') | tojson }},
+            cancel: {{ te('Cancel') | tojson }},
+            saveFailed: {{ te('Could not save this field') | tojson }},
+            saving: {{ te('Saving...') | tojson }}
+        };
+
+        function escapeHtml(value) {
+            if (value === undefined || value === null) {
+                return '';
+            }
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function displayCustomerFieldValue(value) {
+            const text = value === undefined || value === null ? '' : String(value).trim();
+            return text === '' ? 'N/A' : text;
+        }
+
+        function closeCustomerFieldEdit(card, value) {
+            const popup = card.querySelector('.info-edit-popup');
+            if (popup) {
+                popup.remove();
+            }
+            const errorEl = card.querySelector('.info-edit-error');
+            if (errorEl) {
+                errorEl.remove();
+            }
+            card.classList.remove('is-editing', 'is-saving');
+            card.setAttribute('data-value', value);
+            const valueEl = card.querySelector('.info-value');
+            valueEl.textContent = displayCustomerFieldValue(value);
+        }
+
+        function cancelCustomerFieldEdit(card) {
+            closeCustomerFieldEdit(card, card.getAttribute('data-value') || '');
+        }
+
+        function showCustomerFieldError(card, message) {
+            let errorEl = card.querySelector('.info-edit-error');
+            if (!errorEl) {
+                errorEl = document.createElement('div');
+                errorEl.className = 'info-edit-error';
+                card.appendChild(errorEl);
+            }
+            errorEl.textContent = message || customerPageText.saveFailed;
+        }
+
+        function saveCustomerFieldEdit(card) {
+            if (!card || card.classList.contains('is-saving')) {
+                return;
+            }
+            const input = card.querySelector('.info-edit-input');
+            const field = card.getAttribute('data-field');
+            const context = window.currentCustomerContext || {};
+            const original = card.getAttribute('data-value') || '';
+            const nextValue = input ? String(input.value || '').trim() : original;
+            if (!field || !context.customerId || !context.databaseOrigin) {
+                cancelCustomerFieldEdit(card);
+                return;
+            }
+            if (nextValue === original) {
+                closeCustomerFieldEdit(card, original);
+                return;
+            }
+            const saveBtn = card.querySelector('.info-save-btn');
+            card.classList.add('is-saving');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = customerPageText.saving;
+            }
+            $.ajax({
+                type: 'POST',
+                url: '/update_customer_field',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    customer_id: context.customerId,
+                    database: context.databaseOrigin,
+                    field: field,
+                    value: nextValue
+                }),
+                success: function(response) {
+                    if (response && response.success) {
+                        closeCustomerFieldEdit(card, response.value != null ? response.value : nextValue);
+                    } else {
+                        card.classList.remove('is-saving');
+                        if (saveBtn) {
+                            saveBtn.disabled = false;
+                            saveBtn.textContent = customerPageText.save;
+                        }
+                        showCustomerFieldError(card, response && response.message);
+                    }
+                },
+                error: function(xhr) {
+                    card.classList.remove('is-saving');
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = customerPageText.save;
+                    }
+                    const message = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : customerPageText.saveFailed;
+                    showCustomerFieldError(card, message);
+                }
+            });
+        }
+
+        function startCustomerFieldEdit(card) {
+            if (!card || !card.classList.contains('is-editable') || card.classList.contains('is-editing')) {
+                return;
+            }
+            const panel = document.getElementById('customerInfoPanel');
+            panel.querySelectorAll('.info-card.is-editing').forEach((openCard) => {
+                if (openCard !== card) {
+                    cancelCustomerFieldEdit(openCard);
+                }
+            });
+            const original = card.getAttribute('data-value') || '';
+            const valueEl = card.querySelector('.info-value');
+            card.classList.add('is-editing');
+            valueEl.innerHTML = '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'info-edit-input';
+            input.maxLength = 80;
+            input.value = original;
+            const popup = document.createElement('div');
+            popup.className = 'info-edit-popup';
+            popup.innerHTML = `
+                <button type="button" class="info-save-btn">${escapeHtml(customerPageText.save)}</button>
+                <button type="button" class="info-cancel-btn">${escapeHtml(customerPageText.cancel)}</button>
+            `;
+            valueEl.appendChild(input);
+            card.appendChild(popup);
+            input.focus();
+            input.select();
+            popup.querySelector('.info-save-btn').addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                saveCustomerFieldEdit(card);
+            });
+            popup.querySelector('.info-cancel-btn').addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                cancelCustomerFieldEdit(card);
+            });
+            input.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    saveCustomerFieldEdit(card);
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    cancelCustomerFieldEdit(card);
+                }
+            });
+        }
+
+        function formatMoney(value) {
+            const amount = parseFloat(value || 0);
+            return '$' + amount.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function invoiceCell(order) {
+            const invoiceNumber = (order && order.invoice_number) ? String(order.invoice_number).trim() : '';
+            if (invoiceNumber && invoiceNumber !== 'not invoiced' && invoiceNumber !== '0') {
+                const url = order.invoice_lookup_url || ('/invoice_lookup/' + encodeURIComponent(invoiceNumber));
+                return `<a class="invoice-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(invoiceNumber)}</a>`;
+            }
+            return `<span class="invoice-missing">${escapeHtml(customerPageText.notInvoiced)}</span>`;
+        }
+
+        function orderItemHaystack(order) {
+            const items = Array.isArray(order && order.items) ? order.items : [];
+            return items.map((item) => [
+                item.sku,
+                item.description,
+                item.qty,
+                item.line,
+                item.price
+            ].filter((value) => value !== undefined && value !== null && String(value).trim() !== '').join(' ')).join(' ');
+        }
+
+        function orderSearchHaystack(order) {
+            const header = [
+                order.order_number,
+                order.date,
+                order.invoice_number,
+                order.po_number,
+                order.order_amount != null ? order.order_amount : order.total
+            ];
+            return header.concat([orderItemHaystack(order)]).filter(Boolean).join(' ');
+        }
+
+        function applyOrderItemFilter($expand, term) {
+            const query = String(term || '').trim().toLowerCase();
+            $expand.find('.order-expand-table tbody tr').each(function() {
+                const hay = $(this).text().replace(/\s+/g, ' ').toLowerCase();
+                $(this).toggle(!query || hay.indexOf(query) !== -1);
+            });
+        }
+
+        function bindOrderExpand($row) {
+            const $child = $row.next('tr.order-detail-child');
+            $child.off('click.orderExpandGuard').on('click.orderExpandGuard', function(event) {
+                event.stopPropagation();
+            });
+            $child.find('.order-item-filter').off('input.orderFilter').on('input.orderFilter', function() {
+                this.removeAttribute('data-synced-search');
+                applyOrderItemFilter($child, this.value);
+            });
+        }
+
+        function renderOrderDetails(orderNumber) {
+            const order = (window.customerOrdersByNumber || {})[String(orderNumber)] || {};
+            const items = Array.isArray(order.items) ? order.items : [];
+            const lookupUrl = order.order_lookup_url || ('/order_lookup/' + encodeURIComponent(orderNumber));
+            const poLabel = order.po_number
+                ? `${escapeHtml(customerPageText.po)}: ${escapeHtml(order.po_number)}`
+                : '';
+            const itemRows = items.map((item) => {
+                const sku = item.sku || '';
+                return `<tr>
+                    <td>${escapeHtml(item.line === 0 || item.line ? item.line : '')}</td>
+                    <td><a href="/item_lookup/${encodeURIComponent(sku)}" target="_blank" rel="noopener">${escapeHtml(sku)}</a></td>
+                    <td>${escapeHtml(item.description || '')}</td>
+                    <td>${escapeHtml(item.qty)}</td>
+                    <td>${formatMoney(item.price)}</td>
+                </tr>`;
+            }).join('');
+
+            return `
+                <div class="order-expand">
+                    <div class="order-expand-meta">
+                        <div>${poLabel}</div>
+                        ${items.length ? `<input type="search" class="order-item-filter" placeholder="${escapeHtml(customerPageText.searchWithinOrder)}" aria-label="${escapeHtml(customerPageText.searchWithinOrder)}">` : ''}
+                        <a href="${escapeHtml(lookupUrl)}" target="_blank" rel="noopener">${escapeHtml(customerPageText.openOrderLookup)}</a>
+                    </div>
+                    ${items.length ? `
+                        <table class="table table-bordered table-striped order-expand-table">
+                            <thead>
+                                <tr>
+                                    <th>${escapeHtml(customerPageText.line)}</th>
+                                    <th>${escapeHtml(customerPageText.sku)}</th>
+                                    <th>${escapeHtml(customerPageText.description)}</th>
+                                    <th>${escapeHtml(customerPageText.qty)}</th>
+                                    <th>${escapeHtml(customerPageText.price)}</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemRows}</tbody>
+                        </table>
+                    ` : `<p class="order-expand-empty">${escapeHtml(customerPageText.noItems)}</p>`}
+                </div>
+            `;
+        }
+
+        function toggleOrderRow($row) {
+            const table = $('#orderNumbersTable').DataTable();
+            const dtRow = table.row($row);
+            const orderNumber = $row.attr('data-order-number');
+            if (dtRow.child.isShown()) {
+                dtRow.child.hide();
+                $row.removeClass('shown');
+            } else {
+                dtRow.child(renderOrderDetails(orderNumber), 'order-detail-child').show();
+                $row.addClass('shown');
+                bindOrderExpand($row);
+            }
+        }
+
+        function collapseAllOrderRows(table) {
+            table.rows().every(function() {
+                if (this.child.isShown()) {
+                    this.child.hide();
+                    $(this.node()).removeClass('shown');
+                }
+            });
+        }
+
+        function expandCollapsibleSection(section) {
+            const head = section.querySelector('.section-toggle-head');
+            if (!section.classList.contains('is-collapsed')) {
+                const table = section.querySelector('table');
+                if (table && $.fn.DataTable.isDataTable(table)) {
+                    $(table).DataTable().columns.adjust();
+                }
+                return;
+            }
+            if (head) {
+                head.click();
+            }
+        }
+
+        function bindCollapsibleSection(section) {
+            const head = section.querySelector('.section-toggle-head');
+            if (!head) {
+                return;
+            }
+            const setExpanded = () => {
+                head.setAttribute('aria-expanded', section.classList.contains('is-collapsed') ? 'false' : 'true');
+            };
+            setExpanded();
+            head.addEventListener('click', (event) => {
+                if (event.target.closest('input, a, button')) {
+                    return;
+                }
+                section.classList.toggle('is-collapsed');
+                setExpanded();
+                if (!section.classList.contains('is-collapsed')) {
+                    const table = section.querySelector('table');
+                    if (table && $.fn.DataTable.isDataTable(table)) {
+                        $(table).DataTable().columns.adjust();
+                    }
+                }
+            });
+            head.addEventListener('keydown', (event) => {
+                if (event.target.closest('input')) {
+                    return;
+                }
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    head.click();
+                }
+            });
+        }
+
+        function bindOrderSectionSearch(section, table) {
+            const input = section.querySelector('.order-section-search');
+            if (!input) {
+                return;
+            }
+            const runSearch = () => {
+                expandCollapsibleSection(section);
+                collapseAllOrderRows(table);
+                table.search(input.value).draw();
+            };
+            input.addEventListener('click', (event) => event.stopPropagation());
+            input.addEventListener('keydown', (event) => event.stopPropagation());
+            input.addEventListener('focus', () => expandCollapsibleSection(section));
+            input.addEventListener('input', runSearch);
+        }
         
         $(document).ready(function() {
-            $('#toggleNullEntries').on('click', function() {
-                const nullEntriesDiv = $('#nullEntries');
-                if (nullEntriesDiv.hasClass('show')) {
-                    $(this).text('Show Customers Without Valid Orders');
-                } else {
-                    $(this).text('Hide Customers Without Valid Orders');
+            $('#toggleResultsBtn').on('click', function() {
+                const section = document.getElementById('resultsSection');
+                const compact = section.classList.toggle('is-compact');
+                this.textContent = compact ? customerPageText.showList : customerPageText.hideList;
+            });
+
+            $('#customerInfoPanel').on('dblclick', '.info-card.is-editable', function(event) {
+                if ($(event.target).closest('input,button').length) {
+                    return;
+                }
+                startCustomerFieldEdit(this);
+            });
+
+            $('#resultsSection').on('click', 'a.customer-id-link', function (event) {
+                event.preventDefault();
+                $('#resultsSection tr').removeClass('selected-customer');
+                $(this).closest('tr').addClass('selected-customer');
+                const customerId = this.getAttribute('data-id');
+                const databaseOrigin = this.getAttribute('data-db');
+                if (customerId && databaseOrigin) {
+                    getCustomerDetails(customerId, databaseOrigin);
                 }
             });
         });
 
-        function checkCustomerId() {
-    const customerName = document.getElementById('customerNameInput').value;
-    const currentUser = document.getElementById('currentUser').value;
-    
-    if (!customerName) {
-        alert("Please enter a customer name.");
-        return;
-    }
-
-    // Clear previous customer details
-    const allDetailsDiv = document.getElementById('allCustomerDetails');
-    const customerInfoPanel = document.getElementById('customerInfoPanel');
-    customerInfoPanel.innerHTML = "";
-    allDetailsDiv.innerHTML = "";
-
-    // Show loading overlay
-    showLoading("Searching for customer...");
-
-    $.ajax({
-        type: "POST",
-        url: "/check_customer",
-        data: JSON.stringify({ 
-            customer_name: customerName,
-            username: currentUser  // Include the username in the request
-        }),
-        contentType: "application/json",
-        success: function(response) {
-            // Hide loading overlay
-            hideLoading();
-            
-            const resultsDiv = document.getElementById('customerResultsBody');
-            const nullEntriesBody = document.getElementById('nullEntriesBody');
-            resultsDiv.innerHTML = ""; // Clear previous results
-            nullEntriesBody.innerHTML = ""; // Clear previous null entries
-
-            if (response.success) {
-                response.data.forEach(row => {
-                    resultsDiv.innerHTML += `
-                        <tr>
-                            <td>${row.cus_nm}</td>
-                            <td><a href="#" onclick="getCustomerDetails('${row.cus_id}', '${row.database_origin}')">${row.cus_id.trim()}</a></td>
-                            <td>${row.formatted_ord_dt || 'N/A'}</td>
-                            <td>${row.max_ord_num || 'N/A'}</td>
-                            <td>${row.database_origin}</td>
-                        </tr>`;
-                });
-
-                // Show the results section
-                document.getElementById('resultsSection').style.display = 'block';
-
-                // Handle null entries
-                response.null_data.forEach(row => {
-                    nullEntriesBody.innerHTML += `
-                        <tr>
-                            <td>${row.cus_nm}</td>
-                            <td>${row.cus_id.trim()}</td>
-                            <td>${row.formatted_ord_dt || 'N/A'}</td>
-                            <td>${row.max_ord_num || 'N/A'}</td>
-                            <td>${row.database_origin}</td>
-                        </tr>`;
-                });
-
-                // Show or hide the null entries section
-                if (response.null_data.length > 0) {
-                    $('#nullEntries').collapse('show'); // Show null entries if there are any
-                } else {
-                    $('#nullEntries').collapse('hide'); // Hide if there are none
+        function destroyCustomerResultTables() {
+            ['#withOrdersTable', '#withoutOrdersTable'].forEach((selector) => {
+                if ($.fn.DataTable.isDataTable(selector)) {
+                    $(selector).DataTable().destroy();
                 }
-                
-                // Auto-click the first customer ID link if there's only one valid result
-                if (response.data.length === 1) {
-                    const firstResult = response.data[0];
-                    getCustomerDetails(firstResult.cus_id, firstResult.database_origin);
-                }
-            } else {
-                resultsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
-            }
-        },
-        error: function() {
-            // Hide loading overlay
-            hideLoading();
-            alert("An error occurred while checking the customer ID.");
+            });
         }
-    });
-}
+
+        function customerResultRow(row) {
+            const customerId = String(row.cus_id || '').trim();
+            const databaseOrigin = row.database_origin || '';
+            const source = row.source_label || databaseOrigin;
+            return `
+                <tr>
+                    <td>${escapeHtml(row.cus_nm)}</td>
+                    <td>
+                        <a class="customer-id-link" href="#" data-id="${escapeHtml(customerId)}" data-db="${escapeHtml(databaseOrigin)}">${escapeHtml(customerId)}</a>
+                    </td>
+                    <td>${escapeHtml(row.formatted_ord_dt || 'N/A')}</td>
+                    <td>${escapeHtml(row.max_ord_num || 'N/A')}</td>
+                    <td>${escapeHtml(source)}</td>
+                </tr>`;
+        }
+
+        function initCustomerResultTable(selector) {
+            return $(selector).DataTable({
+                order: [[0, 'asc']],
+                paging: true,
+                searching: true,
+                info: true,
+                autoWidth: false,
+                pageLength: 15,
+                lengthMenu: [[10, 15, 25, 50, 100, -1], [10, 15, 25, 50, 100, 'All']],
+                language: {
+                    emptyTable: '—'
+                }
+            });
+        }
+
+        function renderCustomerResults(response, options) {
+            const settings = options || {};
+            const withOrders = response.data || [];
+            const withoutOrders = response.null_data || [];
+            destroyCustomerResultTables();
+            document.querySelector('#withOrdersTable tbody').innerHTML = withOrders.map(customerResultRow).join('');
+            document.querySelector('#withoutOrdersTable tbody').innerHTML = withoutOrders.map(customerResultRow).join('');
+            document.getElementById('withOrdersCount').textContent = withOrders.length;
+            document.getElementById('withoutOrdersCount').textContent = withoutOrders.length;
+            document.getElementById('resultsMeta').textContent =
+                `${customerPageText.withOrders} ${withOrders.length} · ${customerPageText.withoutOrders} ${withoutOrders.length}`;
+
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.style.display = 'block';
+            resultsSection.classList.remove('is-compact');
+            document.getElementById('toggleResultsBtn').textContent = customerPageText.hideList;
+
+            initCustomerResultTable('#withOrdersTable');
+            initCustomerResultTable('#withoutOrdersTable');
+
+            if (settings.autoOpen && withOrders.length === 1 && withoutOrders.length === 0) {
+                getCustomerDetails(withOrders[0].cus_id, withOrders[0].database_origin);
+            }
+        }
+
+        function searchCustomers(url, loadingMessage, autoOpen) {
+            const customerName = document.getElementById('customerNameInput').value;
+            const currentUser = document.getElementById('currentUser').value;
+            document.getElementById('customerInfoPanel').innerHTML = '';
+            document.getElementById('allCustomerDetails').innerHTML = '';
+            showLoading(loadingMessage);
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify({
+                    customer_name: customerName,
+                    username: currentUser
+                }),
+                contentType: 'application/json',
+                success: function(response) {
+                    hideLoading();
+                    if (response.success) {
+                        renderCustomerResults(response, { autoOpen: !!autoOpen });
+                    } else {
+                        document.getElementById('resultsSection').style.display = 'block';
+                        document.getElementById('resultsMeta').textContent = response.message || 'Error';
+                    }
+                },
+                error: function() {
+                    hideLoading();
+                    alert('An error occurred while checking the customer ID.');
+                }
+            });
+        }
+
+        function checkCustomerId() {
+            const customerName = document.getElementById('customerNameInput').value;
+            if (!customerName) {
+                alert('Please enter a customer name.');
+                return;
+            }
+            searchCustomers('/check_customer', customerPageText.searchingCustomers, true);
+        }
+
+        function listCustomers() {
+            searchCustomers('/list_customers', customerPageText.listingCustomers, false);
+        }
 
         function getCustomerDetails(customerId, databaseOrigin) {
             // Get the current user
@@ -486,12 +1244,17 @@
             
             $.ajax({
                 type: "GET",
-                url: `/customer_details/${customerId}?db=${databaseOrigin}&username=${currentUser}`, // Pass the username as a query parameter
+                url: `/customer_details/${encodeURIComponent(String(customerId).trim())}?db=${encodeURIComponent(databaseOrigin)}&username=${encodeURIComponent(currentUser)}`,
                 success: function(response) {
                     // Hide loading overlay
                     hideLoading();
                     
                     if (response.success) {
+                        const resultsSection = document.getElementById('resultsSection');
+                        if (resultsSection.style.display === 'block') {
+                            resultsSection.classList.add('is-compact');
+                            document.getElementById('toggleResultsBtn').textContent = customerPageText.showList;
+                        }
                         const summary = response.customer_summary || {};
                         const profile = response.customer_profile || {};
 
@@ -505,29 +1268,32 @@
                         function renderInfoGrid(items) {
                             return `
                                 <div class="info-grid">
-                                    ${items.map(item => `
-                                        <div class="info-card">
+                                    ${items.map(item => {
+                                        const raw = item.value === undefined || item.value === null ? '' : String(item.value);
+                                        const editable = Boolean(item.field);
+                                        return `
+                                        <div class="info-card${editable ? ' is-editable' : ''}"${editable ? ` data-field="${escapeHtml(item.field)}" data-value="${escapeHtml(raw)}"` : ''}>
                                             <div class="info-label">${item.label}</div>
-                                            <div class="info-value">${safeValue(item.value)}</div>
-                                        </div>
-                                    `).join('')}
+                                            <div class="info-value">${escapeHtml(safeValue(item.value))}</div>
+                                        </div>`;
+                                    }).join('')}
                                 </div>
                             `;
                         }
 
                         const profileTab = renderInfoGrid([
-                            {label: 'Customer Name', value: summary.customer_name},
+                            {label: 'Customer Name', value: summary.customer_name || profile.customer_name, field: 'customer_name'},
                             {label: 'Customer ID', value: summary.customer_id || customerId},
                             {label: 'Database', value: summary.database || databaseOrigin},
                             {label: 'Status', value: profile.status},
-                            {label: 'Customer Type', value: profile.customer_type},
+                            {label: 'Customer Type', value: profile.customer_type, field: 'customer_type'},
                             {label: 'Customer Since', value: profile.customer_since},
-                            {label: 'Phone 1', value: profile.phone_1},
-                            {label: 'Phone 2', value: profile.phone_2},
-                            {label: 'Phone 3', value: profile.phone_3},
-                            {label: 'Fax', value: profile.fax},
-                            {label: 'Email', value: profile.email},
-                            {label: 'Web', value: profile.web},
+                            {label: 'Phone 1', value: profile.phone_1, field: 'phone_1'},
+                            {label: 'Phone 2', value: profile.phone_2, field: 'phone_2'},
+                            {label: 'Phone 3', value: profile.phone_3, field: 'phone_3'},
+                            {label: 'Fax', value: profile.fax, field: 'fax'},
+                            {label: 'Email', value: profile.email, field: 'email'},
+                            {label: 'Web', value: profile.web, field: 'web'},
                             {label: 'Total Orders', value: summary.total_orders ?? 0},
                             {label: 'Total Order Lines', value: summary.total_order_lines ?? 0},
                             {label: 'Unique SKUs', value: summary.total_skus ?? 0},
@@ -539,39 +1305,40 @@
                         ]);
 
                         const billingTab = renderInfoGrid([
-                            {label: 'Billing Address 1', value: profile.billing_address_1},
-                            {label: 'Billing Address 2', value: profile.billing_address_2},
-                            {label: 'Billing City', value: profile.billing_city},
-                            {label: 'Billing State', value: profile.billing_state},
-                            {label: 'Billing Zip', value: profile.billing_zip},
-                            {label: 'Billing Country', value: profile.billing_country}
+                            {label: 'Billing Address 1', value: profile.billing_address_1, field: 'billing_address_1'},
+                            {label: 'Billing Address 2', value: profile.billing_address_2, field: 'billing_address_2'},
+                            {label: 'Billing City', value: profile.billing_city, field: 'billing_city'},
+                            {label: 'Billing State', value: profile.billing_state, field: 'billing_state'},
+                            {label: 'Billing Zip', value: profile.billing_zip, field: 'billing_zip'},
+                            {label: 'Billing Country', value: profile.billing_country, field: 'billing_country'}
                         ]);
 
                         const shippingTab = renderInfoGrid([
-                            {label: 'Shipping Address 1', value: profile.shipping_address_1},
-                            {label: 'Shipping Address 2', value: profile.shipping_address_2},
-                            {label: 'Shipping City', value: profile.shipping_city},
-                            {label: 'Shipping State', value: profile.shipping_state},
-                            {label: 'Shipping Zip', value: profile.shipping_zip},
-                            {label: 'Shipping Country', value: profile.shipping_country},
-                            {label: 'Ship Via', value: profile.ship_via},
-                            {label: 'Ship Type', value: profile.ship_type}
+                            {label: 'Shipping Address 1', value: profile.shipping_address_1, field: 'shipping_address_1'},
+                            {label: 'Shipping Address 2', value: profile.shipping_address_2, field: 'shipping_address_2'},
+                            {label: 'Shipping City', value: profile.shipping_city, field: 'shipping_city'},
+                            {label: 'Shipping State', value: profile.shipping_state, field: 'shipping_state'},
+                            {label: 'Shipping Zip', value: profile.shipping_zip, field: 'shipping_zip'},
+                            {label: 'Shipping Country', value: profile.shipping_country, field: 'shipping_country'},
+                            {label: 'Ship Via', value: profile.ship_via, field: 'ship_via'},
+                            {label: 'Ship Type', value: profile.ship_type, field: 'ship_type'}
                         ]);
 
                         const salesTab = renderInfoGrid([
-                            {label: 'Sales Rep 1', value: profile.sales_rep_1},
-                            {label: 'Sales Rep 2', value: profile.sales_rep_2},
-                            {label: 'Sales Rep 3', value: profile.sales_rep_3},
-                            {label: 'Sales Rep 4', value: profile.sales_rep_4},
-                            {label: 'Department', value: profile.department},
-                            {label: 'Terms', value: profile.terms},
-                            {label: 'Terms Description', value: profile.terms_description}
+                            {label: 'Sales Rep 1', value: profile.sales_rep_1, field: 'sales_rep_1'},
+                            {label: 'Sales Rep 2', value: profile.sales_rep_2, field: 'sales_rep_2'},
+                            {label: 'Sales Rep 3', value: profile.sales_rep_3, field: 'sales_rep_3'},
+                            {label: 'Sales Rep 4', value: profile.sales_rep_4, field: 'sales_rep_4'},
+                            {label: 'Department', value: profile.department, field: 'department'},
+                            {label: 'Terms', value: profile.terms, field: 'terms'},
+                            {label: 'Terms Description', value: profile.terms_description, field: 'terms_description'}
                         ]);
 
                         const summarySection = document.createElement('div');
                         summarySection.className = 'details-section';
                         summarySection.innerHTML = `
                             <h4>Customer Info</h4>
+                            <div class="info-edit-hint">${escapeHtml(customerPageText.doubleClickToEdit)}</div>
                             <div class="info-tabs" role="tablist" aria-label="Customer Info Tabs">
                                 <button type="button" class="info-tab-btn active" data-tab="profile">Profile</button>
                                 <button type="button" class="info-tab-btn" data-tab="billing">Billing</button>
@@ -584,44 +1351,99 @@
                             <div class="info-tab-pane" data-pane="sales">${salesTab}</div>
                         `;
 
-                        const detailsSection = document.createElement('div');
-                        detailsSection.className = 'details-section';
-                        detailsSection.innerHTML = `<h4>Customer Order History</h4><div id="customerOrderHistory">${response.data}</div>`;
-                        
+                        const orders = response.unique_order_numbers || [];
+                        const productRows = response.product_summary_rows || [];
+                        window.customerOrdersByNumber = {};
+                        orders.forEach((order) => {
+                            window.customerOrdersByNumber[String(order.order_number)] = order;
+                        });
+
+                        const ordersTotal = orders.reduce((sum, order) => {
+                            return sum + (parseFloat(order.order_amount != null ? order.order_amount : order.total) || 0);
+                        }, 0);
+
                         const orderNumbersSection = document.createElement('div');
-                        orderNumbersSection.className = 'details-section';
+                        orderNumbersSection.className = 'details-section is-collapsed';
                         orderNumbersSection.innerHTML = `
-                            <h4>Unique Order Numbers</h4>
+                            <div class="orders-section-head section-toggle-head" role="button" tabindex="0" aria-expanded="false">
+                                <div>
+                                    <h4>${escapeHtml(customerPageText.orders)} (${orders.length})</h4>
+                                    <div class="orders-hint">${escapeHtml(customerPageText.clickToOpenSection)}</div>
+                                </div>
+                                <input type="search" class="order-section-search" placeholder="${escapeHtml(customerPageText.searchOrdersAndSkus)}" aria-label="${escapeHtml(customerPageText.searchOrdersAndSkus)}">
+                                <div class="orders-total-pill">${escapeHtml(customerPageText.total)} ${formatMoney(ordersTotal)}</div>
+                            </div>
+                            <div class="section-body">
                             <table id="orderNumbersTable" class="table table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>{{ te('Order') }}</th>
-                                        <th>{{ te('Date') }}</th>
-                                        <th>Item total</th>
-                                        <th>Handling</th>
-                                        <th>Misc</th>
-                                        <th>{{ te('Total') }}</th>
+                                        <th>${escapeHtml(customerPageText.order)}</th>
+                                        <th>${escapeHtml(customerPageText.date)}</th>
+                                        <th>${escapeHtml(customerPageText.invoice)}</th>
+                                        <th>${escapeHtml(customerPageText.orderAmount)}</th>
+                                        <th class="order-search-haystack">${escapeHtml(customerPageText.sku)}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${response.unique_order_numbers.map(order => `
-                                        <tr>
-                                            <td><a href="${order.order_lookup_url}">${order.order_number}</a></td>
-                                            <td>${order.date}</td>
-                                            <td>${parseFloat(order.ord_amt || 0).toFixed(2)}</td>
-                                            <td>${parseFloat(order.handl_fee || 0).toFixed(2)}</td>
-                                            <td>${parseFloat(order.misc_chg || 0).toFixed(2)}</td>
-                                            <td>${parseFloat(order.total || 0).toFixed(2)}</td>
-                                        </tr>
-                                    `).join('')}
+                                    ${orders.map(order => {
+                                        const orderNumber = String(order.order_number);
+                                        const lookupUrl = order.order_lookup_url || (`/order_lookup/${encodeURIComponent(orderNumber)}`);
+                                        const amount = order.order_amount != null ? order.order_amount : order.total;
+                                        return `
+                                        <tr class="order-summary-row" data-order-number="${escapeHtml(orderNumber)}">
+                                            <td>
+                                                <div class="order-num-cell">
+                                                    <a href="${escapeHtml(lookupUrl)}" target="_blank" rel="noopener">${escapeHtml(orderNumber)}</a>
+                                                </div>
+                                            </td>
+                                            <td data-order="${escapeHtml(order.date_sort || '')}">${escapeHtml(order.date || 'N/A')}</td>
+                                            <td>${invoiceCell(order)}</td>
+                                            <td data-order="${parseFloat(amount || 0).toFixed(2)}">${formatMoney(amount)}</td>
+                                            <td class="order-search-haystack">${escapeHtml(orderSearchHaystack(order))}</td>
+                                        </tr>`;
+                                    }).join('')}
                                 </tbody>
                             </table>
+                            </div>
                         `;
-                        
+
                         const productSummarySection = document.createElement('div');
-                        productSummarySection.className = 'details-section';
-                        productSummarySection.innerHTML = `<div id="productSummary">${response.product_summary}</div>`;
-                        
+                        productSummarySection.className = 'details-section is-collapsed';
+                        productSummarySection.innerHTML = `
+                            <div class="orders-section-head section-toggle-head" role="button" tabindex="0" aria-expanded="false">
+                                <div>
+                                    <h4>${escapeHtml(customerPageText.productSummary)} (${productRows.length})</h4>
+                                    <div class="orders-hint">${escapeHtml(customerPageText.clickToExpandSection)}</div>
+                                </div>
+                            </div>
+                            <div class="section-body">
+                            <table id="product_summary_table" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>${escapeHtml(customerPageText.sku)}</th>
+                                        <th>${escapeHtml(customerPageText.ordered)}</th>
+                                        <th>${escapeHtml(customerPageText.prices)}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${productRows.map((row) => {
+                                        const sku = row.sku || '';
+                                        const prices = Array.isArray(row.prices) ? row.prices.map((price) => parseFloat(price).toFixed(2)).join(' ,') : '';
+                                        return `<tr>
+                                            <td><a href="/item_lookup/${encodeURIComponent(sku)}" target="_blank" rel="noopener">${escapeHtml(sku)}</a></td>
+                                            <td>${escapeHtml(row.total_qty)}</td>
+                                            <td>${escapeHtml(prices)}</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                            </div>
+                        `;
+
+                        window.currentCustomerContext = {
+                            customerId: String(customerId).trim(),
+                            databaseOrigin: databaseOrigin
+                        };
                         customerInfoPanel.appendChild(summarySection);
 
                         summarySection.querySelectorAll('.info-tab-btn').forEach((btn) => {
@@ -636,13 +1458,40 @@
                             });
                         });
 
-                        allDetailsDiv.appendChild(detailsSection);
-                        allDetailsDiv.appendChild(productSummarySection);
                         allDetailsDiv.appendChild(orderNumbersSection);
+                        allDetailsDiv.appendChild(productSummarySection);
+                        bindCollapsibleSection(orderNumbersSection);
+                        bindCollapsibleSection(productSummarySection);
 
-                        // Initialize DataTable for order numbers
-                        $('#orderNumbersTable').DataTable({
-                            "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
+                        if ($.fn.DataTable.isDataTable('#orderNumbersTable')) {
+                            $('#orderNumbersTable').DataTable().destroy();
+                        }
+                        if ($.fn.DataTable.isDataTable('#product_summary_table')) {
+                            $('#product_summary_table').DataTable().destroy();
+                        }
+
+                        const orderTable = $('#orderNumbersTable').DataTable({
+                            "order": [[1, "desc"]],
+                            "scrollX": false,
+                            "autoWidth": false,
+                            "paging": true,
+                            "searching": true,
+                            "info": true,
+                            "pageLength": 100,
+                            "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
+                            "dom": 'Blrtip',
+                            "buttons": [{
+                                extend: 'excelHtml5',
+                                exportOptions: { columns: [0, 1, 2, 3] }
+                            }],
+                            "columnDefs": [
+                                { targets: 4, visible: false, searchable: true }
+                            ]
+                        });
+                        bindOrderSectionSearch(orderNumbersSection, orderTable);
+
+                        $('#product_summary_table').DataTable({
+                            "order": [[1, "desc"]],
                             "scrollX": true,
                             "autoWidth": false,
                             "paging": true,
@@ -654,38 +1503,12 @@
                             "buttons": ['excelHtml5']
                         });
 
-                        setTimeout(function() {
-                            if ($.fn.DataTable.isDataTable('#customer_details_table')) {
-                                $('#customer_details_table').DataTable().destroy();
+                        $('#allCustomerDetails').off('click.orderExpand').on('click.orderExpand', '#orderNumbersTable tbody tr.order-summary-row', function (event) {
+                            if ($(event.target).closest('a,button').length) {
+                                return;
                             }
-                            if ($.fn.DataTable.isDataTable('#product_summary_table')) {
-                                $('#product_summary_table').DataTable().destroy();
-                            }
-
-                            $('#customer_details_table').DataTable({
-                                "order": [[0, "desc"]], // Sort by the first column (Order Number) in descending order
-                                "scrollX": true,
-                                "autoWidth": false,
-                                "paging": true,
-                                "searching": true,
-                                "info": true,
-                                "pageLength": 100,
-                                "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-                                "dom": 'Blfrtip',
-                                "buttons": ['excelHtml5']
-                            });
-                                $('#product_summary_table').DataTable({
-                                "scrollX": true,
-                                "autoWidth": false,
-                                "paging": true,
-                                "searching": true,
-                                "info": true,
-                                "pageLength": 100,
-                                "lengthMenu": [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "All"]],
-                                "dom": 'Blfrtip',
-                                "buttons": ['excelHtml5']
-                            });
-                        }, 100);
+                            toggleOrderRow($(this));
+                        });
                     } else {
                         allDetailsDiv.innerHTML = `<div class='alert alert-danger'>${response.message}</div>`;
                     }
@@ -703,13 +1526,6 @@
                 event.preventDefault();
                 checkCustomerId();
             }
-        });
-        
-        document.getElementById('nullEntriesHeader').addEventListener('click', function () {
-            const table = document.getElementById('nullEntriesTable');
-            const visible = table.style.display === 'block';
-            table.style.display = visible ? 'none' : 'block';
-            this.textContent = (visible ? '▶' : '▼') + ' Customers Without Valid Orders';
         });
 
         // Auto-fill and search if URL hash is present or search_id parameter is provided

@@ -1385,7 +1385,7 @@
                                 </div>
                                 <div style="color: #666; font-size: 13px; margin-top: 5px;">
                                     Invoice #
-                                    <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number) }}"
+                                    <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number, db=header_info.database) }}"
                                        target="_blank"
                                        rel="noopener"
                                        style="color: #4a90e2; text-decoration: none; font-weight: 600;">
@@ -1542,7 +1542,7 @@
                         <span class="info-label"><i class="fas fa-file-invoice mr-2"></i>{{ te('Invoice #:') }}</span>
                         <span class="info-value">
                             {% if header_info.invoice_number and header_info.invoice_number != 'not invoiced' %}
-                                <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number) }}" 
+                                <a href="{{ url_for('invoice_lookup.invoice_lookup', invoice_number=header_info.invoice_number, db=header_info.database) }}" 
                                    target="_blank" 
                                    style="color: #4a90e2; text-decoration: none; font-weight: 600; transition: all 0.3s;">
                                     {{ header_info.invoice_number }}
@@ -1944,7 +1944,6 @@
     </main>
 
     <!-- JavaScript Dependencies -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
@@ -2009,7 +2008,16 @@
 
         function openBlobPdfInNewTab(blob) {
             const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
+            const opened = window.open(url, '_blank');
+            if (!opened) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
             setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
         }
 
@@ -2375,6 +2383,9 @@
             });
 
             // Initialize all tables except items_table and info_list_table (which are initialized separately)
+            if (typeof $.fn.DataTable !== 'function') {
+                console.error('DataTables did not load; label and table actions will still bind.');
+            } else {
             $('.table').not('#items_table').not('#info_list_table').DataTable({
                 "paging": true,
                 "searching": true,
@@ -2484,6 +2495,7 @@
                     }
                 }
             });
+            }
 
             // Save Order Notes
             $('#saveOrderNotesBtn').on('click', function(e) {
@@ -2737,6 +2749,17 @@
                     alert('Please enter total boxes (positive number).');
                     return;
                 }
+                // Open during the click so popup blockers do not swallow the PDF after fetch.
+                let preview = null;
+                try {
+                    preview = window.open('about:blank', '_blank');
+                    if (preview) {
+                        preview.document.write('<p style="font-family:sans-serif;padding:16px;">Generating label PDF…</p>');
+                        preview.document.close();
+                    }
+                } catch (e) {
+                    // Keep the tab if it opened; document.write is optional.
+                }
                 const originalHtml = $btn.html();
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Generating…');
                 try {
@@ -2757,12 +2780,23 @@
                         } catch (e) { /* ignore */ }
                         throw new Error(msg);
                     }
+                    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+                    if (contentType.indexOf('pdf') === -1) {
+                        throw new Error('Server did not return a PDF. Refresh the page and sign in again.');
+                    }
                     const blob = await response.blob();
-                    const $modal = $('#etaFashionLabelModal');
-                    hideModalThenRun($modal, function() {
+                    const url = URL.createObjectURL(blob);
+                    if (preview && !preview.closed) {
+                        preview.location = url;
+                    } else {
                         openBlobPdfInNewTab(blob);
-                    });
+                    }
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 60000);
+                    hideModalThenRun($('#etaFashionLabelModal'), function() {});
                 } catch (err) {
+                    if (preview && !preview.closed) {
+                        try { preview.close(); } catch (e) { /* ignore */ }
+                    }
                     alert(err.message || 'Failed to generate special labels.');
                 } finally {
                     $btn.prop('disabled', false).html(originalHtml);
@@ -3426,7 +3460,7 @@
                     </div>
                     <small class="text-muted d-block mt-2">
                         <strong>{{ te('4-in-1 Letter') }}</strong> — US Letter (8.5×11), four 8.5×2.75 labels per page.
-                        <strong>{{ te('Label 4×6') }}</strong> — horizontal 6×4 landscape, one label per sheet (fills page width).
+                        <strong>{{ te('Label 4×6') }}</strong> — horizontal 6×4 landscape, one full-page label per sheet.
                         Vendor prefilled FDC; box numbers 1 through total.
                     </small>
                 </div>

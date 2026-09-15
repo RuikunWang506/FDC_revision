@@ -24,6 +24,7 @@ CSRF_EXEMPT_ENDPOINTS = frozenset(
         "whatnot_live.ingest",
         "whatnot_live.public_state",
         "whatnot_live.webrtc_signal",
+        "mobile_app.mobile_login",
     }
 )
 

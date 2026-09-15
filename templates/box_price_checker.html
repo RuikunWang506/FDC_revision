@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('page.box_price_checker.title') }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/box_price_checker.css') }}?v=2">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page bpc-page">
+  <header class="page-header">
+    <div>
+      <p class="bpc-kicker">{{ _('page.box_price_checker.kicker') }}</p>
+      <h1>{{ _('page.box_price_checker.title') }}</h1>
+      <p class="bpc-lead">{{ _('page.box_price_checker.lead') }}</p>
+    </div>
+  </header>
+
+  <section class="bpc-card" aria-labelledby="bpcDimsHeading">
+    <div class="bpc-card-head">
+      <h2 id="bpcDimsHeading">{{ _('page.box_price_checker.dims') }}</h2>
+      <label class="bpc-tolerance">
+        <span>{{ _('page.box_price_checker.tolerance') }}</span>
+        <input id="bpcTolerance" type="number" min="0" max="6" step="0.25" value="0.5">
+        <span>{{ _('page.box_price_checker.inches') }}</span>
+      </label>
+    </div>
+    <div class="bpc-table-wrap">
+      <table class="bpc-table" id="bpcTable">
+        <thead>
+          <tr>
+            <th>{{ _('page.box_price_checker.length') }}</th>
+            <th>{{ _('page.box_price_checker.width') }}</th>
+            <th>{{ _('page.box_price_checker.height') }}</th>
+            <th class="bpc-actions-col"></th>
+          </tr>
+        </thead>
+        <tbody id="bpcBody"></tbody>
+      </table>
+    </div>
+    <div class="bpc-toolbar">
+      <button type="button" class="bpc-btn bpc-btn-muted" id="bpcAdd">
+        <i class="fas fa-plus"></i> {{ _('page.box_price_checker.add_row') }}
+      </button>
+      <button type="button" class="bpc-btn bpc-btn-primary" id="bpcCheck">
+        <i class="fas fa-search-dollar"></i> {{ _('page.box_price_checker.check') }}
+      </button>
+    </div>
+    <p class="bpc-hint">{{ _('page.box_price_checker.hint') }}</p>
+  </section>
+
+  <p class="bpc-status" id="bpcStatus" hidden></p>
+  <div class="bpc-results" id="bpcResults" aria-live="polite"></div>
+</div>
+
+<script>
+  window.BOX_PRICE_CHECKER = {
+    api: {{ url_for('box_price_checker.box_price_checker_api')|tojson }},
+    strings: {
+      length: {{ _('page.box_price_checker.length')|tojson }},
+      width: {{ _('page.box_price_checker.width')|tojson }},
+      height: {{ _('page.box_price_checker.height')|tojson }},
+      remove: {{ _('page.box_price_checker.remove')|tojson }},
+      needRow: {{ _('page.box_price_checker.need_row')|tojson }},
+      invalid: {{ _('page.box_price_checker.invalid')|tojson }},
+      loading: {{ _('page.box_price_checker.loading')|tojson }},
+      error: {{ _('page.box_price_checker.error')|tojson }},
+      noMatch: {{ _('page.box_price_checker.no_match')|tojson }},
+      exact: {{ _('page.box_price_checker.exact')|tojson }},
+      close: {{ _('page.box_price_checker.close_match')|tojson }},
+      unit: {{ _('page.box_price_checker.unit_price')|tojson }},
+      qty: {{ _('page.box_price_checker.qty')|tojson }},
+      quote: {{ _('page.box_price_checker.quote')|tojson }},
+      pack: {{ _('page.box_price_checker.pack_price')|tojson }},
+      bundle: {{ _('page.box_price_checker.bundle')|tojson }},
+      bundleBale: {{ _('page.box_price_checker.bundle_bale')|tojson }},
+      skid: {{ _('page.box_price_checker.skid')|tojson }},
+      open: {{ _('page.box_price_checker.open')|tojson }},
+      catalog: {{ _('page.box_price_checker.catalog')|tojson }},
+      best: {{ _('page.box_price_checker.best')|tojson }},
+      more: {{ _('page.box_price_checker.more')|tojson }},
+      sku: {{ _('page.box_price_checker.sku')|tojson }}
+    }
+  };
+</script>
+<script src="{{ url_for('static', filename='js/box_price_checker.js') }}?v=3"></script>
+</body>
+</html>

@@ -26,6 +26,8 @@ class LocaleTests(unittest.TestCase):
             "dashboard.no_match",
             "tool.smart_search.title",
             "page.smart_search.title",
+            "tool.box_price_checker.title",
+            "page.box_price_checker.title",
         ):
             self.assertIn(key, en)
             self.assertTrue(en[key])

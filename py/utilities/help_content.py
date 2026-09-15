@@ -54,6 +54,9 @@ ENDPOINT_TO_SLUG = {
     'invoice_lookup.invoice_lookup': 'page-invoice-lookup',
     'customer.customer_home': 'page-customer',
     'customer.customer_details': 'page-customer',
+    'customer.check_customer': 'page-customer',
+    'customer.list_customers': 'page-customer',
+    'customer.update_customer_field': 'page-customer',
     'order_lookup.order_lookup': 'page-order-lookup',
     'order_processor.order_processor': 'page-order-processor',
     'four_seller.four_seller_page': 'page-4seller',
@@ -84,6 +87,7 @@ ENDPOINT_TO_SLUG = {
     'pallet_detail.pallet_detail_root': 'page-pallet',
     'vendor_app.vendor_app_home': 'page-vendor-app',
     'vendor_app.vendor_erwan': 'page-vendor-app',
+    'box_price_checker.box_price_checker_page': 'page-box-price-checker',
     'help.index': 'page-help-center',
     'help.article': None,
 }

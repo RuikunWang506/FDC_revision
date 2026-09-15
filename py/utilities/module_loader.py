@@ -106,7 +106,7 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "import_path": "py.other.customer",
         "attr": "customer_bp",
         "kind": "blueprint",
-        "path_prefixes": ("/customer",),
+        "path_prefixes": ("/customer", "/check_customer", "/list_customers", "/customer_details", "/update_customer_field"),
         "tool_ids": ("customer",),
     },
     {
@@ -156,6 +156,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "kind": "blueprint",
         "path_prefixes": ("/smart_search", "/api/smart_search"),
         "tool_ids": ("smart_search",),
+    },
+    {
+        "name": "box_price_checker",
+        "import_path": "py.other.box_price_checker",
+        "attr": "box_price_checker_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/box_price_checker",),
+        "tool_ids": ("box_price_checker",),
     },
     {
         "name": "macy",
@@ -347,6 +355,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "attr": "four_seller_sales_bp",
         "kind": "blueprint",
         "path_prefixes": ("/4seller/sales",),
+        "tool_ids": (),
+    },
+    {
+        "name": "mobile_app",
+        "import_path": "py.other.mobile_app_api",
+        "attr": "mobile_app_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/api/mobile",),
         "tool_ids": (),
     },
     {

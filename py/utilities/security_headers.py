@@ -3,6 +3,27 @@ from __future__ import annotations
 
 from flask import Flask, request
 
+# Allow the CDNs templates already load (jsDelivr, DataTables, jQuery, unpkg, stackpath).
+# blob: is required for Print Center PDF preview iframes and scanner workers.
+# Cloudflare Insights is injected at the edge.
+CSP_POLICY = (
+    "default-src 'self'; "
+    "img-src 'self' data: blob: https:; "
+    "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com "
+    "https://cdn.datatables.net https://cdn.jsdelivr.net https://stackpath.bootstrapcdn.com; "
+    "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://challenges.cloudflare.com "
+    "https://cdn.datatables.net https://cdn.jsdelivr.net https://code.jquery.com "
+    "https://unpkg.com https://stackpath.bootstrapcdn.com https://static.cloudflareinsights.com; "
+    "connect-src 'self' https://challenges.cloudflare.com https://ipinfo.io "
+    "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com "
+    "https://fonts.gstatic.com https://static.cloudflareinsights.com; "
+    "frame-src 'self' blob: https://challenges.cloudflare.com; "
+    "worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com; "
+    "object-src 'none'; "
+    "base-uri 'self'"
+)
+
 
 def register_security_headers(app: Flask) -> None:
     @app.after_request
@@ -21,16 +42,5 @@ def register_security_headers(app: Flask) -> None:
                 "max-age=31536000; includeSubDomains",
             )
         # 'unsafe-inline' is a known follow-up: templates still use inline JS/CSS.
-        response.headers.setdefault(
-            "Content-Security-Policy",
-            "default-src 'self'; "
-            "img-src 'self' data: blob: https:; "
-            "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
-            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://challenges.cloudflare.com; "
-            "connect-src 'self' https://challenges.cloudflare.com https://ipinfo.io; "
-            "frame-src https://challenges.cloudflare.com; "
-            "object-src 'none'; "
-            "base-uri 'self'",
-        )
+        response.headers.setdefault("Content-Security-Policy", CSP_POLICY)
         return response

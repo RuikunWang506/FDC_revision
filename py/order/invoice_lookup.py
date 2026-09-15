@@ -32,22 +32,50 @@ def _erp_time_display(log_time) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d}"
 
 
-def generate_invoice(invoice_number):
-    """Query invoice data from the database"""
-    try:
-        # Determine the database based on the length of invoice_number
-        if len(invoice_number) == 5:
-            database_name = 'omsdata_FDC'
-        elif len(invoice_number) == 4:
-            database_name = 'oms_EF'
-        else:
-            current_app.logger.error(f"Invalid invoice number length: {invoice_number}")
-            return None, None
+def invoice_database_candidates(invoice_number, preferred_db=None):
+    """OMS invoice numbers are not 4/5 digits only; EF uses 3-digit and 6-digit values too."""
+    number = str(invoice_number or "").strip()
+    dbs = []
+    if preferred_db in ("omsdata_FDC", "oms_EF"):
+        dbs.append(preferred_db)
+    if len(number) == 5:
+        fallback = ("omsdata_FDC", "oms_EF")
+    else:
+        fallback = ("oms_EF", "omsdata_FDC")
+    for database_name in fallback:
+        if database_name not in dbs:
+            dbs.append(database_name)
+    return dbs
 
-        conn = pyodbc.connect(
-            f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
-        )
-        cursor = conn.cursor()
+
+def generate_invoice(invoice_number, preferred_db=None):
+    """Query invoice data from the database"""
+    invoice_number = str(invoice_number or "").strip()
+    if not invoice_number or invoice_number in ("0", "not invoiced"):
+        return None, None
+
+    last_error = None
+    for database_name in invoice_database_candidates(invoice_number, preferred_db):
+        try:
+            result = _generate_invoice_from_db(invoice_number, database_name)
+            if result:
+                return result
+        except Exception as e:
+            last_error = e
+            current_app.logger.error(
+                "Error fetching invoice %s from %s: %s", invoice_number, database_name, e
+            )
+    if last_error is None:
+        current_app.logger.warning("Invoice %s not found in OMS databases", invoice_number)
+    return None, None
+
+
+def _generate_invoice_from_db(invoice_number, database_name):
+    conn = pyodbc.connect(
+        f'DRIVER={sql_server_config["driver"]};SERVER={sql_server_config["server"]};DATABASE={database_name};UID={sql_server_config["username"]};PWD={sql_server_config["password"]}'
+    )
+    cursor = conn.cursor()
+    try:
 
         # Query invoice header information with order number
         invoice_query = """
@@ -95,9 +123,7 @@ def generate_invoice(invoice_number):
         invoice_row = cursor.fetchone()
         
         if not invoice_row:
-            cursor.close()
-            conn.close()
-            return None, None
+            return None
 
         invoice_date = invoice_row[25] or ""
         invoice_time = _erp_time_display(invoice_row[28])
@@ -133,7 +159,8 @@ def generate_invoice(invoice_number):
             'business_type': str(invoice_row[24]) if invoice_row[24] else 'N/A',
             'invoice_date': invoice_date or 'N/A',
             'process_date': invoice_row[26],
-            'order_number': str(invoice_row[27]) if invoice_row[27] else 'N/A'
+            'order_number': str(invoice_row[27]) if invoice_row[27] else 'N/A',
+            'database': database_name,
         }
 
         # Query invoice items
@@ -178,14 +205,21 @@ def generate_invoice(invoice_number):
         else:
             items_html = None
 
-        cursor.close()
-        conn.close()
-
         return header_info, items_html
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
-    except Exception as e:
-        current_app.logger.error(f"Error fetching invoice {invoice_number}: {e}")
-        return None, None
+
+def _preferred_invoice_db():
+    db = (request.args.get("db") or request.form.get("db") or "").strip()
+    return db if db in ("omsdata_FDC", "oms_EF") else None
 
 
 @invoice_lookup_bp.route("/invoice_lookup", methods=["GET", "POST"])
@@ -193,6 +227,7 @@ def generate_invoice(invoice_number):
 @login_required
 def invoice_lookup(invoice_number=None):
     """Invoice lookup route"""
+    preferred_db = _preferred_invoice_db()
     current_user = session['username']
     header_info = None
     items_html = None
@@ -204,7 +239,7 @@ def invoice_lookup(invoice_number=None):
             current_app.logger.info(
                 f"***{current_user}***__@@@searched invoice@@@ {invoice_number} ip={_request_client_ip()}"
             )
-            header_info, items_html = generate_invoice(invoice_number)
+            header_info, items_html = generate_invoice(invoice_number, preferred_db=preferred_db)
             
             if not header_info:
                 error_message = f"Invoice {invoice_number} not found"
@@ -215,7 +250,7 @@ def invoice_lookup(invoice_number=None):
         current_app.logger.info(
             f"***{current_user}***__@@@invoice via URL@@@ {invoice_number} ip={_request_client_ip()}"
         )
-        header_info, items_html = generate_invoice(invoice_number)
+        header_info, items_html = generate_invoice(invoice_number, preferred_db=preferred_db)
         
         if not header_info:
             error_message = f"Invoice {invoice_number} not found"
@@ -228,7 +263,7 @@ def invoice_lookup(invoice_number=None):
             current_app.logger.info(
                 f"***{current_user}***__@@@invoice via query@@@ {invoice_number} ip={_request_client_ip()}"
             )
-            header_info, items_html = generate_invoice(invoice_number)
+            header_info, items_html = generate_invoice(invoice_number, preferred_db=preferred_db)
             
             if not header_info:
                 error_message = f"Invoice {invoice_number} not found"

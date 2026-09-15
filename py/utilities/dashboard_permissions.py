@@ -36,6 +36,8 @@ PUBLIC_ENDPOINTS = frozenset(
         "whatnot_live.ingest",
         "whatnot_live.public_state",
         "whatnot_live.webrtc_signal",
+        "mobile_app.mobile_login",
+        "mobile_app.mobile_session",
     }
 )
 
@@ -70,6 +72,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "container": "fdcef_container_search",
     "whatnot_live": "whatnot_live",
     "smart_search": "smart_search",
+    "box_price_checker": "box_price_checker",
 }
 
 # Single source of truth for admin UI + home filtering (order = display order)
@@ -102,6 +105,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Warehouse"},
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Warehouse"},
     {"id": "smart_search", "title": "Smart Search", "category": "Admin"},
+    {"id": "box_price_checker", "title": "Box Price Checker", "category": "Admin"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
     {"id": "vendor_app", "title": "Vendor App", "category": "Admin"},
@@ -139,6 +143,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "fdcef_container_search": {"href": "/container_search", "label": "Containers"},
     "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
     "smart_search": {"href": "/smart_search", "label": "Search"},
+    "box_price_checker": {"href": "/box_price_checker", "label": "Box Price"},
     "audit": {"href": "/audit", "label": "Audit"},
     "manage_users": {"href": "/manage_users", "label": "Users"},
     "vendor_app": {"href": "/vendor_app", "label": "Vendor"},

@@ -7,6 +7,7 @@ import io
 import re
 
 # Import helper to fetch locations for SKUs so we can populate Location server-side
+from py.other.customer import format_oms_invoice_number
 from py.other.label_status import enrich_header_info
 from py.search.item_lookup import fetch_locations
 from py.utilities.setting import Config, login_required
@@ -587,10 +588,7 @@ def generate_order(order_number):
                 O.ORD_NUM AS order#, 
                 O.CUS_NM AS Customer, 
                 O.CUS_ID AS CUS#,
-                CASE 
-                    WHEN OD.INVS_NUM IS NULL OR OD.INVS_NUM = 0 THEN 'not invoiced'
-                    ELSE CAST(OD.INVS_NUM AS VARCHAR)
-                END AS invoice_num,
+                    OD.INVS_NUM AS invoice_num,
                 OD.PO_NUM AS PO#, 
                 OD.ORD_AMT AS order_amount,
                 OD.PAID_AMT AS paid_amount,
@@ -671,7 +669,8 @@ def generate_order(order_number):
             'order_number': str(df.iloc[0]['order#']),
             'customer': df.iloc[0]['Customer'],
             'customer_id': str(df.iloc[0]['CUS#']).strip(),
-            'invoice_number': df.iloc[0]['invoice_num'] if (pd.notna(df.iloc[0]['invoice_num']) and str(df.iloc[0]['invoice_num']).strip() not in ['0', 'not invoiced']) else 'not invoiced',
+            'invoice_number': format_oms_invoice_number(df.iloc[0]['invoice_num']),
+            'database': database_name,
             'po_number': df.iloc[0]['PO#'],
             'package_amount': f"${package_amount:,.2f}" if package_amount > 0 else 'N/A',
             'discount': f"${calculated_discount:,.2f}" if calculated_discount > 0 else 'N/A',
