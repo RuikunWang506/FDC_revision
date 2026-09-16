@@ -69,6 +69,17 @@ class DAMSyncServiceV2:
         except Exception:
             pass
 
+    def _mysql(self):
+        """Return a live MySQL connection, or None if DAM DB is down."""
+        connection = get_mysql_connection()
+        if connection is None:
+            self._emit("Cannot connect to MySQL; skipping this DAM sync step")
+            try:
+                log_event("error", "DAM sync skipped: MySQL connection is None")
+            except Exception:
+                pass
+        return connection
+
     def _note_added(self, filename: str, sku: str, source: str, path: str) -> None:
         if len(self.recent_added) >= self._recent_added_cap:
             return
@@ -193,7 +204,9 @@ class DAMSyncServiceV2:
         total_files = len(file_list)
         self._emit(f"Processing {total_files} catalog images...")
         
-        connection = get_mysql_connection()
+        connection = self._mysql()
+        if not connection:
+            return
         # Buffered cursor: SELECT ... fetchone() must not leave unread rows or the next
         # execute() raises "Unread result found" when duplicate sha256/filename rows exist.
         cursor = connection.cursor(buffered=True)
@@ -376,7 +389,9 @@ class DAMSyncServiceV2:
         total_files = len(file_list)
         self._emit(f"Processing {total_files} big picture images...")
         
-        connection = get_mysql_connection()
+        connection = self._mysql()
+        if not connection:
+            return
         cursor = connection.cursor(buffered=True)
         
         batch_count = 0
@@ -475,7 +490,9 @@ class DAMSyncServiceV2:
         """Update canonical image flags for each SKU"""
         self._emit("\n=== Updating Canonical Flags ===")
         
-        connection = get_mysql_connection()
+        connection = self._mysql()
+        if not connection:
+            return
         cursor = connection.cursor()
         
         # Get all unique SKUs

@@ -72,6 +72,42 @@ def _clean_ship_field(val) -> str:
     return s
 
 
+def _ship_to_display_lines(
+    cus_nm: str,
+    adr1: str,
+    adr2: str,
+    adr22: str,
+    adr3: str,
+    city: str,
+    state: str,
+    zip_code: str,
+    country: str,
+) -> list[str]:
+    """Build Ship To lines, including OMS address-2 overflow (SP_ADR_22)."""
+    lines = []
+    if cus_nm:
+        lines.append(cus_nm)
+    if adr1 and adr1.upper() != cus_nm.upper():
+        lines.append(adr1)
+    if adr2:
+        lines.append(adr2)
+    if adr22 and adr22.upper() != adr2.upper():
+        lines.append(adr22)
+    if adr3:
+        lines.append(adr3)
+    elif city or state or zip_code:
+        city_line = city
+        if state:
+            city_line = f"{city_line}, {state}" if city_line else state
+        if zip_code:
+            city_line = f"{city_line} {zip_code}".strip() if city_line else zip_code
+        if city_line:
+            lines.append(city_line)
+    if country:
+        lines.append(country)
+    return lines
+
+
 def fetch_order_ship_to_lines(order_number: str | int) -> tuple[list[str] | None, str | None]:
     """
     Ship-to lines matching order lookup display: SP_CUS_NM, street lines, city/state/zip.
@@ -92,7 +128,7 @@ def fetch_order_ship_to_lines(order_number: str | int) -> tuple[list[str] | None
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT SP_CUS_NM, SP_ADR, SP_ADR_2, SP_ADR_3,
+            SELECT SP_CUS_NM, SP_ADR, SP_ADR_2, SP_ADR_22, SP_ADR_3,
                    SP_ADR_CT, SP_ADR_ST, SP_ADR_ZP, SP_ADR_CN
             FROM dbo.orders
             WHERE ord_num = ?
@@ -105,34 +141,17 @@ def fetch_order_ship_to_lines(order_number: str | int) -> tuple[list[str] | None
         if not row:
             return None, f"Order {order_number} not found."
 
-        cus_nm = _clean_ship_field(row[0])
-        adr1 = _clean_ship_field(row[1])
-        adr2 = _clean_ship_field(row[2])
-        adr3 = _clean_ship_field(row[3])
-        city = _clean_ship_field(row[4])
-        state = _clean_ship_field(row[5])
-        zip_code = _clean_ship_field(row[6])
-        country = _clean_ship_field(row[7])
-
-        lines = []
-        if cus_nm:
-            lines.append(cus_nm)
-        if adr1 and adr1.upper() != cus_nm.upper():
-            lines.append(adr1)
-        if adr2:
-            lines.append(adr2)
-        if adr3:
-            lines.append(adr3)
-        elif city or state or zip_code:
-            city_line = city
-            if state:
-                city_line = f"{city_line}, {state}" if city_line else state
-            if zip_code:
-                city_line = f"{city_line} {zip_code}".strip() if city_line else zip_code
-            if city_line:
-                lines.append(city_line)
-        if country:
-            lines.append(country)
+        lines = _ship_to_display_lines(
+            _clean_ship_field(row[0]),
+            _clean_ship_field(row[1]),
+            _clean_ship_field(row[2]),
+            _clean_ship_field(row[3]),
+            _clean_ship_field(row[4]),
+            _clean_ship_field(row[5]),
+            _clean_ship_field(row[6]),
+            _clean_ship_field(row[7]),
+            _clean_ship_field(row[8]),
+        )
 
         if not lines:
             return None, "Ship-to address is empty for this order."
@@ -563,6 +582,7 @@ def generate_order(order_number):
                     TRK_NUM,
                     SP_ADR,
                     SP_ADR_2,
+                    SP_ADR_22,
                     SP_ADR_3,
                     SP_ADR_CT,
                     SP_ADR_ST,
@@ -614,6 +634,7 @@ def generate_order(order_number):
                 OD.TRK_NUM AS tracking_number,
                 OD.SP_ADR AS ship_address_1,
                 OD.SP_ADR_2 AS ship_address_2,
+                OD.SP_ADR_22 AS ship_address_22,
                 OD.SP_ADR_3 AS ship_address_3,
                 OD.SP_ADR_CT AS ship_to_city,
                 OD.SP_ADR_ST AS ship_to_state,
@@ -699,6 +720,7 @@ def generate_order(order_number):
             'tracking_number': str(df.iloc[0]['tracking_number']).strip() if pd.notna(df.iloc[0]['tracking_number']) and str(df.iloc[0]['tracking_number']).strip() else 'N/A',
             'ship_address_1': str(df.iloc[0]['ship_address_1']).strip() if pd.notna(df.iloc[0]['ship_address_1']) and str(df.iloc[0]['ship_address_1']).strip() else '',
             'ship_address_2': str(df.iloc[0]['ship_address_2']).strip() if pd.notna(df.iloc[0]['ship_address_2']) and str(df.iloc[0]['ship_address_2']).strip() else '',
+            'ship_address_22': str(df.iloc[0]['ship_address_22']).strip() if pd.notna(df.iloc[0]['ship_address_22']) and str(df.iloc[0]['ship_address_22']).strip() else '',
             'ship_address_3': str(df.iloc[0]['ship_address_3']).strip() if pd.notna(df.iloc[0]['ship_address_3']) and str(df.iloc[0]['ship_address_3']).strip() else '',
             'ship_to_city': str(df.iloc[0]['ship_to_city']).strip() if pd.notna(df.iloc[0]['ship_to_city']) and str(df.iloc[0]['ship_to_city']).strip() else 'N/A',
             'ship_to_state': str(df.iloc[0]['ship_to_state']).strip() if pd.notna(df.iloc[0]['ship_to_state']) and str(df.iloc[0]['ship_to_state']).strip() else 'N/A',
@@ -1579,33 +1601,21 @@ def gofo_availability():
     if not header_info:
         return jsonify({"ok": False, "error": f"Order {order_number} not found."}), 404
 
-    zip_code = normalize_zip(header_info.get("ship_to_zip"))
+    ship = _order_ship_context(header_info)
+    zip_code = normalize_zip(ship["zip"])
     if not zip_code or zip_code.upper() == "N/A":
         return jsonify({"ok": False, "error": "This order has no ship-to ZIP."}), 400
-
-    city = header_info.get("ship_to_city") or ""
-    state = header_info.get("ship_to_state") or ""
-    country = header_info.get("ship_to_country") or ""
-    phone = header_info.get("phone") or ""
-    name = (
-        header_info.get("ship_customer_name")
-        or header_info.get("customer")
-        or ""
-    ).strip()
-    adr1 = (header_info.get("ship_address_1") or "").strip()
-    adr2 = (header_info.get("ship_address_2") or "").strip()
-    street = adr2 or adr1
 
     current_user = session.get("username", "unknown")
 
     result = check_parcel_and_ground(
         zip_code=zip_code,
-        country=country,
-        state=state if state != "N/A" else "",
-        city=city if city != "N/A" else "",
-        street=street,
-        phone=phone if phone != "N/A" else "",
-        name=name,
+        country=ship["country"],
+        state=ship["state"],
+        city=ship["city"],
+        street=ship["street"],
+        phone=ship["phone"],
+        name=ship["name"],
     )
     if not result.get("ok"):
         return jsonify(result), 502
@@ -1638,6 +1648,7 @@ def _order_ship_context(header_info: dict) -> dict:
     ).strip()
     adr1 = (header_info.get("ship_address_1") or "").strip()
     adr2 = (header_info.get("ship_address_2") or "").strip()
+    adr22 = (header_info.get("ship_address_22") or "").strip()
     return {
         "zip": header_info.get("ship_to_zip") or "",
         "city": "" if city == "N/A" else city,
@@ -1645,7 +1656,7 @@ def _order_ship_context(header_info: dict) -> dict:
         "country": country,
         "phone": "" if phone == "N/A" else phone,
         "name": name,
-        "street": adr2 or adr1,
+        "street": adr22 or adr2 or adr1,
     }
 
 

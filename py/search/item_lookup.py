@@ -146,6 +146,103 @@ def _resolve_image_search_terms(user_input, df):
 
     return [], 'exact'
 
+
+ITEM_LOOKUP_IMAGE_SOURCES = ('catalog_original', 'catalog', 'dropbox')
+
+
+def _dataframe_has_inventory_rows(df):
+    return df is not None and hasattr(df, 'empty') and not df.empty
+
+
+def _lookup_item_catalog_images(user_input, df):
+    """Catalog / Dropbox pictures for a lookup, even when OMS has no style rows."""
+    search_terms, image_match_mode = _resolve_image_search_terms(user_input, df)
+    has_comma = ',' in (user_input or '')
+    sorted_image_urls = []
+    file_info = []
+    dam_assets = []
+    db = None
+    try:
+        db = py.utilities.models.SessionLocal()
+        for term in search_terms:
+            sku_filter = ImageAsset.sku.ilike(term) if image_match_mode == 'exact' else ImageAsset.sku.ilike(f'{term}%')
+            query = db.query(ImageAsset).filter(
+                sku_filter,
+                ImageAsset.is_active == True,
+                ImageAsset.source.in_(ITEM_LOOKUP_IMAGE_SOURCES)
+            )
+            if has_comma:
+                query = query.filter(ImageAsset.is_canonical == True)
+            dam_assets.extend(query.order_by(ImageAsset.version).all())
+        seen_filenames = set()
+        unique_dam_assets = []
+        for asset in dam_assets:
+            if asset.filename not in seen_filenames:
+                seen_filenames.add(asset.filename)
+                unique_dam_assets.append(asset)
+        dam_assets = unique_dam_assets
+    except Exception as e:
+        current_app.logger.error(f"Error querying DAM database: {e}")
+        dam_assets = []
+    finally:
+        if db is not None:
+            db.close()
+
+    if dam_assets:
+        for asset in dam_assets:
+            if _looks_like_hash_sku(asset.sku):
+                continue
+            file_info.append((
+                asset.filename,
+                asset.file_size,
+                asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown',
+                asset.width,
+                asset.height,
+                asset.version,
+                asset.is_canonical,
+                asset.sku
+            ))
+            sorted_image_urls.append(f'/image/{asset.id}/300')
+        combined = list(zip(sorted_image_urls, file_info))
+        combined.sort(key=lambda x: (-int(bool(x[1][6])), x[1][5] if x[1][5] is not None else 0))
+        sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
+        sorted_image_urls = list(sorted_image_urls)
+        file_info = list(file_info)
+        return sorted_image_urls, file_info, [info[0] for info in file_info]
+
+    matching_assets = []
+    for term in search_terms:
+        matching_assets.extend(search_assets_by_sku_pattern(term, source_filter=list(ITEM_LOOKUP_IMAGE_SOURCES)))
+    unique_assets = {}
+    for asset in matching_assets:
+        unique_assets[asset.id] = asset
+    matching_assets = list(unique_assets.values())
+    if has_comma:
+        canonical_assets = [asset for asset in matching_assets if asset.is_canonical]
+        if not canonical_assets:
+            canonical_assets = matching_assets
+    else:
+        canonical_assets = matching_assets
+
+    file_names = []
+    for asset in canonical_assets:
+        if _looks_like_hash_sku(asset.sku):
+            continue
+        file_names.append(asset.filename)
+        size = 0
+        if os.path.exists(asset.path):
+            size = os.path.getsize(asset.path)
+        modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
+        sku = asset.sku if asset.sku and not _looks_like_hash_sku(asset.sku) else ''
+        if not sku:
+            sku = asset.filename.split('.')[0].upper()
+            if _looks_like_hash_sku(sku):
+                sku = ''
+        file_info.append((asset.filename, size, modified_date, None, None, asset.version, asset.is_canonical, sku))
+        sorted_image_urls.append(get_asset_url(asset.id))
+    return sorted_image_urls, file_info, sort_filenames(file_names)
+
+
 @item_lookup_bp.route("/item_lookup", methods=["GET", "POST"])
 @item_lookup_bp.route("/item_lookup/<string:user_input>", methods=["GET"])
 @login_required
@@ -169,7 +266,14 @@ def item_lookup(user_input=None):
 
     # Handle cases where user_input is empty
     if not user_input:
-        return render_template("Item_lookup.html", excel_html=None, history_html=None, current_user=current_user, user_input=user_input)
+        return render_template(
+            "Item_lookup.html",
+            excel_html=None,
+            history_html=None,
+            current_user=current_user,
+            user_input=user_input,
+            no_products=False,
+        )
 
     # Continue with the rest of the logic if user_input is valid
     if user_input.endswith(","):
@@ -178,14 +282,19 @@ def item_lookup(user_input=None):
     # Generate Excel and history HTML
     excel_html, history_html, purchase_html, adjustment_html, _, user_input = generate_excel(user_input)
 
-    if not excel_html and not history_html and not purchase_html and not adjustment_html:  # If no valid data is found
-        return render_template("Item_lookup.html", excel_html=None, history_html=None, purchase_html=None, adjustment_html=None, current_user=current_user, user_input=user_input)
     # Process excel_html to add Location and Update_Date columns
     df = None
     if excel_html:
         from io import StringIO
-        df = pd.read_html(StringIO(excel_html))[0]  # Convert HTML to DataFrame
+        try:
+            df = pd.read_html(StringIO(excel_html))[0]  # Convert HTML to DataFrame
+        except Exception:
+            df = None
+        if not _dataframe_has_inventory_rows(df):
+            excel_html = None
+            df = None
 
+    if _dataframe_has_inventory_rows(df):
         # Add a row number column
         df.insert(0, '#', range(1, len(df) + 1))
 
@@ -238,125 +347,17 @@ def item_lookup(user_input=None):
             escape=False  # Allow HTML in headers and cells
         )
 
-    # Prepare image and file information - Enhanced with DAM system
-    search_terms, image_match_mode = _resolve_image_search_terms(user_input, df)
-    
-    # Determine if we should filter to canonical only (when multiple SKUs with comma)
-    has_comma = ',' in user_input
-    
-    # First, try to get assets from DAM database - catalog_original and dropbox sources
-    dam_assets = []
-    try:
-        db = py.utilities.models.SessionLocal()
-        for term in search_terms:
-            sku_filter = ImageAsset.sku.ilike(term) if image_match_mode == 'exact' else ImageAsset.sku.ilike(f'{term}%')
-            query = db.query(ImageAsset).filter(
-                sku_filter,
-                ImageAsset.is_active == True,
-                ImageAsset.source.in_(['catalog_original', 'dropbox'])
-            )
-            
-            # Only filter to canonical images if input has comma
-            if has_comma:
-                query = query.filter(ImageAsset.is_canonical == True)
-            
-            assets = query.order_by(ImageAsset.version).all()
-            dam_assets.extend(assets)
-        
-        # Remove duplicates based on filename
-        seen_filenames = set()
-        unique_dam_assets = []
-        for asset in dam_assets:
-            if asset.filename not in seen_filenames:
-                seen_filenames.add(asset.filename)
-                unique_dam_assets.append(asset)
-        dam_assets = unique_dam_assets
-        
-    except Exception as e:
-        current_app.logger.error(f"Error querying DAM database: {e}")
-        dam_assets = []
-    finally:
-        if 'db' in locals():
-            db.close()
+    no_products = not _dataframe_has_inventory_rows(df)
+    if no_products:
+        excel_html = None
+        if history_html and 'No item history' in history_html:
+            history_html = None
+        if purchase_html and 'No purchase history' in purchase_html:
+            purchase_html = None
+        if adjustment_html and 'No inventory adjustments' in adjustment_html:
+            adjustment_html = None
 
-    # If DAM has assets, use them; otherwise fall back to filesystem search
-    if dam_assets:
-        file_info = []
-        sorted_image_urls = []
-        for asset in dam_assets:
-            if _looks_like_hash_sku(asset.sku):
-                continue
-            file_info.append((
-                asset.filename,
-                asset.file_size,
-                asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown',
-                asset.width,
-                asset.height,
-                asset.version,
-                asset.is_canonical,
-                asset.sku
-            ))
-            sorted_image_urls.append(f'/image/{asset.id}/300')
-        
-        # Sort by canonical status (canonical first), then by version
-        combined = list(zip(sorted_image_urls, file_info))
-        combined.sort(key=lambda x: (-x[1][5], x[1][4]))  # canonical desc, version asc
-        sorted_image_urls, file_info = zip(*combined) if combined else ([], [])
-        sorted_file_names = [info[0] for info in file_info] if file_info else []
-        
-    else:
-        # Use DAM system to search for assets - catalog_original and dropbox sources
-        matching_assets = []
-        for term in search_terms:
-            assets = search_assets_by_sku_pattern(term, source_filter=['catalog_original', 'dropbox'])
-            matching_assets.extend(assets)
-            
-        # Remove duplicates by asset ID
-        unique_assets = {}
-        for asset in matching_assets:
-            unique_assets[asset.id] = asset
-        matching_assets = list(unique_assets.values())
-        
-        # Filter to only canonical images if input has comma (multiple SKUs)
-        if has_comma:
-            canonical_assets = [asset for asset in matching_assets if asset.is_canonical]
-            # If no canonical assets found, fall back to all assets
-            if not canonical_assets:
-                canonical_assets = matching_assets
-        else:
-            # Single SKU - show all images
-            canonical_assets = matching_assets
-        
-        # Convert assets to file_info format expected by template
-        file_info = []
-        file_names = []
-        sorted_image_urls = []
-        
-        for asset in canonical_assets:
-            if _looks_like_hash_sku(asset.sku):
-                continue
-            file_names.append(asset.filename)
-            
-            # Get file size if path exists
-            size = 0
-            if os.path.exists(asset.path):
-                size = os.path.getsize(asset.path)
-            
-            modified_date = asset.created_at.strftime('%Y-%m-%d %H:%M:%S') if asset.created_at else 'Unknown'
-            sku = asset.sku if asset.sku and not _looks_like_hash_sku(asset.sku) else ''
-            if not sku:
-                sku = asset.filename.split('.')[0].upper()
-                if _looks_like_hash_sku(sku):
-                    sku = ''
-            
-            file_info.append((asset.filename, size, modified_date, None, None, asset.version, asset.is_canonical, sku))
-            
-            # Use DAM URL for image access
-            image_url = get_asset_url(asset.id)
-            sorted_image_urls.append(image_url)
-        
-        # Sort file names using existing function
-        sorted_file_names = sort_filenames(file_names)
+    sorted_image_urls, file_info, sorted_file_names = _lookup_item_catalog_images(user_input, df)
 
     log_user_action(f"***{current_user}***__@@@search SKU@@@__ {user_input}", current_user)
     return render_template(
@@ -364,12 +365,13 @@ def item_lookup(user_input=None):
         excel_html=excel_html,
         history_html=history_html,
         purchase_html=purchase_html,
-        adjustment_html=adjustment_html,  # Add this
+        adjustment_html=adjustment_html,
         image_urls=sorted_image_urls,
         file_names=sorted_file_names,
         file_info=file_info,
         current_user=current_user,
-        user_input=user_input.capitalize()
+        user_input=user_input.capitalize(),
+        no_products=no_products,
     )
 
 @item_lookup_bp.route('/get_item_location', methods=['GET'])

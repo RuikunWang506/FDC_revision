@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   {% endif %}
   {% include '_csrf.html' %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=card-layout-1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v=bulletin-1">
   <style>
     .dashboard-wrapper {
       --fdc-dashboard-bg: url("{% if dashboard_bg is defined and dashboard_bg.url %}{{ dashboard_bg.url }}{% else %}{{ url_for('static', filename=dashboard_bg.file if dashboard_bg is defined else 'rocker-sta-qr8Ci2tzyR8.jpg') }}{% endif %}");
@@ -175,7 +175,41 @@
       <div class="dashboard-main" id="toolGrid">
         <div class="dash-hero">
           <h1>{{ _('dashboard.title') }}</h1>
+          {% if tool_allowed('bulletin') %}
+          <section class="dash-bulletin" aria-label="{{ _('bulletin.title') }}">
+            <div class="dash-bulletin-head">
+              <div>
+                <h2>{{ _('bulletin.title') }}</h2>
+                <p>{{ _('bulletin.home_hint') }}</p>
+              </div>
+              <div class="dash-bulletin-actions">
+                <a href="/bulletin">{{ _('bulletin.public') }}</a>
+                <a href="/bulletin?view=private">{{ _('bulletin.private') }}</a>
+                <a class="dash-bulletin-open" href="/bulletin">{{ _('bulletin.open_all') }}</a>
+              </div>
+            </div>
+            {% if bulletin_preview|default([]) %}
+            <div class="dash-bulletin-list">
+              {% for post in bulletin_preview %}
+              <a class="dash-bulletin-item" href="/bulletin#post-{{ post.id }}">
+                <div class="dash-bulletin-meta">
+                  <strong>{{ post.author }}</strong>
+                  <time data-ts="{{ post.created_at }}">{{ post.created_at }}</time>
+                </div>
+                <p>{{ post.text_preview or _('bulletin.file_only') }}</p>
+                {% if post.attachments %}
+                <span class="dash-bulletin-files">📎 {{ post.attachments|length }}</span>
+                {% endif %}
+              </a>
+              {% endfor %}
+            </div>
+            {% else %}
+            <a class="dash-bulletin-empty" href="/bulletin">{{ _('bulletin.empty_preview') }}</a>
+            {% endif %}
+          </section>
+          {% else %}
           <p>{{ _('dashboard.browse_all') }}</p>
+          {% endif %}
         </div>
         <p class="dash-empty-search" id="dashboardEmptySearch" hidden>{{ _('dashboard.no_match') }}</p>
 
@@ -791,6 +825,16 @@
     window.DASHBOARD_STATIC_BG_BASE = DASHBOARD_STATIC_BG_BASE;
   </script>
   <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=card-layout-1"></script>
+  <script>
+    document.querySelectorAll('.dash-bulletin time[data-ts]').forEach(function (el) {
+      var d = new Date(el.getAttribute('data-ts'));
+      if (!isNaN(d.getTime())) {
+        el.textContent = d.toLocaleString(undefined, {
+          month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

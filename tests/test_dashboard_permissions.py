@@ -27,6 +27,27 @@ class DashboardPermissionTests(unittest.TestCase):
         self.assertEqual(perms.ENDPOINT_TOOL["auth.delete_user"], "manage_users")
         self.assertEqual(perms.ENDPOINT_TOOL["auth.edit_user"], "manage_users")
 
+    def test_bulletin_is_a_dashboard_tool(self):
+        self.assertEqual(perms.TOOL_BY_BLUEPRINT["bulletin"], "bulletin")
+        self.assertTrue(any(t["id"] == "bulletin" for t in perms.DASHBOARD_TOOLS))
+        self.assertEqual(perms.DASHBOARD_TOOL_NAV["bulletin"]["href"], "/bulletin")
+
+    def test_bulletin_default_groups_and_explicit_tools(self):
+        self.assertTrue(perms.bulletin_visible_for_group({}, "rose", "manager"))
+        self.assertTrue(perms.bulletin_visible_for_group({}, "xj", "superadmin"))
+        self.assertTrue(perms.bulletin_visible_for_group({}, "daniel", "warehouse"))
+        self.assertTrue(perms.bulletin_visible_for_group({"tools": []}, "yeti", "visitor"))
+        self.assertFalse(perms.bulletin_visible_for_group({}, "kenny", "visitor"))
+        self.assertFalse(perms.bulletin_visible_for_group({}, "adminuser", "admin"))
+        self.assertFalse(
+            perms.bulletin_visible_for_group({"tools": ["item_lookup"]}, "rose", "manager")
+        )
+        self.assertTrue(
+            perms.tool_visible_for_user({"tools": ["item_lookup", "bulletin"]}, "kenny", "bulletin")
+        )
+        self.assertFalse(perms.tool_visible_for_user({"tools": ["item_lookup"]}, "rose", "bulletin"))
+        self.assertTrue(perms.tool_visible_for_user({"tools": []}, "yeti", "bulletin"))
+
 
 if __name__ == "__main__":
     unittest.main()

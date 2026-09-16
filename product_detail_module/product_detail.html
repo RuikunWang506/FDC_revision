@@ -106,6 +106,9 @@
         .empty-state { background: white; padding: 20px; text-align: center; border-radius: 4px; }
         .empty-state i { font-size: 32px; color: #bdbdbd; margin-bottom: 8px; }
         .empty-state h3 { font-size: 14px; color: #666; }
+        .pd-catalog-only { background: white; padding: 20px; text-align: center; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .pd-catalog-only-note { margin: 8px 0 16px; color: #1565c0; font-size: 15px; }
+        .pd-catalog-only .style-info-gallery { justify-content: center; max-width: 520px; margin: 0 auto; }
 
         /* Product Wrapper - Collapsible */
         .product-wrapper { margin: 0 0 12px; }
@@ -1953,7 +1956,25 @@
             {% endif %}
 
             {% if not product_data and search_input %}
-            <div class="empty-state"><i class="fas fa-search"></i><h3>{{ te('No Results Found') }}</h3></div>
+                {% if catalog_images %}
+                <div class="pd-catalog-only">
+                    <p class="pd-catalog-only-note">
+                        {{ te('We got pictures though.') }}
+                        {% if catalog_style %}
+                        <a href="/master_image_viewer/{{ catalog_style }}">{{ te('Open Master Image Viewer') }}</a>
+                        {% endif %}
+                    </p>
+                    <div class="style-info-gallery">
+                        {% for image in catalog_images %}
+                        <div class="img-container" onclick="enlargeImage(this.querySelector('img'))">
+                            <img src="{{ image.url }}" alt="{{ image.filename }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="fas fa-search"></i><h3>{{ te('No Results Found') }}</h3></div>
+                {% endif %}
             {% elif not product_data %}
             <div class="empty-state"><i class="fas fa-box"></i><h3>{{ te('Enter a search to get started') }}</h3></div>
             {% endif %}

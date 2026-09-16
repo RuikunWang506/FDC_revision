@@ -14,6 +14,30 @@ import re
 from urllib.parse import quote, unquote
 from markupsafe import Markup, escape
 
+PRODUCT_DETAIL_IMAGE_SOURCES = ["catalog_original", "catalog"]
+
+
+def normalize_product_search_input(search_input):
+    """Trim spaces and trailing plus signs (query '+' or scanner leftover)."""
+    s = (search_input or "").strip()
+    while s.endswith("+"):
+        s = s[:-1].strip()
+    return s
+
+
+def catalog_style_from_search(search_input):
+    s = normalize_product_search_input(search_input)
+    if not s:
+        return ""
+    return s.split(",")[0].strip().split()[0].strip()
+
+
+def lookup_catalog_images_for_miss(search_input, max_images=12):
+    style = catalog_style_from_search(search_input)
+    if not style:
+        return "", []
+    return style, fetch_style_images(style, max_images=max_images)
+
 # Get the directory of this file
 module_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -1412,38 +1436,36 @@ def search_product_data_with_history(search_input):
     return product_data
 
 
-def fetch_style_images(style, first_sku=None):
+def fetch_style_images(style, first_sku=None, max_images=3):
     """
     Fetch catalog images for a specific style from DAM system.
     The style parameter IS the search term (e.g., "M1141").
-    Returns list of (image_url, filename) tuples.
+    Returns list of {url, filename} dicts.
     """
     try:
-        # Strip and use style name directly - it's the base product code
-        search_term = style.strip() if style else first_sku
-        
-        # Search for images matching the style using DAM system
-        # Only get catalog_original source for product detail
-        matching_assets = search_assets_by_sku_pattern(search_term, source_filter='catalog_original')
-        
-        # Filter to canonical images only
+        search_term = catalog_style_from_search(style) if style else ""
+        if not search_term and first_sku:
+            search_term = catalog_style_from_search(first_sku)
+        if not search_term:
+            return []
+
+        matching_assets = search_assets_by_sku_pattern(
+            search_term, source_filter=PRODUCT_DETAIL_IMAGE_SOURCES
+        )
+
         canonical_assets = [asset for asset in matching_assets if asset.is_canonical]
-        
-        # If no canonical found, use all
         if not canonical_assets:
             canonical_assets = matching_assets
-        
-        # Convert to image URLs and filenames
+
         images = []
-        for asset in canonical_assets[:3]:  # Limit to first 3 images
-            image_url = get_asset_url(asset.id)
+        limit = max_images if max_images else None
+        for asset in canonical_assets[:limit]:
             images.append({
-                'url': image_url,
+                'url': get_asset_url(asset.id),
                 'filename': asset.filename
             })
-        
         return images
-        
+
     except Exception as e:
         current_app.logger.error(f"Error fetching images for {style}: {e}", exc_info=True)
         return []
@@ -1488,7 +1510,11 @@ def product_detail(search_input=None):
             search_input = request.args.get("search", "").strip()
         if not search_input:
             search_input = ""
-    
+    search_input = normalize_product_search_input(search_input)
+
+    catalog_images = []
+    catalog_style = ""
+
     # Search if input provided
     if search_input:
         log_user_action(f"***{current_user}***__@@@search SKU@@@__ {search_input.lower()} [newpage]", current_user)
@@ -1496,6 +1522,7 @@ def product_detail(search_input=None):
         product_data = search_product_data_with_history(search_input)
         if not product_data:
             error_message = "No products found matching your search."
+            catalog_style, catalog_images = lookup_catalog_images_for_miss(search_input)
         else:
             # Fetch images for each style using first SKU
             for style_group in product_data:
@@ -1516,7 +1543,9 @@ def product_detail(search_input=None):
         error_message=error_message,
         history_data=history_data,
         adjustment_data=adjustment_data,
-        purchase_data=purchase_data
+        purchase_data=purchase_data,
+        catalog_images=catalog_images,
+        catalog_style=catalog_style,
     )
 
 

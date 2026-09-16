@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('bulletin.title') }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bulletin.css') }}?v=1">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page bulletin-page">
+  <header class="bulletin-hero">
+    <div>
+      <p class="bulletin-kicker">{{ _('dashboard.title') }}</p>
+      <h1>{{ _('bulletin.title') }}</h1>
+      <p>{{ _('bulletin.lead') }}</p>
+    </div>
+    <a class="bulletin-home-link" href="{{ url_for('home') }}">{{ _('nav.home_page') }}</a>
+  </header>
+
+  <div class="bulletin-tabs" role="tablist">
+    <a class="bulletin-tab{% if bulletin_view != 'private' %} is-active{% endif %}" href="{{ url_for('bulletin.bulletin_page', view='public') }}">{{ _('bulletin.public') }}</a>
+    <a class="bulletin-tab{% if bulletin_view == 'private' %} is-active{% endif %}" href="{{ url_for('bulletin.bulletin_page', view='private') }}">{{ _('bulletin.private') }}</a>
+  </div>
+
+  <section class="bulletin-composer" id="bulletinComposer">
+    <div class="bulletin-toolbar" id="bulletinToolbar">
+      <select data-cmd="fontName" title="{{ _('bulletin.font') }}">
+        <option value="Segoe UI">Segoe UI</option>
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Microsoft YaHei">微软雅黑</option>
+      </select>
+      <select data-cmd="fontSizePx" title="{{ _('bulletin.size') }}">
+        <option value="12">12</option>
+        <option value="14" selected>14</option>
+        <option value="16">16</option>
+        <option value="18">18</option>
+        <option value="24">24</option>
+        <option value="32">32</option>
+      </select>
+      <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+      <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+      <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+      <input type="color" data-cmd="foreColor" title="{{ _('bulletin.color') }}" value="#203246">
+      <button type="button" data-cmd="insertUnorderedList" title="Bullets">•</button>
+      <button type="button" data-cmd="insertOrderedList" title="Numbers">1.</button>
+      <button type="button" data-cmd="justifyLeft" title="Left">☰</button>
+      <button type="button" data-cmd="justifyCenter" title="Center">≡</button>
+    </div>
+    <div id="bulletinEditor" class="bulletin-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="{{ _('bulletin.placeholder') }}"></div>
+    <div class="bulletin-pending" id="bulletinPending" hidden></div>
+    <div class="bulletin-compose-row">
+      <label class="bulletin-vis">
+        <input type="radio" name="bulletinVisibility" value="public"{% if bulletin_view != 'private' %} checked{% endif %}>
+        {{ _('bulletin.public') }}
+      </label>
+      <label class="bulletin-vis">
+        <input type="radio" name="bulletinVisibility" value="private"{% if bulletin_view == 'private' %} checked{% endif %}>
+        {{ _('bulletin.private') }}
+      </label>
+      <input type="text" id="bulletinRecipients" class="bulletin-recipients" placeholder="{{ _('bulletin.share_placeholder') }}" {% if bulletin_view != 'private' %}hidden{% endif %} autocomplete="off">
+      <label class="bulletin-attach-btn">
+        <input type="file" id="bulletinFileInput" multiple hidden>
+        {{ _('bulletin.attach') }}
+      </label>
+      <button type="button" class="bulletin-post-btn" id="bulletinPostBtn">{{ _('bulletin.post') }}</button>
+    </div>
+    <p class="bulletin-hint">{{ _('bulletin.drop_hint') }}</p>
+    <p class="bulletin-status" id="bulletinStatus" hidden></p>
+  </section>
+
+  <div class="bulletin-feed" id="bulletinFeed"></div>
+  <p class="bulletin-empty" id="bulletinEmpty" hidden>{{ _('bulletin.empty') }}</p>
+</div>
+
+<script type="application/json" id="bulletinConfig">{{ {
+  'view': bulletin_view,
+  'username': current_user,
+  'posts': bulletin_posts,
+  'i18n': {
+    'empty': _('bulletin.empty'),
+    'delete': _('bulletin.delete'),
+    'shared_with': _('bulletin.shared_with'),
+    'post_error': _('bulletin.post_error'),
+    'posted': _('bulletin.posted')
+  }
+}|tojson }}</script>
+<script src="{{ url_for('static', filename='js/bulletin.js') }}?v=1"></script>
+</body>
+</html>

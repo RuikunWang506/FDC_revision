@@ -210,6 +210,7 @@ def register_routes(app):
                 portal_ctx = {}
         dashboard_favorites: list = []
         recent_arrivals: list = []
+        bulletin_preview: list = []
         if not portal_minimal:
             from py.utilities.dashboard_permissions import get_dashboard_favorites
 
@@ -220,12 +221,28 @@ def register_routes(app):
                 recent_arrivals = recent_arrivals_for_dashboard(limit=8)
             except Exception:
                 recent_arrivals = []
+            try:
+                from py.utilities.dashboard_permissions import tool_visible_for_user
+                from py.utilities.auth import get_user_permissions
+
+                if tool_visible_for_user(
+                    get_user_permissions(current_user), current_user, "bulletin"
+                ):
+                    from py.other.bulletin import preview_posts, serialize_post
+
+                    bulletin_preview = [
+                        serialize_post(post, current_user)
+                        for post in preview_posts(current_user)
+                    ]
+            except Exception:
+                bulletin_preview = []
         return render_template(
             "index.html",
             current_user=current_user,
             portal_minimal=portal_minimal,
             dashboard_favorites=dashboard_favorites,
             recent_arrivals=recent_arrivals,
+            bulletin_preview=bulletin_preview,
             **portal_ctx,
         )
 

@@ -447,6 +447,51 @@
         .image-option input[type="radio"]:checked + label {
             border-color: #007bff;
         }
+
+        .lc-missing-image-upload {
+            width: 100%;
+        }
+        .lc-missing-image-dropzone {
+            width: 100%;
+            min-height: 180px;
+            border: 2px dashed #94a3b8;
+            border-radius: 12px;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.25rem 1rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: border-color .15s ease, background .15s ease;
+        }
+        .lc-missing-image-dropzone.lc-dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+        .lc-missing-image-dropzone.is-busy {
+            pointer-events: none;
+            opacity: 0.75;
+            cursor: wait;
+        }
+        .lc-missing-image-title {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.2rem;
+        }
+        .lc-missing-image-hint {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        .lc-missing-image-status {
+            font-size: 0.85rem;
+            margin-top: 0.65rem;
+        }
+        .lc-missing-image-status.is-error { color: #b91c1c; }
+        .lc-missing-image-status.is-ok { color: #166534; }
     
         .dropbox-overlay {
             position: absolute;
@@ -1243,7 +1288,7 @@
     {% for description, style_groups in description_groups.items() %}
         {% for style_group in style_groups %}
         
-            <div class="card mb-3 style-product-card" id="{{ style_group[0].style|replace(' ', '_') }}" data-style-card="1" data-in-oms="{% if session.get('verified_' + style_group[0].style) or session.get('verified_' + style_group[0].style|replace('-', '')) or session.get('verified_' + style_group[0].style[:6] + '-' + style_group[0].style[6:]) %}1{% else %}0{% endif %}">
+            <div class="card mb-3 style-product-card" id="{{ style_group[0].style|replace(' ', '_') }}" data-style-card="1" data-style="{{ style_group[0].style }}" data-in-oms="{% if session.get('verified_' + style_group[0].style) or session.get('verified_' + style_group[0].style|replace('-', '')) or session.get('verified_' + style_group[0].style[:6] + '-' + style_group[0].style[6:]) %}1{% else %}0{% endif %}">
                 {# Rest of your existing card body code #}
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2 bg-light p-2 rounded">
@@ -1300,7 +1345,7 @@
                         </div>
         
                         <div class="col-6">
-                            <div class="d-flex flex-wrap">
+                            <div class="d-flex flex-wrap lc-card-images">
                                 {% set style = style_group[0].style.strip() %}
                                 {% if style in dropbox_images %}
                                 <div class="image-option">
@@ -1329,6 +1374,17 @@
                                         </label>
                                     </div>
                                     {% endfor %}
+                                {% endif %}
+                                {% if style not in dropbox_images and style not in image_urls %}
+                                <div class="lc-missing-image-upload" data-style="{{ style }}">
+                                    <div class="lc-missing-image-dropzone" tabindex="0">
+                                        <input type="file" accept="image/*" class="lc-missing-image-input" hidden>
+                                        <div class="lc-missing-image-title">{{ te('No catalog image') }}</div>
+                                        <div class="lc-missing-image-hint">{{ te('Drop a photo here, or upload one for this style.') }}</div>
+                                        <button type="button" class="btn btn-sm btn-primary lc-missing-image-browse">{{ te('Upload picture') }}</button>
+                                        <div class="lc-missing-image-status" hidden></div>
+                                    </div>
+                                </div>
                                 {% endif %}
                             </div>
                         </div>
@@ -4173,6 +4229,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (typeof syncRemoveStylesQtyControls === 'function') syncRemoveStylesQtyControls();
 });
 </script>
-<script src="{{ url_for('static', filename='js/v7_listcreator_style_tools.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='js/v7_listcreator_style_tools.js') }}?v=4"></script>
 </body>
 </html>

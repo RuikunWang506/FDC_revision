@@ -73,6 +73,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "whatnot_live": "whatnot_live",
     "smart_search": "smart_search",
     "box_price_checker": "box_price_checker",
+    "bulletin": "bulletin",
 }
 
 # Single source of truth for admin UI + home filtering (order = display order)
@@ -106,6 +107,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Warehouse"},
     {"id": "smart_search", "title": "Smart Search", "category": "Admin"},
     {"id": "box_price_checker", "title": "Box Price Checker", "category": "Admin"},
+    {"id": "bulletin", "title": "Bulletin", "category": "Admin"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
     {"id": "vendor_app", "title": "Vendor App", "category": "Admin"},
@@ -144,6 +146,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
     "smart_search": {"href": "/smart_search", "label": "Search"},
     "box_price_checker": {"href": "/box_price_checker", "label": "Box Price"},
+    "bulletin": {"href": "/bulletin", "label": "Bulletin"},
     "audit": {"href": "/audit", "label": "Audit"},
     "manage_users": {"href": "/manage_users", "label": "Users"},
     "vendor_app": {"href": "/vendor_app", "label": "Vendor"},
@@ -151,6 +154,22 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
 
 
 WHATNOT_LIVE_USERS = frozenset({"yeti", "elaine"})
+
+# Unrestricted groups that get Bulletin unless Manage Users turns on a tools list.
+BULLETIN_DEFAULT_GROUP_SLUGS = frozenset({"yeti", "superadmin", "manager", "warehouse"})
+
+
+def bulletin_visible_for_group(
+    perms: Optional[Dict[str, Any]], username: str, group_slug: str
+) -> bool:
+    """yeti always; explicit tools list wins; otherwise default staff groups."""
+    uname = (username or "").strip().lower()
+    if uname == "yeti":
+        return True
+    tools = perms.get("tools") if isinstance(perms, dict) else None
+    if isinstance(tools, list):
+        return "bulletin" in tools
+    return (group_slug or "").strip().lower() in BULLETIN_DEFAULT_GROUP_SLUGS
 
 
 def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_id: str) -> bool:
@@ -160,6 +179,18 @@ def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_i
         return uname in WHATNOT_LIVE_USERS
     if uname == "yeti":
         return True
+    if tool_id == "bulletin":
+        tools = perms.get("tools") if isinstance(perms, dict) else None
+        if isinstance(tools, list):
+            return "bulletin" in tools
+        slug = ""
+        try:
+            from py.utilities.auth import get_user_group_slug
+
+            slug = get_user_group_slug(username) or ""
+        except Exception:
+            slug = ""
+        return bulletin_visible_for_group(perms, username, slug)
     if not perms:
         return True
     tools = perms.get("tools")

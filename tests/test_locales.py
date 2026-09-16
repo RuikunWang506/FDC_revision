@@ -28,6 +28,8 @@ class LocaleTests(unittest.TestCase):
             "page.smart_search.title",
             "tool.box_price_checker.title",
             "page.box_price_checker.title",
+            "bulletin.title",
+            "tool.bulletin.title",
         ):
             self.assertIn(key, en)
             self.assertTrue(en[key])

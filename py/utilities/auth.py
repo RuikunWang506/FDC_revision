@@ -1221,14 +1221,15 @@ def _ensure_user_groups_schema_once() -> None:
             ensure_user_groups_schema,
             seed_user_groups_if_empty,
             backfill_null_user_groups,
+            seed_client_portal_group,
+            grant_bulletin_to_default_groups,
         )
 
         ensure_user_groups_schema(connection)
         seed_user_groups_if_empty(connection)
         backfill_null_user_groups(connection)
-        from py.utilities.user_groups import seed_client_portal_group
-
         seed_client_portal_group(connection)
+        grant_bulletin_to_default_groups(connection)
         _USER_GROUPS_SCHEMA_INITIALIZED = True
     except Exception as e:
         print(f"user_groups schema init: {e}")

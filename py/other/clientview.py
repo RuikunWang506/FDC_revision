@@ -12,6 +12,8 @@ from flask import (
 
 from product_detail_module.product_detail import (
     fetch_style_images,
+    lookup_catalog_images_for_miss,
+    normalize_product_search_input,
     search_product_data_with_history,
 )
 from py.utilities.auth import check_credentials, get_user_permissions, update_last_login
@@ -217,10 +219,14 @@ def clientview_product_detail(search_input=None):
             search_input = request.args.get("search", "").strip()
         if not search_input:
             search_input = ""
+    search_input = normalize_product_search_input(search_input)
 
     customer_purchase_msg = customer_purchase_notice(
         current_user, FEATURE_CLIENT_PRODUCT_DETAIL
     )
+
+    catalog_images = []
+    catalog_style = ""
 
     if search_input:
         log_user_action(
@@ -234,6 +240,7 @@ def clientview_product_detail(search_input=None):
         if limits_on:
             if not raw_product_data:
                 error_message = customer_purchase_no_data_message()
+                catalog_style, catalog_images = lookup_catalog_images_for_miss(search_input)
             else:
                 product_data = filter_product_data_for_customer(
                     current_user,
@@ -257,6 +264,7 @@ def clientview_product_detail(search_input=None):
                         )
         elif not raw_product_data:
             error_message = "No products found matching your search."
+            catalog_style, catalog_images = lookup_catalog_images_for_miss(search_input)
         else:
             product_data = raw_product_data
             for style_group in product_data:
@@ -284,6 +292,8 @@ def clientview_product_detail(search_input=None):
         history_data=history_data,
         adjustment_data=adjustment_data,
         purchase_data=purchase_data,
+        catalog_images=catalog_images,
+        catalog_style=catalog_style,
         show_navbar=False,
         portal_client_nav=True,
         is_tiktok_view=True,

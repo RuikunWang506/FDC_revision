@@ -4,6 +4,11 @@
     return meta ? (meta.getAttribute("content") || "") : "";
   }
 
+  function needsCsrf(method) {
+    var m = String(method || "GET").toUpperCase();
+    return m !== "GET" && m !== "HEAD" && m !== "OPTIONS" && m !== "TRACE";
+  }
+
   function addHidden(form) {
     if (!form || form.method.toLowerCase() === "get") return;
     if (form.querySelector('input[name="csrf_token"]')) return;
@@ -22,32 +27,47 @@
     Array.prototype.forEach.call(document.querySelectorAll("form"), addHidden);
   });
 
+  function methodOf(input, init) {
+    if (init && init.method) return String(init.method).toUpperCase();
+    if (input && typeof input === "object" && input.method) return String(input.method).toUpperCase();
+    return "GET";
+  }
+
+  // Install fetch wrapping first so a missing jQuery.ajaxSetup cannot skip CSRF headers.
+  if (typeof window.fetch === "function" && !window.fetch.__fdcCsrf) {
+    var originalFetch = window.fetch;
+    var wrappedFetch = function (input, init) {
+      init = init || {};
+      if (needsCsrf(methodOf(input, init))) {
+        var headers = new Headers(
+          init.headers || (input && typeof input === "object" ? input.headers : undefined) || {}
+        );
+        if (!headers.has("X-CSRF-Token")) headers.set("X-CSRF-Token", token());
+        init.headers = headers;
+      }
+      return originalFetch.call(this, input, init);
+    };
+    wrappedFetch.__fdcCsrf = true;
+    window.fetch = wrappedFetch;
+  }
+
   function hookJquery() {
-    if (!window.jQuery || window.jQuery.__fdcCsrf) return;
-    window.jQuery.__fdcCsrf = true;
-    window.jQuery.ajaxSetup({
+    var jq = window.jQuery;
+    if (!jq || jq.__fdcCsrf) return;
+    // jquery.slim has no ajaxSetup; wait until the full build replaces it.
+    if (typeof jq.ajaxSetup !== "function") return;
+    jq.__fdcCsrf = true;
+    jq.ajaxSetup({
       beforeSend: function (xhr, settings) {
         var method = (settings && settings.type ? settings.type : "GET").toUpperCase();
-        if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+        if (needsCsrf(method)) {
           xhr.setRequestHeader("X-CSRF-Token", token());
         }
       }
     });
   }
-  hookJquery();
-  document.addEventListener("DOMContentLoaded", hookJquery);
-
-  if (typeof window.fetch === "function") {
-    var original = window.fetch;
-    window.fetch = function (input, init) {
-      init = init || {};
-      var method = (init.method || (typeof input === "object" && input.method) || "GET").toUpperCase();
-      if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
-        var headers = new Headers(init.headers || (typeof input === "object" ? input.headers : undefined) || {});
-        if (!headers.has("X-CSRF-Token")) headers.set("X-CSRF-Token", token());
-        init.headers = headers;
-      }
-      return original.call(this, input, init);
-    };
-  }
+  try { hookJquery(); } catch (e) { /* slim or incomplete jQuery */ }
+  document.addEventListener("DOMContentLoaded", function () {
+    try { hookJquery(); } catch (e) {}
+  });
 })();

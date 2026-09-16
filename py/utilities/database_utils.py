@@ -1,7 +1,9 @@
 import os
+import time
 
 import mysql.connector
 from mysql.connector import Error, pooling
+from mysql.connector.errors import PoolError
 import pyodbc
 
 from py.utilities.setting import Config
@@ -30,18 +32,34 @@ def _get_mysql_pool():
     return _mysql_pool
 
 
-def get_mysql_connection():
+def get_mysql_connection(retries=3):
     """Pooled MySQL connection. close() returns it to the pool.
 
-    Pool checkout failures return None. Do not open a direct connection as a
-    fallback — that bypasses the pool cap during exhaustion.
+    Pool checkout is retried briefly — the 8-slot pool is often busy, not down.
+    Other MySQL errors still return None immediately. Do not open a direct
+    connection as a fallback; that bypasses the pool cap during exhaustion.
     """
-    try:
-        connection = _get_mysql_pool().get_connection()
-        if connection.is_connected():
-            return connection
-    except Error as e:
-        print(f"Error connecting to MySQL pool: {e}")
+    last_error = None
+    attempts = max(1, int(retries or 1))
+    for attempt in range(attempts):
+        try:
+            connection = _get_mysql_pool().get_connection()
+            if connection is not None and connection.is_connected():
+                return connection
+            if connection is not None:
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+        except PoolError as e:
+            last_error = e
+        except Error as e:
+            print(f"Error connecting to MySQL pool: {e}")
+            return None
+        if attempt + 1 < attempts:
+            time.sleep(0.08 * (2 ** attempt))
+    if last_error is not None:
+        print(f"Error connecting to MySQL pool: {last_error}")
     return None
 
 

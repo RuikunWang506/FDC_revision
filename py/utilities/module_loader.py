@@ -310,6 +310,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "tool_ids": ("print_center",),
     },
     {
+        "name": "bulletin",
+        "import_path": "py.other.bulletin",
+        "attr": "bulletin_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/bulletin",),
+        "tool_ids": ("bulletin",),
+    },
+    {
         "name": "whatnot_live",
         "import_path": "py.other.whatnot_live",
         "attr": "whatnot_live_bp",

@@ -262,6 +262,17 @@
                 <div class="search-input mt-4">
                     Your search input was: <br>{{ user_input }}
                 </div>
+                {% if no_products %}
+                <div class="alert alert-warning mt-3 mb-2" role="status">
+                    {{ te('No products found matching your search.') }}
+                </div>
+                {% if image_urls %}
+                <div class="alert alert-info mb-0" role="status">
+                    {{ te('We got pictures though.') }}
+                    <a class="alert-link" href="/master_image_viewer/{{ user_input }}">{{ te('Open Master Image Viewer') }}</a>
+                </div>
+                {% endif %}
+                {% endif %}
                 <div id="inventory-balance-container" class="mt-4 text-center" style="background-color: #ffffff; border-radius: 10px; border: 1px solid #444; display: none; padding: 10px; margin-top: 15px;">
                     <h4 class="mb-2" style="color: #000000; font-size: 20px;">{{ te('Inventory Audit') }}</h4>
                     <div class="balance-rows">
@@ -321,7 +332,8 @@
     <div class="text-center"> <!-- Center the container -->
 
         <div class="row justify-content-center"> <!-- Center the row content -->
-            {% for image_url, info in (image_urls | zip(file_info) | list)[:3] %}
+            {% for image_url, info in (image_urls | zip(file_info) | list) %}
+                {% if no_products or loop.index <= 3 %}
                 <div class="col-6 col-md-4 col-lg-2 mb-3">
                     <div class="img-container text-center">
                         {# Prefer DB source column when available #}
@@ -411,6 +423,7 @@
 
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
         </div>
 

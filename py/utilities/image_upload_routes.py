@@ -551,6 +551,7 @@ def process_bulk_catalog():
         
         processed_files = []
         saved_paths = []
+        recorded_assets = []
         errors = []
         
         # Track version numbers per SKU during this batch
@@ -608,17 +609,15 @@ def process_bulk_catalog():
                     sku_files[sku].append(path)
                 
                 for sku, paths in sku_files.items():
-                    _record_catalog_uploads(paths, sku)
+                    recorded = _record_catalog_uploads(paths, sku) or []
+                    recorded_assets.extend(recorded)
             except Exception as e:
                 logger.error(f"Auto-record failed: {e}")
-        
-        # Trigger background sync to update index files and ensure everything is in sync
-        if saved_paths:
-            try:
-                _trigger_background_sync()
-                logger.info(f"Background sync triggered after catalog upload")
-            except Exception as e:
-                logger.error(f"Background sync trigger failed: {e}")
+
+        # Catalog rows are already written by _record_catalog_uploads.
+        # Do not start a full DAM disk scan here: it walks ~146k files for ~40
+        # minutes, holds a pool connection the whole time, and overlapping
+        # uploads exhaust MYSQL_POOL_SIZE (8) so the rest of the app gets None.
         
         # Cleanup
         try:
@@ -630,12 +629,30 @@ def process_bulk_catalog():
         message = f"Successfully processed {len(processed_files)} catalog images."
         if errors:
             message += f" {len(errors)} errors occurred."
+
+        assets_out = []
+        try:
+            from py.utilities.dam_utils import get_asset_url
+            for rec in recorded_assets:
+                aid = rec.get('id') if isinstance(rec, dict) else None
+                if not aid:
+                    continue
+                assets_out.append({
+                    'sku': rec.get('sku'),
+                    'filename': rec.get('filename'),
+                    'asset_id': aid,
+                    'path': get_asset_url(aid, width=150),
+                    'fullsize_path': get_asset_url(aid),
+                })
+        except Exception as e:
+            logger.error(f"Could not build asset URLs after catalog upload: {e}")
         
         return jsonify({
             'success': True,
             'message': message,
             'processed': processed_files,
-            'errors': errors
+            'errors': errors,
+            'assets': assets_out,
         })
         
     except Exception as e:
@@ -720,14 +737,9 @@ def process_bulk_detail():
                         
             except Exception as e:
                 errors.append(f"Error processing style {sku}: {str(e)}")
-        
-        # Trigger background sync to update index files and ensure everything is in sync
-        if processed_files:
-            try:
-                _trigger_background_sync()
-                logger.info(f"Background sync triggered after detail upload")
-            except Exception as e:
-                logger.error(f"Background sync trigger failed: {e}")
+
+        # Detail rows are already written by _record_big_picture_uploads.
+        # Nightly /dam cron reconciles disk; do not stack 40-minute full scans.
         
         # Cleanup
         try:
@@ -869,6 +881,7 @@ def _check_duplicate_by_hash(file_path: str):
         return False, None
 
 def _record_catalog_uploads(file_paths, sku: str):
+    recorded = []
     conn = get_mysql_connection()
     if not conn:
         raise RuntimeError('Cannot connect to MySQL')
@@ -901,9 +914,7 @@ def _record_catalog_uploads(file_paths, sku: str):
                         info['width'], info['height'], info['size_bytes'],
                         is_canonical, datetime.now(), img_id
                     ))
-                else:
-                    # Already catalog-original (or other), no action
-                    pass
+                recorded.append({'id': img_id, 'sku': sku, 'filename': filename})
                 continue
             # Check by filename/source
             cur.execute(
@@ -922,6 +933,7 @@ def _record_catalog_uploads(file_paths, sku: str):
                     """, (
                         file_path, info['width'], info['height'], info['size_bytes'], sha256, datetime.now(), img_id
                     ))
+                recorded.append({'id': img_id, 'sku': sku, 'filename': filename})
                 continue
             # Insert new
             import re
@@ -938,10 +950,21 @@ def _record_catalog_uploads(file_paths, sku: str):
                 info['width'], info['height'], info['size_bytes'], sha256,
                 True, is_canonical, datetime.now(), datetime.now()
             ))
+            img_id = cur.lastrowid
+            if not img_id:
+                cur.execute(
+                    "SELECT id FROM image_assets WHERE filename=%s AND source=%s ORDER BY id DESC LIMIT 1",
+                    (filename, 'catalog_original')
+                )
+                id_row = cur.fetchone()
+                img_id = id_row[0] if id_row else None
+            if img_id:
+                recorded.append({'id': img_id, 'sku': sku, 'filename': filename})
         conn.commit()
         # Update canonical for this SKU
         _update_canonical_for_sku(conn, sku)
         conn.commit()
+        return recorded
     finally:
         cur.close()
         conn.close()
@@ -1126,29 +1149,10 @@ def view_logs():
     return redirect('/log_viewer')
 
 def _trigger_background_sync():
+    """Deprecated: a full DAM scan after each upload starved the MySQL pool.
+
+    Uploads already insert/update image_assets. Nightly cron at /dam still
+    reconciles disk. Kept as a no-op so old callers cannot start overlapping
+    40-minute jobs.
     """
-    Trigger a background DAM sync after bulk uploads.
-    Ensures the database matches files on disk (full folder scan each run).
-    Runs in a separate thread to not block the upload response.
-    """
-    from threading import Thread
-    from py.utilities.logging_setup import log_event
-    
-    def run_sync():
-        try:
-            log_event('info', 'Background sync triggered after bulk upload')
-            
-            # Use DAMSyncServiceV2 to sync
-            sync_service = DAMSyncServiceV2()
-            
-            sync_service.run_full_sync()
-            
-            log_event('info', f'Background sync completed: {sync_service.stats}')
-            
-        except Exception as e:
-            log_event('error', f'Background sync failed: {str(e)}')
-            logger.error(f"Background sync error: {e}")
-    
-    # Start sync in background thread
-    thread = Thread(target=run_sync, daemon=True)
-    thread.start()
+    logger.info("Skipping post-upload DAM full sync; nightly cron reconciles disk")

@@ -88,6 +88,7 @@ ENDPOINT_TO_SLUG = {
     'vendor_app.vendor_app_home': 'page-vendor-app',
     'vendor_app.vendor_erwan': 'page-vendor-app',
     'box_price_checker.box_price_checker_page': 'page-box-price-checker',
+    'bulletin.bulletin_page': 'page-home',
     'help.index': 'page-help-center',
     'help.article': None,
 }

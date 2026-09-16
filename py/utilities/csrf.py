@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import hmac
+import re
 import secrets
+from html import escape as html_escape
 
 from flask import Flask, abort, request, session
 
@@ -35,6 +37,64 @@ def get_csrf_token() -> str:
         token = secrets.token_urlsafe(32)
         session[CSRF_SESSION_KEY] = token
     return token
+
+
+_CSRF_META_NAME_THEN_CONTENT = re.compile(
+    r'(<meta\b[^>]*\bname=["\']csrf-token["\'][^>]*\bcontent=["\'])([^"\']*)(["\'])',
+    re.IGNORECASE,
+)
+_CSRF_META_CONTENT_THEN_NAME = re.compile(
+    r'(<meta\b[^>]*\bcontent=["\'])([^"\']*)(["\'][^>]*\bname=["\']csrf-token["\'])',
+    re.IGNORECASE,
+)
+_CSRF_HIDDEN_INPUT = re.compile(
+    r'(<input\b[^>]*\bname=["\']csrf_token["\'][^>]*\bvalue=["\'])([^"\']*)(["\'])',
+    re.IGNORECASE,
+)
+FDC_CSRF_JS_URL = "/static/js/fdc-csrf.js?v=2"
+_CSRF_SCRIPT_TAG = f'<script src="{FDC_CSRF_JS_URL}"></script>'
+_CSRF_SCRIPT_RE = re.compile(
+    r'<script\b[^>]*\bsrc=["\'][^"\']*fdc-csrf\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>',
+    re.IGNORECASE,
+)
+
+
+def rewrite_html_csrf_meta(html: str, token: str) -> str:
+    """Replace a baked csrf-token meta (cached HTML snapshots) with the live session token.
+
+    Snapshot files are rendered in a worker request context, so their meta tag is not the
+    viewer's token. fetch()/XHR from those pages must send the current session value.
+    """
+    if not html or not token:
+        return html or ""
+    safe = html_escape(str(token), quote=True)
+
+    def _sub(match: re.Match[str]) -> str:
+        return match.group(1) + safe + match.group(3)
+
+    if _CSRF_META_NAME_THEN_CONTENT.search(html):
+        html = _CSRF_META_NAME_THEN_CONTENT.sub(_sub, html, count=1)
+    elif _CSRF_META_CONTENT_THEN_NAME.search(html):
+        html = _CSRF_META_CONTENT_THEN_NAME.sub(_sub, html, count=1)
+    else:
+        tags = f'<meta name="csrf-token" content="{safe}">\n'
+        if not _CSRF_SCRIPT_RE.search(html):
+            tags += _CSRF_SCRIPT_TAG + "\n"
+        lower = html.lower()
+        idx = lower.find("</head>")
+        if idx < 0:
+            idx = lower.find("<body")
+        if idx >= 0:
+            html = html[:idx] + tags + html[idx:]
+        else:
+            html = tags + html
+
+    if _CSRF_SCRIPT_RE.search(html):
+        html = _CSRF_SCRIPT_RE.sub(_CSRF_SCRIPT_TAG, html, count=1)
+
+    if _CSRF_HIDDEN_INPUT.search(html):
+        html = _CSRF_HIDDEN_INPUT.sub(_sub, html)
+    return html
 
 
 def _request_csrf_token() -> str:

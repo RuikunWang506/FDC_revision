@@ -320,6 +320,47 @@ def parse_permissions_ui(raw: Any) -> Dict[str, Any]:
     }
 
 
+def grant_bulletin_to_default_groups(connection) -> None:
+    """Add bulletin to explicit tools lists for Yeti / Superadmin / Manager / Warehouse."""
+    from py.utilities.dashboard_permissions import BULLETIN_DEFAULT_GROUP_SLUGS
+
+    cur = connection.cursor(dictionary=True)
+    try:
+        cur.execute("SELECT id, slug, permissions FROM user_groups")
+        rows = list(cur.fetchall() or [])
+        upd = connection.cursor()
+        try:
+            changed = False
+            for row in rows:
+                slug = str(row.get("slug") or "").strip().lower()
+                if slug not in BULLETIN_DEFAULT_GROUP_SLUGS:
+                    continue
+                raw = row.get("permissions")
+                parsed: dict = {}
+                if raw:
+                    try:
+                        parsed = json.loads(raw) if isinstance(raw, str) else dict(raw or {})
+                    except (TypeError, ValueError, json.JSONDecodeError):
+                        parsed = {}
+                if not isinstance(parsed, dict):
+                    parsed = {}
+                tools = parsed.get("tools")
+                if not isinstance(tools, list) or "bulletin" in tools:
+                    continue
+                parsed["tools"] = list(tools) + ["bulletin"]
+                upd.execute(
+                    "UPDATE user_groups SET permissions = %s WHERE id = %s",
+                    (json.dumps(parsed), row["id"]),
+                )
+                changed = True
+            if changed:
+                connection.commit()
+        finally:
+            upd.close()
+    finally:
+        cur.close()
+
+
 def group_member_counts(connection) -> Dict[int, int]:
     cur = connection.cursor()
     try:

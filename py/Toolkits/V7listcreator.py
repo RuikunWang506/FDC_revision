@@ -1,4 +1,5 @@
 from py.utilities.setting import login_required
+from py.utilities.csrf import get_csrf_token, rewrite_html_csrf_meta
 from flask import Blueprint, render_template, request, jsonify, current_app, send_file, send_from_directory, redirect, url_for, flash, session, Response
 from werkzeug.utils import secure_filename
 from openpyxl import Workbook, load_workbook
@@ -2267,7 +2268,7 @@ def html_job_redo(rid):
     })
 
 
-LISTCREATOR_STYLE_TOOLS_JS = '/static/js/v7_listcreator_style_tools.js?v=3'
+LISTCREATOR_STYLE_TOOLS_JS = '/static/js/v7_listcreator_style_tools.js?v=4'
 
 
 def _inject_listcreator_style_tools_js(html):
@@ -2311,11 +2312,103 @@ def listcreator_cached_html(rid):
     try:
         with open(path, 'r', encoding='utf-8', errors='replace') as fh:
             html = _inject_listcreator_style_tools_js(fh.read())
+            html = rewrite_html_csrf_meta(html, get_csrf_token())
     except OSError:
         return jsonify({'error': 'Expired or removed'}), 404
     resp = Response(html, mimetype='text/html')
     resp.headers['Cache-Control'] = 'private, max-age=0, must-revalidate'
     return resp
+
+
+def _normalize_requested_styles(raw_styles):
+    """Deduped, sanitized style tokens for catalog-image lookup."""
+    wanted = []
+    seen = set()
+    for raw in raw_styles or []:
+        s = str(raw or '').strip()
+        if not s or len(s) > 80:
+            continue
+        if any(ch in s for ch in '<>"\'\n\r\t'):
+            continue
+        key = s.upper()
+        if key in seen:
+            continue
+        seen.add(key)
+        wanted.append(s)
+        if len(wanted) >= 250:
+            break
+    return wanted
+
+
+def listcreator_catalog_images_for_styles(styles):
+    """Return DAM catalog thumbnails keyed by requested style (and uppercase)."""
+    wanted = _normalize_requested_styles(styles)
+    if not wanted:
+        return {}
+    found = get_images_for_selection(wanted) or {}
+    by_upper = {}
+    for key, imgs in found.items():
+        if imgs:
+            by_upper[str(key).upper()] = imgs
+    missing = [s for s in wanted if s.upper() not in by_upper]
+    if missing:
+        from py.utilities.dam_utils import get_asset_by_sku
+        for style in missing:
+            try:
+                assets = get_asset_by_sku(style, source_filter='catalog_original') or []
+            except Exception:
+                assets = []
+            if assets and not isinstance(assets, list):
+                assets = [assets]
+            image_set = []
+            for i, asset in enumerate(assets):
+                if not asset:
+                    continue
+                image_set.append({
+                    'filename': getattr(asset, 'filename', '') or '',
+                    'path': get_asset_url(asset.id, width=150),
+                    'fullsize_path': get_asset_url(asset.id),
+                    'asset_id': asset.id,
+                    'default': bool(getattr(asset, 'is_canonical', False) or i == 0),
+                })
+            if image_set:
+                by_upper[style.upper()] = image_set
+    out = {}
+    for style in wanted:
+        imgs = by_upper.get(style.upper())
+        if not imgs:
+            continue
+        out[style] = imgs
+        if style.upper() != style:
+            out[style.upper()] = imgs
+    return out
+
+
+@v7_listcreator_bp.route('/v7_listcreator/style_catalog_images', methods=['GET', 'POST'])
+@login_required
+def style_catalog_images():
+    """Live catalog images for one or more styles so cached cards can refresh without rerunning the list."""
+    styles = []
+    if request.method == 'POST':
+        payload = request.get_json(silent=True) or {}
+        raw = payload.get('styles')
+        if raw is None:
+            raw = payload.get('style')
+        if isinstance(raw, str):
+            styles = [raw]
+        elif isinstance(raw, list):
+            styles = raw
+    else:
+        many = (request.args.get('styles') or '').strip()
+        one = (request.args.get('style') or '').strip()
+        if many:
+            styles = [part.strip() for part in many.split(',') if part.strip()]
+        elif one:
+            styles = [one]
+    return jsonify({
+        'success': True,
+        'images': listcreator_catalog_images_for_styles(styles),
+    })
 
 
 def _listcreator_serialize_html_job(j, current_user, me_slug):
