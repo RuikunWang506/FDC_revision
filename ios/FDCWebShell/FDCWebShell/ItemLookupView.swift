@@ -281,8 +281,8 @@ private struct StyleLookupCard: View {
             seen.insert(sku)
             return [
                 sku,
-                product.location?.text("current_location").ifBlank("No location"),
-                product.location?.text("update_date").ifBlank("Never"),
+                (product.location?.text("current_location")).ifBlank("No location"),
+                (product.location?.text("update_date")).ifBlank("Never"),
             ]
         }
         return CompactTable(headers: ["SKU", "Loc", "Last"], rows: rows, skuWidth: 124, numWidth: 90)
