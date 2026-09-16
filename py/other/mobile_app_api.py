@@ -48,15 +48,41 @@ def _origin() -> str:
     return (getattr(Config, "PUBLIC_APP_ORIGIN", None) or "https://www.fdcef.com").rstrip("/")
 
 
+def _is_placeholder_image(path: Any) -> bool:
+    text = str(path or "").strip().lower()
+    return (not text) or ("no_image" in text)
+
+
 def _abs_url(path: Any) -> str:
     text = str(path or "").strip()
-    if not text:
+    if _is_placeholder_image(text):
         return ""
     if text.startswith("http://") or text.startswith("https://"):
         return text
     if not text.startswith("/"):
         text = "/" + text
     return _origin() + text
+
+
+def _dam_thumb(sku_or_style: str, width: int = 300) -> str:
+    key = (sku_or_style or "").strip().upper()
+    if not key:
+        return ""
+    from py.utilities.dam_utils import get_canonical_asset_url, search_assets_by_sku_pattern
+
+    style = key.split()[0]
+    for term in (key, style):
+        url = get_canonical_asset_url(term, width=width, source_filter="catalog_original")
+        if url:
+            return url
+    assets = search_assets_by_sku_pattern(style, source_filter=["catalog_original", "dropbox", "catalog"])
+    if not assets:
+        return ""
+    assets = sorted(
+        assets,
+        key=lambda asset: 0 if getattr(asset, "source", "") == "catalog_original" else 1,
+    )
+    return f"/image/{assets[0].id}/{width}"
 
 
 def _json_cell(value: Any) -> Any:
@@ -376,10 +402,15 @@ def _item_style_groups(query: str, rows: List[Dict[str, Any]], images: List[Dict
                     )
                 if product.get("image_url"):
                     product["image_url"] = _abs_url(product.get("image_url"))
+            raw_image = style_data.get("image_url")
+            if _is_placeholder_image(raw_image):
+                raw_image = images[0]["url"] if images else ""
+            if _is_placeholder_image(raw_image):
+                raw_image = _dam_thumb(style)
             styles.append(
                 {
                     "style": style,
-                    "image_url": _abs_url(style_data.get("image_url") or (images[0]["url"] if images else "")),
+                    "image_url": _abs_url(raw_image),
                     "colors": colors,
                     "products": _jsonify_obj(products),
                     "measurements": {
@@ -461,7 +492,8 @@ def _styles_from_excel_rows(rows: List[Dict[str, Any]], images: List[Dict[str, s
     first_image = images[0]["url"] if images else ""
     for style, bucket in grouped.items():
         bucket.pop("_seen_colors", None)
-        bucket["image_url"] = first_image
+        thumb = first_image if not _is_placeholder_image(first_image) else _dam_thumb(style)
+        bucket["image_url"] = _abs_url(thumb)
         products = bucket["products"]
         weights = sorted({f"{p['package']['pc_weight']:.1f} lbs" for p in products if p["package"]["pc_weight"]})
         dims = sorted(

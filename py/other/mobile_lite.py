@@ -11,13 +11,33 @@ from flask import current_app
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc, get_sql_server_connection_oms_ef
 from py.utilities.ocean_qty import fetch_ocean_qty_by_skus
-from py.utilities.dam_utils import get_canonical_asset_url
+from py.utilities.dam_utils import get_canonical_asset_url, search_assets_by_sku_pattern
 
 mobile_lite_bp = Blueprint('mobile_lite', __name__, template_folder='templates')
 
 # Database configurations from settings
 sql_server_config = Config.SQL_SERVER_CONFIG
 db_config = Config.DB_CONFIG
+
+
+def _style_catalog_image(style_number):
+    """Match bag-style / item-lookup DAM sources, not the unused 'catalog' label."""
+    style_number = (style_number or "").strip().upper().split()[0]
+    if not style_number:
+        return ""
+    url = get_canonical_asset_url(style_number, width=300, source_filter="catalog_original")
+    if url:
+        return url
+    assets = search_assets_by_sku_pattern(
+        style_number, source_filter=["catalog_original", "dropbox"]
+    )
+    if assets:
+        assets = sorted(
+            assets,
+            key=lambda asset: 0 if getattr(asset, "source", "") == "catalog_original" else 1,
+        )
+        return f"/image/{assets[0].id}/300"
+    return ""
 
 def get_db_connection():
     """Establishes a connection to the MySQL database."""
@@ -244,10 +264,9 @@ def get_product_data(user_input):
                     }
                 }
 
-                # Add image URL using DAM system
-                style_number = style.split()[0].strip() if style else ''
-                canonical_image_url = get_canonical_asset_url(style_number, source_filter='catalog')
-                product_data['image_url'] = canonical_image_url if canonical_image_url else "/static/no_image_available.jpg"
+                # DAM stores catalog photos as catalog_original (and dropbox), not "catalog".
+                style_number = style.split()[0].strip() if style else ""
+                product_data["image_url"] = _style_catalog_image(style_number) or "/static/no_image_available.jpg"
 
                 results.append(product_data)
         

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct FDCSearchBar: View {
     let placeholder: String
@@ -88,13 +89,15 @@ struct KVGrid: View {
 struct RemoteThumb: View {
     let url: String
     var size: CGFloat = 88
+    @State private var image: UIImage?
 
     var body: some View {
-        AsyncImage(url: URL(string: url)) { phase in
-            switch phase {
-            case .success(let img):
-                img.resizable().scaledToFill()
-            default:
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
                 FDCTheme.card
                     .overlay {
                         Image(systemName: "photo")
@@ -105,7 +108,27 @@ struct RemoteThumb: View {
         .frame(width: size, height: size)
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .task(id: url) { await load() }
     }
+
+    private func load() async {
+        if let cached = RemoteImageCache.store.object(forKey: url as NSString) {
+            image = cached
+            return
+        }
+        guard let data = await APIClient.shared.imageData(from: url),
+              let loaded = UIImage(data: data)
+        else {
+            image = nil
+            return
+        }
+        RemoteImageCache.store.setObject(loaded, forKey: url as NSString)
+        image = loaded
+    }
+}
+
+private enum RemoteImageCache {
+    static let store = NSCache<NSString, UIImage>()
 }
 
 struct StatusBanner: View {

@@ -40,6 +40,13 @@ class MobileAppApiTests(unittest.TestCase):
         self.assertTrue({"item_lookup", "order_lookup"}.issubset(native))
         self.assertTrue(native.issubset(NATIVE_TOOL_IDS))
 
+    def test_abs_url_skips_placeholder(self):
+        from py.other.mobile_app_api import _abs_url, _is_placeholder_image
+
+        self.assertTrue(_is_placeholder_image("/static/no_image_available.jpg"))
+        self.assertEqual(_abs_url("/static/no_image_available.jpg"), "")
+        self.assertTrue(_abs_url("/image/12/300").endswith("/image/12/300"))
+
     def test_records_skip_plain_html(self):
         from py.other.mobile_app_api import _clean_inventory_row, _records_from_html_table
 

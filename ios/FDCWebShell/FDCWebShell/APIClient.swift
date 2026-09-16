@@ -160,6 +160,33 @@ final class APIClient {
         return try await post("/api/mobile/scan", json: body)
     }
 
+    func imageData(from urlString: String) async -> Data? {
+        guard let url = resolvedImageURL(urlString) else { return nil }
+        var req = URLRequest(url: url)
+        req.setValue("image/jpeg,image/png,image/webp,image/gif,image/*,*/*", forHTTPHeaderField: "Accept")
+        do {
+            let (data, response) = try await session.data(for: req)
+            let http = response as? HTTPURLResponse
+            let code = http?.statusCode ?? 0
+            let type = (http?.value(forHTTPHeaderField: "Content-Type") ?? "").lowercased()
+            guard (200..<300).contains(code), !data.isEmpty else { return nil }
+            if type.contains("json") || type.contains("html") { return nil }
+            return data
+        } catch {
+            return nil
+        }
+    }
+
+    func resolvedImageURL(_ raw: String) -> URL? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.lowercased().contains("no_image") else { return nil }
+        if let url = URL(string: trimmed), url.scheme != nil { return url }
+        if trimmed.hasPrefix("/") {
+            return URL(string: trimmed, relativeTo: AppConfig.baseURL)?.absoluteURL
+        }
+        return URL(string: trimmed)
+    }
+
     private func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
         var comps = URLComponents(url: url(path), resolvingAgainstBaseURL: false)!
         if !query.isEmpty {
