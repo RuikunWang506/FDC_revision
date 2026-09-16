@@ -285,6 +285,13 @@
             font-size: 13px;
         }
 
+        #gofoModalAvailResult {
+            border: 1px solid #e3e8ee;
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: #fafbfc;
+        }
+
         #gofoPriceModal .modal-content {
             border-radius: 12px;
             border: none;
@@ -391,6 +398,56 @@
 
         #gofoPriceModal .gofo-price-amount {
             font-weight: 800;
+            color: #1f7a4d;
+        }
+
+        #gofoPriceModal .gofo-quote-card {
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            background: #fff;
+        }
+
+        #gofoPriceModal .gofo-quote-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        #gofoPriceModal .gofo-quote-table {
+            width: 100%;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        #gofoPriceModal .gofo-quote-table th,
+        #gofoPriceModal .gofo-quote-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #eef2f5;
+            vertical-align: middle;
+        }
+
+        #gofoPriceModal .gofo-quote-table th {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        #gofoPriceModal .gofo-quote-table td.gofo-quote-line {
+            text-align: right;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #gofoPriceModal .gofo-quote-table tr.gofo-quote-total td {
+            border-bottom: none;
+            font-weight: 800;
+            padding-top: 8px;
             color: #1f7a4d;
         }
 
@@ -2811,6 +2868,63 @@
                 generateEtaFashionLabelPdf('4x6', $(this));
             });
 
+            function renderGofoAvailHtml(data) {
+                const statusLabel = {
+                    reachable: 'Reachable',
+                    unreachable: 'Not reachable',
+                    blocked: 'Blocked',
+                    error: 'Error',
+                    unknown: 'Unknown'
+                };
+                const zipSt = (data.zip_check && data.zip_check.status) || '';
+                let html = '';
+                if (data.zip) {
+                    html += '<div class="gofo-svc">' +
+                        '<span class="gofo-svc-label">GOFO ZIP</span>' +
+                        '<span class="gofo-badge ' + (zipSt || 'unknown') + '">' +
+                        (zipSt === 'reachable' ? 'In network' : (statusLabel[zipSt] || zipSt || 'Unknown')) +
+                        '</span></div>';
+                    html += '<div class="gofo-zip-meta">ZIP ' + $('<div>').text(data.zip).html();
+                    if (data.zip_check && data.zip_check.sorting_code) {
+                        html += ' · sort ' + $('<div>').text(data.zip_check.sorting_code).html();
+                    }
+                    html += ' · network coverage, not a Ground guarantee</div>';
+                }
+                (data.services || []).forEach(function(svc) {
+                    const st = svc.status || 'unknown';
+                    html += '<div class="gofo-svc">' +
+                        '<span class="gofo-svc-label">' + $('<div>').text(svc.label || svc.key).html() + '</span>' +
+                        '<span class="gofo-badge ' + st + '" title="' + $('<div>').text(svc.message || '').html() + '">' +
+                        (statusLabel[st] || st) +
+                        '</span></div>';
+                    if (svc.message && (st !== 'reachable' || (svc.source || '').indexOf('excel') === 0)) {
+                        html += '<div class="gofo-zip-meta">' + $('<div>').text(svc.message).html() + '</div>';
+                    }
+                });
+                return html;
+            }
+
+            function gofoDestinationReachable(data) {
+                const zipSt = (data && data.zip_check && data.zip_check.status) || '';
+                if (zipSt === 'unreachable' || zipSt === 'blocked') return false;
+                return (data.services || []).some(function(svc) {
+                    return svc.status === 'reachable';
+                });
+            }
+
+            async function fetchGofoAvailability(order) {
+                const response = await fetch('{{ url_for("order_lookup.gofo_availability") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_number: order })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.ok) {
+                    throw new Error((data && data.error) || 'GOFO check failed.');
+                }
+                return data;
+            }
+
             $('#gofoAvailBtn').on('click', async function() {
                 const $btn = $(this);
                 const $out = $('#gofoAvailResult');
@@ -2823,39 +2937,8 @@
                 $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Checking…');
                 $out.empty();
                 try {
-                    const response = await fetch('{{ url_for("order_lookup.gofo_availability") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order_number: order })
-                    });
-                    const data = await response.json().catch(() => ({}));
-                    if (!response.ok || !data.ok) {
-                        throw new Error((data && data.error) || 'GOFO check failed.');
-                    }
-                    const statusLabel = {
-                        reachable: 'Reachable',
-                        unreachable: 'Not reachable',
-                        blocked: 'Blocked',
-                        error: 'Error',
-                        unknown: 'Unknown'
-                    };
-                    let html = '';
-                    (data.services || []).forEach(function(svc) {
-                        const st = svc.status || 'unknown';
-                        html += '<div class="gofo-svc">' +
-                            '<span class="gofo-svc-label">' + $('<div>').text(svc.label || svc.key).html() + '</span>' +
-                            '<span class="gofo-badge ' + st + '" title="' + $('<div>').text(svc.message || '').html() + '">' +
-                            (statusLabel[st] || st) +
-                            '</span></div>';
-                    });
-                    if (data.zip) {
-                        html += '<div class="gofo-zip-meta">ZIP ' + $('<div>').text(data.zip).html();
-                        if (data.zip_check && data.zip_check.sorting_code) {
-                            html += ' · sort ' + $('<div>').text(data.zip_check.sorting_code).html();
-                        }
-                        html += '</div>';
-                    }
-                    $out.html(html);
+                    const data = await fetchGofoAvailability(order);
+                    $out.html(renderGofoAvailHtml(data));
                 } catch (err) {
                     $out.html('<div class="gofo-error"><i class="fas fa-exclamation-circle mr-1"></i>' +
                         $('<div>').text(err.message || 'GOFO check failed.').html() + '</div>');
@@ -2873,6 +2956,62 @@
                 let wholeSuggestion = { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 0 };
                 let mixSuggestion = { boxes: [], note: '', dim_unit: 'INCH', total_boxes: 1 };
                 let boxes = [];
+                let gofoServiceAllowed = { parcel: false, ground: false };
+                const gofoBtnHtml = {
+                    parcel: $('#gofoRunParcelBtn').html(),
+                    ground: $('#gofoRunGroundBtn').html()
+                };
+
+                function gofoServiceBtn(key) {
+                    return key === 'ground' ? $('#gofoRunGroundBtn') : $('#gofoRunParcelBtn');
+                }
+
+                function applyGofoServiceButtons() {
+                    ['parcel', 'ground'].forEach(function(key) {
+                        const allowed = !!gofoServiceAllowed[key];
+                        gofoServiceBtn(key)
+                            .prop('disabled', !allowed)
+                            .attr('title', allowed ? '' : 'This service cannot be reached');
+                    });
+                }
+
+                function setGofoServicesEnabled(parcelAllowed, groundAllowed) {
+                    gofoServiceAllowed.parcel = !!parcelAllowed;
+                    gofoServiceAllowed.ground = !!groundAllowed;
+                    applyGofoServiceButtons();
+                }
+
+                function serviceReachable(data, key) {
+                    const zipSt = (data && data.zip_check && data.zip_check.status) || '';
+                    if (zipSt === 'unreachable' || zipSt === 'blocked') return false;
+                    return (data.services || []).some(function(svc) {
+                        return svc.key === key && svc.status === 'reachable';
+                    });
+                }
+
+                async function refreshModalAvailability() {
+                    const $out = $('#gofoModalAvailResult');
+                    setGofoServicesEnabled(false, false);
+                    $out.html('<div class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>Checking GOFO availability…</div>');
+                    try {
+                        const data = await fetchGofoAvailability(orderNumber);
+                        $out.html(renderGofoAvailHtml(data));
+                        const parcelOk = serviceReachable(data, 'parcel');
+                        const groundOk = serviceReachable(data, 'ground');
+                        setGofoServicesEnabled(parcelOk, groundOk);
+                        if (!parcelOk && !groundOk) {
+                            $out.append('<div class="gofo-error mt-2">Cannot be reached — Check Parcel and Check Ground are disabled.</div>');
+                        } else if (!parcelOk) {
+                            $out.append('<div class="gofo-error mt-2">Parcel cannot be reached — Check Parcel is disabled.</div>');
+                        } else if (!groundOk) {
+                            $out.append('<div class="gofo-error mt-2">Ground cannot be reached — Check Ground is disabled.</div>');
+                        }
+                    } catch (err) {
+                        $out.html('<div class="gofo-error"><i class="fas fa-exclamation-circle mr-1"></i>' +
+                            $('<div>').text(err.message || 'GOFO check failed.').html() + '</div>' +
+                            '<div class="gofo-error mt-1">Price buttons are disabled until availability succeeds.</div>');
+                    }
+                }
 
                 function esc(s) {
                     return $('<div>').text(s == null ? '' : String(s)).html();
@@ -2998,7 +3137,10 @@
                 function cmToInch(v) { return Math.round((parseFloat(v) || 0) / 2.54 * 100) / 100; }
 
                 $modal.on('show.bs.modal', async function() {
-                    $('#gofoPriceResult').empty();
+                    $('#gofoPriceResultParcel').empty();
+                    $('#gofoPriceResultGround').empty();
+                    setGofoServicesEnabled(false, false);
+                    const availPromise = refreshModalAvailability();
                     try {
                         const response = await fetch('{{ url_for("order_lookup.gofo_packages") }}?order_number=' + encodeURIComponent(orderNumber));
                         const data = await response.json().catch(() => ({}));
@@ -3034,6 +3176,7 @@
                         $('#gofoPackageNote').text(err.message || 'Could not load saved packages.');
                         renderBoxes();
                     }
+                    await availPromise;
                 });
 
                 $('#gofoModeMix').on('click', function() { setMode('mix', true); });
@@ -3113,12 +3256,64 @@
                     readBoxesFromDom();
                 });
 
-                $('#gofoRunPriceBtn').on('click', async function() {
+                function money(n) {
+                    const num = Number(n);
+                    return isFinite(num) ? num.toFixed(2) : '0.00';
+                }
+
+                function renderGofoQuoteCard(data) {
+                    const svc = (data.services || [])[0];
+                    if (!svc) {
+                        return '<div class="gofo-error">No quote returned.</div>';
+                    }
+                    const cur = svc.currency || 'USD';
+                    let html = '<div class="gofo-quote-card">';
+                    html += '<div class="gofo-quote-head"><strong>' + esc(svc.label || svc.key) + '</strong>';
+                    html += '<span class="small text-muted">';
+                    if (data.saved === false) html += 'Quoted';
+                    else html += 'Saved';
+                    html += ' · ' + esc(data.box_count) + ' box(es)';
+                    if (data.unique_sizes) html += ' · ' + esc(data.unique_sizes) + ' unique sizes';
+                    html += ' · ZIP ' + esc(data.zip);
+                    if (svc.delivery_days != null) html += ' · ' + esc(svc.delivery_days) + 'd';
+                    html += '</span></div>';
+                    if (data.save_warning) {
+                        html += '<div class="small text-warning mb-1">Package save warning: ' +
+                            esc(data.save_warning) + '</div>';
+                    }
+                    html += '<table class="gofo-quote-table"><thead><tr>' +
+                        '<th>Style</th><th>Boxes</th><th class="gofo-quote-line">Price</th>' +
+                        '</tr></thead><tbody>';
+                    (svc.rows || []).forEach(function(row) {
+                        const name = row.style || row.label || row.sku || ('Row ' + row.row);
+                        html += '<tr><td>' + esc(name) + '</td><td>' + esc(row.qty) + '</td>';
+                        if (row.ok) {
+                            html += '<td class="gofo-quote-line">$' + money(row.unit_price) +
+                                ' × ' + esc(row.qty) + ' = <strong>$' + money(row.line_total) + '</strong></td>';
+                        } else {
+                            html += '<td class="gofo-quote-line text-danger">' + esc(row.error || 'Failed') + '</td>';
+                        }
+                        html += '</tr>';
+                    });
+                    html += '<tr class="gofo-quote-total"><td colspan="2">Total</td><td class="gofo-quote-line">';
+                    if (svc.ok && svc.total != null) {
+                        html += '<strong>$' + money(svc.total) + '</strong>';
+                    } else {
+                        html += '<span class="text-danger">' + esc(svc.error || 'Failed') + '</span>';
+                    }
+                    html += '</td></tr></tbody></table></div>';
+                    return html;
+                }
+
+                async function runGofoPrice(productKey) {
+                    if (!gofoServiceAllowed[productKey]) return;
                     readBoxesFromDom();
-                    const $btn = $(this);
-                    const original = $btn.html();
-                    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Pricing…');
-                    $('#gofoPriceResult').html('<div class="text-muted">Saving packages and checking GOFO rates…</div>');
+                    const $btn = gofoServiceBtn(productKey);
+                    const original = gofoBtnHtml[productKey];
+                    const $slot = productKey === 'ground' ? $('#gofoPriceResultGround') : $('#gofoPriceResultParcel');
+                    $('#gofoRunParcelBtn, #gofoRunGroundBtn').prop('disabled', true);
+                    $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Pricing…');
+                    $slot.html('<div class="text-muted">Quoting unique box sizes with GOFO…</div>');
                     try {
                         const response = await fetch('{{ url_for("order_lookup.gofo_check_price") }}', {
                             method: 'POST',
@@ -3127,35 +3322,30 @@
                                 order_number: orderNumber,
                                 package_mode: packageMode,
                                 dim_unit: $('#gofoDimUnit').val() || 'INCH',
+                                product_key: productKey,
                                 boxes: boxes
                             })
                         });
                         const data = await response.json().catch(() => ({}));
+                        if (data && data.services && data.services.length) {
+                            $slot.html(renderGofoQuoteCard(data));
+                            return;
+                        }
                         if (!response.ok || !data.ok) {
                             throw new Error((data && data.error) || 'Price check failed.');
                         }
-                        let html = '<div class="small text-muted mb-1">Saved for order ' + esc(orderNumber) +
-                            ' · ' + esc(data.box_count) + ' box(es) · ZIP ' + esc(data.zip) + '</div>';
-                        (data.services || []).forEach(function(svc) {
-                            html += '<div class="gofo-svc"><span>' + esc(svc.label) + '</span>';
-                            if (svc.ok) {
-                                html += '<span class="gofo-price-amount">' + esc(svc.currency || 'USD') + ' ' +
-                                    esc(Number(svc.total).toFixed(2)) +
-                                    (svc.delivery_days != null ? ' · ' + esc(svc.delivery_days) + 'd' : '') +
-                                    '</span>';
-                            } else {
-                                html += '<span class="text-danger">' + esc(svc.error || 'Failed') + '</span>';
-                            }
-                            html += '</div>';
-                        });
-                        $('#gofoPriceResult').html(html);
+                        $slot.html(renderGofoQuoteCard(data));
                     } catch (err) {
-                        $('#gofoPriceResult').html('<div class="text-danger"><i class="fas fa-exclamation-circle mr-1"></i>' +
+                        $slot.html('<div class="text-danger"><i class="fas fa-exclamation-circle mr-1"></i>' +
                             esc(err.message || 'Price check failed.') + '</div>');
                     } finally {
-                        $btn.prop('disabled', false).html(original);
+                        $btn.html(original);
+                        applyGofoServiceButtons();
                     }
-                });
+                }
+
+                $('#gofoRunParcelBtn').on('click', function() { runGofoPrice('parcel'); });
+                $('#gofoRunGroundBtn').on('click', function() { runGofoPrice('ground'); });
             })();
 
             $('#printWarehouseLabelBtn').on('click', async function() {
@@ -3398,6 +3588,8 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <div class="small font-weight-bold text-muted mb-1">{{ te('GOFO availability') }}</div>
+                    <div id="gofoModalAvailResult" class="gofo-avail-result mb-3" aria-live="polite"></div>
                     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3" style="gap:10px;">
                         <div>
                             <div class="small text-muted mb-1">{{ te('Package type') }}</div>
@@ -3429,12 +3621,20 @@
                         <div id="gofoBoxList"></div>
                     </div>
                     <hr>
-                    <div id="gofoPriceResult" class="gofo-price-result" aria-live="polite"></div>
+                    <div id="gofoPriceResult" class="gofo-price-result" aria-live="polite">
+                        <div id="gofoPriceResultParcel"></div>
+                        <div id="gofoPriceResultGround"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-dismiss="modal">{{ te('Close') }}</button>
-                    <button type="button" class="btn btn-success" id="gofoRunPriceBtn">
-                        <i class="fas fa-calculator mr-1"></i>{{ te('Get price') }}
+                    <button type="button" class="btn btn-outline-primary" id="gofoRunParcelBtn" disabled
+                            title="Check Parcel is disabled until GOFO availability succeeds">
+                        <i class="fas fa-box mr-1"></i>{{ te('Check Parcel') }}
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="gofoRunGroundBtn" disabled
+                            title="Check Ground is disabled until GOFO availability succeeds">
+                        <i class="fas fa-truck mr-1"></i>{{ te('Check Ground') }}
                     </button>
                 </div>
             </div>

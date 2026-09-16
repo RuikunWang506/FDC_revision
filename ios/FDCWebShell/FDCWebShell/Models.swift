@@ -33,6 +33,7 @@ struct LoginResponse: Codable {
 struct ItemLookupResponse: Codable {
     let ok: Bool
     let query: String?
+    let styles: [ItemStyleGroup]?
     let rows: [[String: JSONValue]]?
     let history: [[String: JSONValue]]?
     let purchases: [[String: JSONValue]]?
@@ -40,6 +41,61 @@ struct ItemLookupResponse: Codable {
     let images: [ItemImage]?
     let totals: ItemTotals?
     let error: String?
+}
+
+struct ItemStyleGroup: Codable, Identifiable {
+    var id: String { style }
+    let style: String
+    let imageURL: String?
+    let colors: [ItemColorChip]?
+    let products: [ItemProductRow]?
+    let measurements: ItemMeasurements?
+
+    enum CodingKeys: String, CodingKey {
+        case style, colors, products, measurements
+        case imageURL = "image_url"
+    }
+}
+
+struct ItemColorChip: Codable, Identifiable, Hashable {
+    var id: String { code }
+    let code: String
+    let hex: String?
+    let light: Bool?
+}
+
+struct ItemProductRow: Codable, Identifiable {
+    var id: String { "\(db)-\(sku)" }
+    let db: String
+    let sku: String
+    let info: [String: JSONValue]?
+    let inventory: [String: JSONValue]?
+    let package: [String: JSONValue]?
+    let location: [String: JSONValue]?
+
+    var color: String {
+        sku.split(separator: " ").last.map(String.init)?.uppercased() ?? ""
+    }
+
+    var isFDC: Bool { db.uppercased().contains("FDC") }
+    var isEF: Bool { db.uppercased().contains("EF") || db.uppercased().contains("E_F") }
+
+    func inv(_ key: String) -> String { inventory?.text(key) ?? "" }
+    func invInt(_ key: String) -> Int { Int(Double(inv(key)) ?? 0) }
+}
+
+struct ItemMeasurements: Codable {
+    let pcWeights: String?
+    let dimensions: String?
+    let pkgWeights: String?
+    let pkgDimensions: String?
+
+    enum CodingKeys: String, CodingKey {
+        case dimensions
+        case pcWeights = "pc_weights"
+        case pkgWeights = "pkg_weights"
+        case pkgDimensions = "pkg_dimensions"
+    }
 }
 
 struct ItemTotals: Codable {

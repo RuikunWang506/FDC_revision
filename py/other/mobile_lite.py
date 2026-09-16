@@ -11,6 +11,7 @@ from flask import current_app
 from py.utilities.setting import Config
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc, get_sql_server_connection_oms_ef
 from py.utilities.ocean_qty import fetch_ocean_qty_by_skus
+from py.utilities.dam_utils import get_canonical_asset_url
 
 mobile_lite_bp = Blueprint('mobile_lite', __name__, template_folder='templates')
 

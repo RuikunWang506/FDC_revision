@@ -323,6 +323,7 @@ def mobile_item_lookup():
             rows = [_clean_inventory_row(rec) for rec in df.to_dict(orient="records")]
 
         images = _item_images(user_input, df)
+        styles = _item_style_groups(query, rows, images)
         log_user_action(
             f"***{session.get('username')}***__@@@search SKU@@@__ {user_input} [mobile]",
             session.get("username"),
@@ -331,6 +332,7 @@ def mobile_item_lookup():
             {
                 "ok": True,
                 "query": user_input,
+                "styles": styles,
                 "rows": rows,
                 "history": _records_from_html_table(history_html or ""),
                 "purchases": _records_from_html_table(purchase_html or ""),
@@ -347,6 +349,137 @@ def mobile_item_lookup():
     except Exception as exc:
         current_app.logger.exception("mobile item_lookup failed")
         return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+def _item_style_groups(query: str, rows: List[Dict[str, Any]], images: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    try:
+        from py.other.mobile_lite import format_measurements, get_color_from_abbr, get_product_data, is_light_color
+
+        grouped = get_product_data(query) or {}
+        styles = []
+        for style, style_data in grouped.items():
+            products = style_data.get("products") or []
+            meas = format_measurements(products) if products else {}
+            colors = []
+            seen = set()
+            for product in products:
+                sku = str(product.get("sku") or "").strip().upper()
+                color = sku.split()[-1] if " " in sku else ""
+                if color and color not in seen:
+                    seen.add(color)
+                    colors.append(
+                        {
+                            "code": color,
+                            "hex": get_color_from_abbr(color),
+                            "light": is_light_color(color),
+                        }
+                    )
+                if product.get("image_url"):
+                    product["image_url"] = _abs_url(product.get("image_url"))
+            styles.append(
+                {
+                    "style": style,
+                    "image_url": _abs_url(style_data.get("image_url") or (images[0]["url"] if images else "")),
+                    "colors": colors,
+                    "products": _jsonify_obj(products),
+                    "measurements": {
+                        "pc_weights": meas.get("pc_weights") or "",
+                        "dimensions": str(meas.get("dimensions") or "").replace("<br>", "\n"),
+                        "pkg_weights": meas.get("pkg_weights") or "",
+                        "pkg_dimensions": str(meas.get("pkg_dimensions") or "").replace("<br>", "\n"),
+                    },
+                }
+            )
+        if styles:
+            return styles
+    except Exception as exc:
+        current_app.logger.warning("mobile lite grouping failed, using excel rows: %s", exc)
+    return _styles_from_excel_rows(rows, images)
+
+
+def _excel_num(row: Dict[str, Any], key: str) -> float:
+    try:
+        return float(row.get(key) or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _styles_from_excel_rows(rows: List[Dict[str, Any]], images: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        sku = str(row.get("SKU") or "").strip().upper()
+        style = str(row.get("Style") or "").strip().upper().split()[0] if row.get("Style") else (sku.split()[0] if sku else "")
+        if not style:
+            style = sku or "UNKNOWN"
+        bucket = grouped.setdefault(
+            style,
+            {"style": style, "image_url": "", "products": [], "colors": [], "_seen_colors": set()},
+        )
+        db = str(row.get("DB") or "").strip()
+        if db.lower() in ("e_fas", "oms_ef"):
+            db = "oms_EF"
+        elif "fdc" in db.lower():
+            db = "FDC"
+        color = str(row.get("color") or "").strip().upper()
+        if not color and " " in sku:
+            color = sku.split()[-1]
+        if color and color not in bucket["_seen_colors"]:
+            bucket["_seen_colors"].add(color)
+            bucket["colors"].append({"code": color, "hex": "#888888", "light": True})
+        bucket["products"].append(
+            {
+                "db": db,
+                "sku": sku,
+                "style": style,
+                "info": {
+                    "cost": _excel_num(row, "cost"),
+                    "price": _excel_num(row, "MSRP") / 2 if _excel_num(row, "MSRP") else 0,
+                    "description": row.get("Descrip") or "",
+                },
+                "inventory": {
+                    "stock": int(_excel_num(row, "Stock")),
+                    "sold": int(_excel_num(row, "Sold")),
+                    "available": int(_excel_num(row, "Avail")),
+                    "incoming": int(_excel_num(row, "ocean")),
+                    "case_qty": int(_excel_num(row, "CaseQty")),
+                    "update_date": row.get("update dt") or "",
+                },
+                "package": {
+                    "pc_weight": _excel_num(row, "pc_wt"),
+                    "length": _excel_num(row, "len"),
+                    "width": _excel_num(row, "wid"),
+                    "height": _excel_num(row, "hei"),
+                    "box_weight": _excel_num(row, "box_wt"),
+                },
+                "location": {
+                    "current_location": row.get("Location") or "",
+                    "update_date": row.get("update dt") or "",
+                },
+            }
+        )
+    out = []
+    first_image = images[0]["url"] if images else ""
+    for style, bucket in grouped.items():
+        bucket.pop("_seen_colors", None)
+        bucket["image_url"] = first_image
+        products = bucket["products"]
+        weights = sorted({f"{p['package']['pc_weight']:.1f} lbs" for p in products if p["package"]["pc_weight"]})
+        dims = sorted(
+            {
+                f"{p['package']['length']}\" × {p['package']['width']}\" × {p['package']['height']}\""
+                for p in products
+                if p["package"]["length"] or p["package"]["width"] or p["package"]["height"]
+            }
+        )
+        box_w = sorted({f"{p['package']['box_weight']:.1f} lbs" for p in products if p["package"]["box_weight"]})
+        bucket["measurements"] = {
+            "pc_weights": ", ".join(weights),
+            "dimensions": "\n".join(dims),
+            "pkg_weights": ", ".join(box_w),
+            "pkg_dimensions": "",
+        }
+        out.append(bucket)
+    return out
 
 
 def _item_images(user_input: str, df) -> List[Dict[str, str]]:

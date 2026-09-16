@@ -1,6 +1,8 @@
 import pyodbc
 import pandas as pd
 
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from flask import Blueprint, request, render_template, session, current_app, jsonify, redirect, url_for, send_file
 import io
@@ -1595,12 +1597,6 @@ def gofo_availability():
     street = adr2 or adr1
 
     current_user = session.get("username", "unknown")
-    current_app.logger.info(
-        "***%s***__@@@GOFO availability@@@__ order=%s zip=%s",
-        current_user,
-        order_number,
-        zip_code,
-    )
 
     result = check_parcel_and_ground(
         zip_code=zip_code,
@@ -1613,6 +1609,18 @@ def gofo_availability():
     )
     if not result.get("ok"):
         return jsonify(result), 502
+
+    current_app.logger.info(
+        "***%s***__@@@GOFO availability@@@__ order=%s zip=%s zip_status=%s services=%s",
+        current_user,
+        order_number,
+        zip_code,
+        (result.get("zip_check") or {}).get("status"),
+        ",".join(
+            f"{s.get('key')}={s.get('status')}"
+            for s in (result.get("services") or [])
+        ),
+    )
 
     result["order_number"] = order_number
     return jsonify(result)
@@ -1926,9 +1934,12 @@ def gofo_check_price():
     boxes = payload.get("boxes") or []
     dim_unit = str(payload.get("dim_unit") or "INCH").upper()
     package_mode = str(payload.get("package_mode") or "mix").lower()
+    product_key = str(payload.get("product_key") or payload.get("service") or "").strip().lower()
     current_user = session.get("username", "unknown")
+    started = time.time()
+    save_error = None
 
-    try:
+    def _save_packages():
         save_packages(
             order_number=order_number,
             package_mode=package_mode,
@@ -1936,35 +1947,62 @@ def gofo_check_price():
             boxes=boxes,
             updated_by=current_user,
         )
-    except Exception as e:
-        current_app.logger.exception("Save packages before price check failed")
-        return jsonify({"ok": False, "error": f"Could not save packages: {e}"}), 500
+
+    with ThreadPoolExecutor(max_workers=1) as saver:
+        save_fut = saver.submit(_save_packages)
+        result = estimate_prices_for_boxes(
+            boxes=boxes,
+            dim_unit=dim_unit,
+            zip_code=zip_code,
+            country=ship["country"],
+            state=ship["state"],
+            city=ship["city"],
+            street=ship["street"],
+            phone=ship["phone"],
+            name=ship["name"],
+            product_keys=product_key or None,
+        )
+        try:
+            save_fut.result()
+        except Exception as e:
+            current_app.logger.exception("Save packages during price check failed")
+            save_error = str(e)
+
+    if save_error and not result.get("ok"):
+        return jsonify({"ok": False, "error": f"Could not save packages: {save_error}"}), 500
 
     current_app.logger.info(
-        "***%s***__@@@GOFO check price@@@__ order=%s zip=%s boxes=%s mode=%s",
+        "***%s***__@@@GOFO check price@@@__ order=%s zip=%s boxes=%s unique=%s mode=%s service=%s elapsed=%.2fs saved=%s",
         current_user,
         order_number,
         zip_code,
-        len(boxes),
+        result.get("box_count") if result.get("ok") else len(boxes),
+        result.get("unique_sizes"),
         package_mode,
+        product_key or "both",
+        time.time() - started,
+        "ok" if not save_error else "fail",
     )
 
-    result = estimate_prices_for_boxes(
-        boxes=boxes,
-        dim_unit=dim_unit,
-        zip_code=zip_code,
-        country=ship["country"],
-        state=ship["state"],
-        city=ship["city"],
-        street=ship["street"],
-        phone=ship["phone"],
-        name=ship["name"],
-    )
     if not result.get("ok"):
-        return jsonify(result), 502
+        current_app.logger.warning(
+            "***%s***__@@@GOFO check price failed@@@__ order=%s service=%s error=%s",
+            current_user,
+            order_number,
+            product_key or "both",
+            (result.get("error") or "")[:300],
+        )
+        result["order_number"] = order_number
+        result["package_mode"] = package_mode
+        result["saved"] = not bool(save_error)
+        if save_error:
+            result["save_warning"] = save_error
+        return jsonify(result)
 
     result["order_number"] = order_number
     result["package_mode"] = package_mode
-    result["saved"] = True
+    result["saved"] = not bool(save_error)
+    if save_error:
+        result["save_warning"] = save_error
     return jsonify(result)
 

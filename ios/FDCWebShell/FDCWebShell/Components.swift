@@ -134,3 +134,49 @@ struct EmptyHint: View {
             .frame(maxWidth: .infinity)
     }
 }
+
+struct CompactTable: View {
+    let headers: [String]
+    let rows: [[String]]
+    var skuWidth: CGFloat = 118
+    var numWidth: CGFloat = 52
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 0) {
+                headerRow
+                ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                    HStack(spacing: 0) {
+                        ForEach(Array(row.enumerated()), id: \.offset) { col, value in
+                            Text(value.isEmpty ? "—" : value)
+                                .font(.caption)
+                                .foregroundStyle(FDCTheme.ink)
+                                .frame(width: col == 0 ? skuWidth : numWidth, alignment: col == 0 ? .leading : .trailing)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 4)
+                    .background(index % 2 == 0 ? Color.white.opacity(0.03) : Color.clear)
+                }
+            }
+        }
+    }
+
+    private var headerRow: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(headers.enumerated()), id: \.offset) { col, title in
+                Text(title)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(FDCTheme.muted)
+                    .frame(width: col == 0 ? skuWidth : numWidth, alignment: col == 0 ? .leading : .trailing)
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.horizontal, 4)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(FDCTheme.line).frame(height: 1)
+        }
+    }
+}

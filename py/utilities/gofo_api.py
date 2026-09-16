@@ -4,11 +4,14 @@ from __future__ import annotations
 import base64
 import os
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
 import requests
+from requests.adapters import HTTPAdapter
 
 from py.utilities.nssm_env import load_nssm_env_file
 
@@ -20,6 +23,11 @@ COST_PATH = "/open-api/v2/order/costEstimation"
 _PARCEL_ZIP_XLSX_GLOB = "GOFO-Parcel*可达邮编*.xlsx"
 _PARCEL_ACTIVE_SHEET = "GOFO_可达邮编"
 _PARCEL_CLOSED_SHEET = "待关闭_可达邮编"
+
+# Ground reachable ZIP workbook (Fashion Ground 报价 / 可达邮编)
+_GROUND_ZIP_XLSX_GLOBS = ("*GOFO-Ground*.xlsx", "*GOFO*Ground*.xlsx")
+_GROUND_ACTIVE_SHEET = "可达邮编"
+_GROUND_DEFAULT_PORT = "LAX"
 
 # Product codes from GOFO对接接口文档v260326.pdf
 PRODUCTS = (
@@ -46,13 +54,50 @@ _zip_cache: dict[str, Any] = {
     "loaded_at": 0.0,
 }
 
+_QUOTE_WORKERS = 8
+_QUOTE_CACHE_TTL_SEC = 180.0
+_CRED_CACHE_TTL_SEC = 60.0
+_tls = threading.local()
+_cred_cache: dict[str, Any] = {"loaded_at": 0.0, "base": "", "user": "", "password": ""}
+_quote_cache: dict[tuple, tuple[float, dict[str, Any]]] = {}
+_quote_cache_lock = threading.Lock()
+_ground_zip_cache: dict[str, Any] = {
+    "mtime": None,
+    "path": None,
+    "zips": {},
+    "loaded_at": 0.0,
+}
+
 
 def _credentials() -> tuple[str, str, str]:
+    now = time.time()
+    if (
+        _cred_cache["user"]
+        and _cred_cache["password"]
+        and now - float(_cred_cache["loaded_at"] or 0) < _CRED_CACHE_TTL_SEC
+    ):
+        return _cred_cache["base"], _cred_cache["user"], _cred_cache["password"]
     load_nssm_env_file(reload_empty=True)
     base = (os.environ.get("GOFO_API_BASE_URL") or DEFAULT_BASE_URL).strip().rstrip("/")
     user = (os.environ.get("GOFO_API_ACCOUNT") or "").strip()
     password = (os.environ.get("GOFO_API_PASSWORD") or "").strip()
+    _cred_cache.update({"loaded_at": now, "base": base, "user": user, "password": password})
     return base, user, password
+
+
+def _http_session() -> requests.Session:
+    sess = getattr(_tls, "session", None)
+    if sess is None:
+        sess = requests.Session()
+        adapter = HTTPAdapter(pool_connections=_QUOTE_WORKERS, pool_maxsize=_QUOTE_WORKERS)
+        sess.mount("https://", adapter)
+        sess.mount("http://", adapter)
+        _tls.session = sess
+    return sess
+
+
+def _dim_key(length: float, width: float, height: float, weight: float) -> tuple[float, float, float, float]:
+    return (round(float(length), 2), round(float(width), 2), round(float(height), 2), round(float(weight), 3))
 
 
 def _auth_headers(user: str, password: str) -> dict[str, str]:
@@ -159,6 +204,122 @@ def _load_parcel_zip_tables() -> tuple[dict[str, dict[str, str]], dict[str, dict
     return active, closed, {"path_name": path.name}
 
 
+def _find_ground_zip_xlsx() -> Path:
+    root = _project_root()
+    found: dict[Path, Path] = {}
+    for pattern in _GROUND_ZIP_XLSX_GLOBS:
+        for path in root.glob(pattern):
+            found[path.resolve()] = path
+    matches = sorted(found.values(), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not matches:
+        raise FileNotFoundError(
+            f"GOFO Ground ZIP Excel not found (expected {_GROUND_ZIP_XLSX_GLOBS} in project root)."
+        )
+    return matches[0]
+
+
+def _read_ground_zip_sheet(ws) -> dict[str, dict[str, Any]]:
+    """Parse Ground 可达邮编: col B ZIP, C region, D state, E city, F+ injection-port zones."""
+    rows = ws.iter_rows(min_row=2, values_only=True)
+    next(rows, None)  # header labels
+    port_row = next(rows, None)
+    ports: list[tuple[int, str]] = []
+    known_ports = {
+        "LAX", "EWR", "SFO", "SAV", "ATL", "ORD", "IAH",
+        "PHX", "DFW", "JFK", "MIA", "MCO", "SEA", "CLT", "CVG",
+    }
+    if port_row:
+        for idx, val in enumerate(port_row):
+            name = str(val or "").strip().upper()
+            if name in known_ports:
+                ports.append((idx, name))
+
+    out: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not row:
+            continue
+        zip_code = _cell_zip(row[1] if len(row) > 1 else None)
+        if not zip_code:
+            continue
+        zones: dict[str, str] = {}
+        for idx, port in ports:
+            if idx < len(row) and row[idx] not in (None, ""):
+                zones[port] = str(row[idx]).strip()
+        remote = str(row[12] if len(row) > 12 and row[12] is not None else "").strip()
+        out[zip_code] = {
+            "region": str(row[2] or "").strip() if len(row) > 2 else "",
+            "state": str(row[3] or "").strip() if len(row) > 3 else "",
+            "city": str(row[4] or "").strip() if len(row) > 4 else "",
+            "zones": zones,
+            "remote": remote,
+            "note": str(row[14] or "").strip() if len(row) > 14 else "",
+        }
+    return out
+
+
+def _load_ground_zip_table() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+    path = _find_ground_zip_xlsx()
+    mtime = path.stat().st_mtime
+    if (
+        _ground_zip_cache["path"] == str(path)
+        and _ground_zip_cache["mtime"] == mtime
+        and _ground_zip_cache["zips"]
+    ):
+        return _ground_zip_cache["zips"], {"path_name": path.name, "zip_count": str(len(_ground_zip_cache["zips"]))}
+
+    import openpyxl
+
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        if _GROUND_ACTIVE_SHEET not in wb.sheetnames:
+            raise FileNotFoundError(f"Sheet {_GROUND_ACTIVE_SHEET!r} missing in {path.name}")
+        zips = _read_ground_zip_sheet(wb[_GROUND_ACTIVE_SHEET])
+    finally:
+        wb.close()
+
+    _ground_zip_cache["path"] = str(path)
+    _ground_zip_cache["mtime"] = mtime
+    _ground_zip_cache["zips"] = zips
+    _ground_zip_cache["loaded_at"] = time.time()
+    return zips, {"path_name": path.name, "zip_count": str(len(zips))}
+
+
+def lookup_ground_zip(zip_code: str | None) -> dict[str, Any] | None:
+    """Return Ground 可达邮编 row, or None if the workbook is missing."""
+    zip_norm = normalize_zip(zip_code)
+    if not zip_norm:
+        return {"found": False, "status": "unreachable", "message": "Ship-to ZIP is missing."}
+    try:
+        table, meta = _load_ground_zip_table()
+    except FileNotFoundError:
+        return None
+    info = table.get(zip_norm)
+    if not info:
+        return {
+            "found": False,
+            "status": "unreachable",
+            "message": "ZIP is not on the GOFO Ground 可达邮编 list",
+            "source_file": meta.get("path_name") or "",
+        }
+    bits = [part for part in (info.get("city"), info.get("state")) if part]
+    zone = (info.get("zones") or {}).get(_GROUND_DEFAULT_PORT)
+    message = "On GOFO Ground 可达邮编"
+    if bits:
+        message += f" ({', '.join(bits)})"
+    if zone:
+        message += f" · {_GROUND_DEFAULT_PORT} zone {zone}"
+    remote = (info.get("remote") or "").strip()
+    if remote and remote.upper() not in ("N", "NO"):
+        message += f" · {remote}"
+    return {
+        "found": True,
+        "status": "reachable",
+        "message": message,
+        "info": info,
+        "source_file": meta.get("path_name") or "",
+    }
+
+
 def _interpret_verify(body: dict[str, Any]) -> dict[str, Any]:
     code = body.get("code")
     msg = (body.get("msgEn") or body.get("msg") or "").strip()
@@ -216,7 +377,7 @@ def verify_delivery(
 
     url = f"{base}{VERIFY_PATH}"
     try:
-        resp = requests.post(
+        resp = _http_session().post(
             url,
             headers=_auth_headers(user, password),
             json={"orderConsignee": consignee},
@@ -317,7 +478,7 @@ def _cost_estimation_request(
     }
     url = f"{base}{COST_PATH}"
     try:
-        resp = requests.post(
+        resp = _http_session().post(
             url,
             headers=_auth_headers(user, password),
             json=payload,
@@ -371,6 +532,79 @@ def _cost_estimation_request(
     }
 
 
+def _quote_cache_key(
+    *,
+    product_code: str,
+    zip_code: str,
+    length: float,
+    width: float,
+    height: float,
+    weight_lb: float,
+    dim_unit: str,
+) -> tuple:
+    return (
+        product_code,
+        normalize_zip(zip_code),
+        *_dim_key(length, width, height, weight_lb),
+        (dim_unit or "INCH").strip().upper(),
+    )
+
+
+def _cached_cost_estimation(**kwargs: Any) -> dict[str, Any]:
+    """Reuse identical GOFO quotes for a few minutes (same ZIP + carton + product)."""
+    key = _quote_cache_key(
+        product_code=kwargs["product_code"],
+        zip_code=kwargs["zip_code"],
+        length=kwargs["length"],
+        width=kwargs["width"],
+        height=kwargs["height"],
+        weight_lb=kwargs["weight_lb"],
+        dim_unit=kwargs.get("dim_unit") or "INCH",
+    )
+    now = time.time()
+    with _quote_cache_lock:
+        hit = _quote_cache.get(key)
+        if hit and now - hit[0] < _QUOTE_CACHE_TTL_SEC:
+            cached = dict(hit[1])
+            cached["cached"] = True
+            return cached
+
+    result = _cost_estimation_request(**kwargs)
+    cacheable = result.get("ok") or result.get("code") in (200, 301, 500, 501, 502)
+    if cacheable:
+        store = {k: v for k, v in result.items() if k != "raw"}
+        with _quote_cache_lock:
+            _quote_cache[key] = (now, store)
+            if len(_quote_cache) > 400:
+                oldest = sorted(_quote_cache.items(), key=lambda kv: kv[1][0])[:80]
+                for old_key, _old in oldest:
+                    _quote_cache.pop(old_key, None)
+    return result
+
+
+def _quote_error_is_unreachable(msg: str, code: Any = None) -> bool:
+    lower = (msg or "").strip().lower()
+    if not lower:
+        return False
+    markers = (
+        "cannot be reached",
+        "not reachable",
+        "not within delivery",
+        "not within our delivery",
+        "delivery service area",
+        "not within our delivery service area",
+        "不可达",
+        "不在派送",
+    )
+    if any(m in lower for m in markers):
+        return True
+    try:
+        code_int = int(code) if code is not None else None
+    except (TypeError, ValueError):
+        code_int = None
+    return code_int == 301 and ("zip" in lower or "postal" in lower or "service area" in lower)
+
+
 def _cost_estimation_probe(
     *,
     product_code: str,
@@ -384,7 +618,7 @@ def _cost_estimation_probe(
     timeout: float,
 ) -> dict[str, Any]:
     """Best-effort product-specific probe via costEstimation."""
-    result = _cost_estimation_request(
+    result = _cached_cost_estimation(
         product_code=product_code,
         zip_code=zip_code,
         country=country,
@@ -403,13 +637,7 @@ def _cost_estimation_probe(
     if not result.get("ok"):
         msg = (result.get("error") or "").strip()
         lower = msg.lower()
-        if (
-            "cannot be reached" in lower
-            or "not reachable" in lower
-            or "not within delivery" in lower
-            or "不可达" in msg
-            or "不在派送" in msg
-        ):
+        if _quote_error_is_unreachable(msg, result.get("code")):
             return {"ok": True, "status": "unreachable", "message": msg, "code": result.get("code")}
         if "maintaining" in lower or "try again later" in lower:
             return {"ok": False, "status": "unavailable", "message": msg, "code": result.get("code")}
@@ -437,13 +665,25 @@ def estimate_prices_for_boxes(
     phone: str = "",
     name: str = "",
     timeout: float = 25.0,
+    product_keys: list[str] | str | None = None,
 ) -> dict[str, Any]:
-    """Estimate Parcel + Ground freight for one or more boxes (summed)."""
+    """Estimate freight for entered carton rows (unit price × qty per row)."""
     zip_norm = normalize_zip(zip_code)
     if not zip_norm:
         return {"ok": False, "error": "Ship-to ZIP is missing."}
 
-    expanded: list[dict[str, Any]] = []
+    wanted: set[str] | None = None
+    if product_keys:
+        if isinstance(product_keys, str):
+            wanted = {product_keys.strip().lower()}
+        else:
+            wanted = {str(k).strip().lower() for k in product_keys if str(k).strip()}
+        wanted.discard("")
+    products = tuple(p for p in PRODUCTS if wanted is None or p["key"] in wanted)
+    if wanted and not products:
+        return {"ok": False, "error": "Unknown GOFO service. Use parcel or ground."}
+
+    input_rows: list[dict[str, Any]] = []
     for box in boxes or []:
         try:
             length = float(box.get("length") or 0)
@@ -460,69 +700,125 @@ def estimate_prices_for_boxes(
                 "ok": False,
                 "error": "Each box needs length, width, height, and weight greater than 0.",
             }
-        for _ in range(qty):
-            expanded.append(
-                {
-                    "length": length,
-                    "width": width,
-                    "height": height,
-                    "weight": weight,
-                    "sku": str(box.get("sku") or ""),
-                    "label": str(box.get("label") or ""),
-                }
-            )
+        style = str(box.get("style") or "").strip()
+        label = str(box.get("label") or style or "").strip()
+        input_rows.append(
+            {
+                "length": length,
+                "width": width,
+                "height": height,
+                "weight": weight,
+                "qty": qty,
+                "sku": str(box.get("sku") or "").strip(),
+                "style": style,
+                "label": label,
+            }
+        )
 
-    if not expanded:
+    if not input_rows:
         return {"ok": False, "error": "Add at least one box with dimensions and weight."}
 
+    unique_map: dict[tuple[float, float, float, float], dict[str, Any]] = {}
+    unique_order: list[tuple[float, float, float, float]] = []
+    for row in input_rows:
+        key = _dim_key(row["length"], row["width"], row["height"], row["weight"])
+        if key not in unique_map:
+            unique_map[key] = {
+                "length": key[0],
+                "width": key[1],
+                "height": key[2],
+                "weight": key[3],
+            }
+            unique_order.append(key)
+
+    jobs: list[tuple[dict[str, str], tuple[float, float, float, float]]] = []
+    for product in products:
+        for key in unique_order:
+            jobs.append((product, key))
+
+    quote_by_job: dict[tuple[str, tuple[float, float, float, float]], dict[str, Any]] = {}
+
+    def _run_quote(product: dict[str, str], key: tuple[float, float, float, float]) -> tuple[str, tuple, dict[str, Any]]:
+        box = unique_map[key]
+        res = _cached_cost_estimation(
+            product_code=product["product_code"],
+            zip_code=zip_norm,
+            country=country,
+            state=state,
+            city=city,
+            street=street,
+            phone=phone,
+            name=name,
+            length=box["length"],
+            width=box["width"],
+            height=box["height"],
+            weight_lb=box["weight"],
+            dim_unit=dim_unit,
+            timeout=timeout,
+        )
+        return product["key"], key, res
+
+    workers = min(_QUOTE_WORKERS, max(1, len(jobs)))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(_run_quote, product, key) for product, key in jobs]
+        for fut in as_completed(futures):
+            pk, key, res = fut.result()
+            quote_by_job[(pk, key)] = res
+
+    box_count = sum(int(r["qty"]) for r in input_rows)
     services_out: list[dict[str, Any]] = []
-    for product in PRODUCTS:
-        box_results = []
+    for product in products:
+        rows_out = []
         total = 0.0
         currency = "USD"
         delivery_days = None
         zone = None
         errors = []
-        for idx, box in enumerate(expanded, start=1):
-            res = _cost_estimation_request(
-                product_code=product["product_code"],
-                zip_code=zip_norm,
-                country=country,
-                state=state,
-                city=city,
-                street=street,
-                phone=phone,
-                name=name,
-                length=box["length"],
-                width=box["width"],
-                height=box["height"],
-                weight_lb=box["weight"],
-                dim_unit=dim_unit,
-                timeout=timeout,
-            )
+        for idx, row in enumerate(input_rows, start=1):
+            key = _dim_key(row["length"], row["width"], row["height"], row["weight"])
+            res = quote_by_job.get((product["key"], key)) or {}
+            qty = int(row["qty"])
+            name = row["style"] or row["label"] or row["sku"] or f"Row {idx}"
             if not res.get("ok"):
                 err_msg = res.get("error") or "failed"
                 errors.append(err_msg)
-                box_results.append({"box": idx, "ok": False, "error": err_msg})
+                rows_out.append(
+                    {
+                        "row": idx,
+                        "ok": False,
+                        "style": row["style"],
+                        "sku": row["sku"],
+                        "label": name,
+                        "qty": qty,
+                        "unit_price": None,
+                        "line_total": None,
+                        "error": err_msg,
+                    }
+                )
                 continue
             amount = res.get("total")
             try:
-                amount_f = float(amount)
+                unit = float(amount)
             except (TypeError, ValueError):
-                amount_f = 0.0
-            total += amount_f
+                unit = 0.0
+            line_total = round(unit * qty, 2)
+            total += line_total
             currency = res.get("currency") or currency
             if delivery_days is None:
                 delivery_days = res.get("delivery_days")
             if zone is None:
                 zone = res.get("zone")
-            box_results.append(
+            rows_out.append(
                 {
-                    "box": idx,
+                    "row": idx,
                     "ok": True,
-                    "total": amount_f,
-                    "fees": res.get("fees") or [],
-                    "sku": box.get("sku") or "",
+                    "style": row["style"],
+                    "sku": row["sku"],
+                    "label": name,
+                    "qty": qty,
+                    "unit_price": round(unit, 2),
+                    "line_total": line_total,
+                    "cached": bool(res.get("cached")),
                 }
             )
 
@@ -536,14 +832,12 @@ def estimate_prices_for_boxes(
                 "currency": currency,
                 "delivery_days": delivery_days,
                 "zone": zone,
-                "box_count": len(expanded),
-                "boxes": box_results,
-                "error": (
-                    next(iter(dict.fromkeys(errors)))
-                    if errors and len(set(errors)) == 1
-                    else "; ".join(f"Box {i}: {e}" for i, e in enumerate(errors, 1))
-                    if errors
-                    else ""
+                "box_count": box_count,
+                "rows": rows_out,
+                "error": "; ".join(
+                    f"{r.get('label') or ('Row ' + str(r.get('row')))}: {r.get('error')}"
+                    for r in rows_out
+                    if not r.get("ok")
                 ),
             }
         )
@@ -553,7 +847,10 @@ def estimate_prices_for_boxes(
         "ok": any_ok,
         "zip": zip_norm,
         "dim_unit": (dim_unit or "INCH").upper(),
-        "box_count": len(expanded),
+        "box_count": box_count,
+        "unique_sizes": len(unique_order),
+        "quote_calls": len(jobs),
+        "product_keys": [p["key"] for p in products],
         "services": services_out,
         "error": None if any_ok else (services_out[0].get("error") if services_out else "Price check failed"),
     }
@@ -564,7 +861,7 @@ def check_parcel_and_ground_excel(
     zip_code: str,
     country: str = "US",
 ) -> dict[str, Any]:
-    """Fallback: Parcel reachable-ZIP Excel (Ground uses same list)."""
+    """Fallback: Parcel Excel + Ground 可达邮编 workbook."""
     zip_norm = normalize_zip(zip_code)
     if not zip_norm:
         return {"ok": False, "error": "Ship-to ZIP is missing."}
@@ -577,16 +874,16 @@ def check_parcel_and_ground_excel(
         return {"ok": False, "error": f"Failed to read GOFO ZIP Excel: {exc}"}
 
     if zip_norm in closed:
-        status = "unreachable"
-        message = "Postal code is on the pending-close / closed list"
+        parcel_status = "unreachable"
+        parcel_message = "Postal code is on the pending-close / closed list"
         info = closed[zip_norm]
     elif zip_norm in active:
-        status = "reachable"
-        message = "This postal code can be reached"
+        parcel_status = "reachable"
+        parcel_message = "This postal code can be reached"
         info = active[zip_norm]
     else:
-        status = "unreachable"
-        message = "Postal code is not in the GOFO Parcel reachable ZIP list"
+        parcel_status = "unreachable"
+        parcel_message = "Postal code is not in the GOFO Parcel reachable ZIP list"
         info = {}
 
     region = info.get("region") or ""
@@ -599,11 +896,28 @@ def check_parcel_and_ground_excel(
         detail_bits.append(state_code)
     elif region:
         detail_bits.append(region)
-    if detail_bits and status == "reachable":
-        message = f"{message} ({', '.join(detail_bits)})"
+    if detail_bits and parcel_status == "reachable":
+        parcel_message = f"{parcel_message} ({', '.join(detail_bits)})"
+
+    ground = lookup_ground_zip(zip_norm) or {
+        "found": False,
+        "status": parcel_status,
+        "message": parcel_message + " (Ground workbook missing; used Parcel list)",
+        "source_file": "",
+    }
 
     services: list[dict[str, Any]] = []
     for product in PRODUCTS:
+        if product["key"] == "ground":
+            status = ground.get("status") or "unreachable"
+            message = ground.get("message") or status
+            source = "excel_ground"
+            note = ground.get("source_file") or ""
+        else:
+            status = parcel_status
+            message = parcel_message
+            source = "excel"
+            note = meta.get("path_name") or ""
         services.append(
             {
                 "key": product["key"],
@@ -611,12 +925,8 @@ def check_parcel_and_ground_excel(
                 "product_code": product["product_code"],
                 "status": status,
                 "message": message,
-                "source": "excel",
-                "probe_note": (
-                    "Using Parcel ZIP workbook for both services until Ground list is added"
-                    if product["key"] == "ground"
-                    else ""
-                ),
+                "source": source,
+                "probe_note": note,
             }
         )
 
@@ -625,10 +935,10 @@ def check_parcel_and_ground_excel(
         "zip": zip_norm,
         "country": normalize_country(country),
         "zip_check": {
-            "status": status,
-            "message": message,
+            "status": parcel_status,
+            "message": parcel_message,
             "sorting_code": "",
-            "code": 200 if status == "reachable" else 501,
+            "code": 200 if parcel_status == "reachable" else 501,
             "source_file": meta.get("path_name") or "",
             "city": city_name,
             "state": state_code,
@@ -651,11 +961,11 @@ def check_parcel_and_ground(
     name: str = "",
     timeout: float = 25.0,
 ) -> dict[str, Any]:
-    """Check GOFO Parcel and Ground via production Open API.
+    """Check GOFO Parcel (API) and Ground (Fashion 可达邮编 sheet).
 
-    Primary: verifyDelivery (zip coverage).
-    Per product: costEstimation with GOFO Parcel Pickup / GOFO Ground Pickup.
-    Falls back to Excel if API auth/config fails.
+    verifyDelivery = ZIP in GOFO network (not product-specific).
+    Parcel: costEstimation probe.
+    Ground: 202609 GOFO-Ground 可达邮编 workbook (contracted ZIP list).
     """
     zip_norm = normalize_zip(zip_code)
     if not zip_norm:
@@ -679,10 +989,10 @@ def check_parcel_and_ground(
         return zip_result
 
     zip_status = zip_result.get("status")
-    services: list[dict[str, Any]] = []
+    ground_excel = lookup_ground_zip(zip_norm)
 
-    for product in PRODUCTS:
-        probe = _cost_estimation_probe(
+    def _probe_product(product: dict[str, str]) -> dict[str, Any]:
+        return _cost_estimation_probe(
             product_code=product["product_code"],
             zip_code=zip_norm,
             country=country,
@@ -693,22 +1003,37 @@ def check_parcel_and_ground(
             name=name,
             timeout=timeout,
         )
-        if probe.get("ok") and probe.get("status") in ("reachable", "unreachable", "blocked"):
-            status = probe["status"]
-            message = probe.get("message") or status
-            source = "costEstimation"
-        else:
-            status = zip_status
-            if zip_status == "reachable":
-                message = zip_result.get("message") or "This postal code can be reached"
-            elif zip_status == "unreachable":
-                message = zip_result.get("message") or "Postal code cannot be reached"
-            elif zip_status == "blocked":
-                message = zip_result.get("message") or "Reachable but address type blocked"
-            else:
-                message = zip_result.get("message") or "Unable to determine"
-            source = "verifyDelivery"
 
+    def _status_from_probe(probe: dict[str, Any]) -> tuple[str, str, str]:
+        probe_status = probe.get("status")
+        if probe_status in ("reachable", "unreachable", "blocked"):
+            return probe_status, probe.get("message") or probe_status, "costEstimation"
+        if probe.get("message"):
+            status = "unreachable" if _quote_error_is_unreachable(
+                str(probe.get("message") or ""), probe.get("code")
+            ) else "error"
+            return status, str(probe.get("message")), "costEstimation"
+        if zip_status == "reachable":
+            message = zip_result.get("message") or "This postal code can be reached"
+        elif zip_status == "unreachable":
+            message = zip_result.get("message") or "Postal code cannot be reached"
+        elif zip_status == "blocked":
+            message = zip_result.get("message") or "Reachable but address type blocked"
+        else:
+            message = zip_result.get("message") or "Unable to determine"
+        return zip_status or "unknown", message, "verifyDelivery"
+
+    services: list[dict[str, Any]] = []
+    for product in PRODUCTS:
+        if product["key"] == "ground" and ground_excel is not None:
+            status = ground_excel.get("status") or "unreachable"
+            message = ground_excel.get("message") or status
+            source = "excel_ground"
+            probe_note = ground_excel.get("source_file") or ""
+        else:
+            probe = _probe_product(product)
+            status, message, source = _status_from_probe(probe)
+            probe_note = probe.get("message") if source == "verifyDelivery" else ""
         services.append(
             {
                 "key": product["key"],
@@ -717,7 +1042,7 @@ def check_parcel_and_ground(
                 "status": status,
                 "message": message,
                 "source": source,
-                "probe_note": probe.get("message") if source == "verifyDelivery" else "",
+                "probe_note": probe_note,
             }
         )
 
