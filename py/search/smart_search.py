@@ -1423,7 +1423,7 @@ def _search_stock(query: str) -> List[Dict[str, str]]:
         items.append(
             _item(
                 sku,
-                "/internal_stock_check",
+                "/inventory_manual_adjuster",
                 " · ".join(bits),
                 "Stock",
             )
@@ -1589,8 +1589,8 @@ _CATEGORY_SPECS: List[Dict[str, Any]] = [
         "id": "locations",
         "label_key": "smart_search.cat.locations",
         "icon": "fa-warehouse",
-        "tool_ids": ("location_massive_update", "warehousemap"),
-        "href": "/location_massive_update",
+        "tool_ids": ("location_service", "location_massive_update", "warehousemap"),
+        "href": "/locations",
         "runner": _search_locations,
     },
     {
@@ -1613,8 +1613,8 @@ _CATEGORY_SPECS: List[Dict[str, Any]] = [
         "id": "stock",
         "label_key": "smart_search.cat.stock",
         "icon": "fa-layer-group",
-        "tool_ids": ("internal_stock_check",),
-        "href": "/internal_stock_check",
+        "tool_ids": ("inventory_manual_adjuster",),
+        "href": "/inventory_manual_adjuster",
         "runner": _search_stock,
     },
     {

@@ -28,6 +28,8 @@ class LocaleTests(unittest.TestCase):
             "page.smart_search.title",
             "tool.box_price_checker.title",
             "page.box_price_checker.title",
+            "tool.mini_tools.title",
+            "page.mini_tools.title",
             "bulletin.title",
             "tool.bulletin.title",
         ):

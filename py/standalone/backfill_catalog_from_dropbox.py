@@ -10,6 +10,7 @@ Preview by default; pass --apply to write files and DB.
 Usage (repo root):
   python py/standalone/backfill_catalog_from_dropbox.py
   python py/standalone/backfill_catalog_from_dropbox.py --apply
+  python py/standalone/backfill_catalog_from_dropbox.py --oms --apply
   python py/standalone/backfill_catalog_from_dropbox.py --apply --limit 5
 """
 
@@ -29,7 +30,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from mysql.connector import Error as MySQLError
 from mysql.connector.errors import IntegrityError
 
-from py.utilities.database_utils import get_mysql_connection
+from py.utilities.database_utils import get_mysql_connection_unpooled
 from py.utilities.logging_setup import log_event
 from py.utilities.models import ImageAsset, SessionLocal
 from py.utilities.setting import Config
@@ -327,94 +328,106 @@ def insert_catalog_row(conn, cursor, sku_upper: str, dest_path: Path) -> bool:
         return False
 
 
-def main() -> None:
-    base = Path(__file__).resolve().parent
-    ap = argparse.ArgumentParser(description="Backfill catalog_original from Dropbox")
-    ap.add_argument(
-        "--skus-file",
-        default=str(base / "catalog_missing_skus_raw.txt"),
-        help="Comma-separated SKU list (same format as report_catalog_missing)",
-    )
-    ap.add_argument("--apply", action="store_true", help="Copy files and write DB (default is preview only)")
-    ap.add_argument("--limit", type=int, default=0, help="Process at most N SKUs (after filtering)")
-    args = ap.parse_args()
+def empty_backfill_stats() -> dict:
+    return {
+        "oms_wanted": 0,
+        "oms_missing_catalog": 0,
+        "oms_dropbox_files": 0,
+        "oms_copied": 0,
+        "oms_preview": 0,
+        "oms_no_dropbox": 0,
+        "oms_unreadable": 0,
+        "oms_sha_conflict": 0,
+        "oms_db_failed": 0,
+    }
 
-    skus_file = Path(args.skus_file)
-    if not skus_file.is_file():
-        print(f"SKU list not found: {skus_file}", file=sys.stderr)
-        sys.exit(1)
 
-    wanted = load_skus(str(skus_file))
-    missing = skus_missing_catalog(wanted)
+def run_backfill_for_skus(
+    wanted: list[str],
+    *,
+    apply: bool = True,
+    log_fn=print,
+    limit: int = 0,
+) -> dict:
+    """Copy highest-res Dropbox image into catalog_original for SKUs missing that source."""
+    stats = empty_backfill_stats()
+    wanted_clean: list[str] = []
+    seen: set[str] = set()
+    for raw in wanted or []:
+        key = (raw or "").strip().upper()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        wanted_clean.append(key)
+    stats["oms_wanted"] = len(wanted_clean)
+    if not wanted_clean:
+        log_fn("No styles to backfill.")
+        return stats
+
+    missing = skus_missing_catalog(wanted_clean)
     missing_sorted = sorted(missing, key=len, reverse=True)
+    if limit:
+        missing_sorted = missing_sorted[:limit]
+    stats["oms_missing_catalog"] = len(missing_sorted)
+    log_fn(f"SKUs in list (unique): {len(wanted_clean)}")
+    log_fn(f"Still missing catalog_original: {len(missing_sorted)}")
+    log_fn(f"Mode: {'APPLY (write disk + DB)' if apply else 'DRY RUN (preview only)'}")
+    if not missing_sorted:
+        return stats
 
-    if args.limit:
-        missing_sorted = missing_sorted[: args.limit]
-
-    display_for_upper = {m.upper().strip(): m for m in missing_sorted}
-
-    roots = dropbox_roots()
     catalog_dir = Path(Config.IMAGE_DAM_CATALOG_DIR)
-
-    print(f"Dropbox roots ({len(roots)}): {[str(r) for r in roots]}")
-    print(f"Catalog destination: {catalog_dir}")
-    print(f"SKUs in list (unique): {len(wanted)}")
-    print(f"Still missing catalog_original: {len(missing_sorted)}")
-    print(f"Mode: {'APPLY (write disk + DB)' if args.apply else 'DRY RUN (preview only)'}")
-    print("-" * 60)
-
+    roots = dropbox_roots()
+    log_fn(f"Dropbox roots ({len(roots)}): {[str(r) for r in roots]}")
+    log_fn(f"Catalog destination: {catalog_dir}")
     if not roots:
-        print("No Dropbox folders exist — check Config paths.")
-        sys.exit(1)
+        log_fn("No Dropbox folders exist — check Config paths.")
+        return stats
 
-    print("Scanning Dropbox for images (may take a while)...")
-    all_paths = list(iter_dropbox_images(roots))
-    print(f"Found {len(all_paths)} image files.")
+    log_fn("Scanning Dropbox for images (may take a while)...")
+    all_paths: list[Path] = []
+    for i, path in enumerate(iter_dropbox_images(roots), 1):
+        all_paths.append(path)
+        if i % 5000 == 0:
+            log_fn(f"  scanned {i} Dropbox image files...")
+    stats["oms_dropbox_files"] = len(all_paths)
+    log_fn(f"Found {len(all_paths)} image files.")
 
     buckets = collect_candidates_for_skus(missing_sorted, all_paths)
 
-    ok_db = 0
-    preview_ok = 0
-    skipped_no_file = 0
-    skipped_pixels = 0
-    skipped_sha_conflict = 0
-
     for sku_raw in missing_sorted:
         su = sku_raw.upper().strip()
-        label = display_for_upper.get(su, sku_raw)
         cands = buckets.get(su, [])
         if not cands:
-            print(f"[--] {label}: no Dropbox candidates")
-            skipped_no_file += 1
+            log_fn(f"[--] {su}: no Dropbox candidates")
+            stats["oms_no_dropbox"] += 1
             continue
         best = pick_highest_resolution(cands)
         if not best:
-            print(f"[--] {label}: candidates unreadable")
-            skipped_pixels += 1
+            log_fn(f"[--] {su}: candidates unreadable")
+            stats["oms_unreadable"] += 1
             continue
 
         dim = image_pixels(best)
         if not dim:
-            skipped_pixels += 1
+            stats["oms_unreadable"] += 1
             continue
-        dest_name = catalog_safe_filename(sku_raw)
-        dest = catalog_dir / dest_name
+        dest = catalog_dir / catalog_safe_filename(su)
+        tag = "++" if apply else ">>"
+        log_fn(f"[{tag}] {su}: best={best.name} ({dim[0]}x{dim[1]} px) -> {dest.name}")
 
-        tag = "++" if args.apply else ">>"
-        print(f"[{tag}] {label}: best={best.name} ({dim[0]}x{dim[1]} px) -> {dest.name}")
-
-        if not args.apply:
-            preview_ok += 1
+        if not apply:
+            stats["oms_preview"] += 1
             continue
 
         src_sha = sha256_file(best)
         if not src_sha:
-            skipped_pixels += 1
+            stats["oms_unreadable"] += 1
             continue
 
-        conn_pf = get_mysql_connection()
+        conn_pf = get_mysql_connection_unpooled()
         if not conn_pf:
-            print("  [db] no MySQL connection")
+            log_fn("  [db] no MySQL connection")
+            stats["oms_db_failed"] += 1
             continue
         cur_pf = conn_pf.cursor(buffered=True)
         try:
@@ -426,27 +439,28 @@ def main() -> None:
             if dup_row:
                 ex_id, ex_sku = dup_row
                 if ex_sku.strip().upper() != su:
-                    print(
+                    log_fn(
                         f"  [~~] image bytes already in DB as sku={ex_sku} (id={ex_id}), skip copy"
                     )
-                    skipped_sha_conflict += 1
+                    stats["oms_sha_conflict"] += 1
                     continue
         finally:
             cur_pf.close()
             conn_pf.close()
 
         if not save_catalog_jpg(best, dest):
-            skipped_pixels += 1
+            stats["oms_unreadable"] += 1
             continue
 
-        conn = get_mysql_connection()
+        conn = get_mysql_connection_unpooled()
         if not conn:
-            print("  [db] no MySQL connection")
+            log_fn("  [db] no MySQL connection")
+            stats["oms_db_failed"] += 1
             continue
         cursor = conn.cursor(buffered=True)
         try:
             if insert_catalog_row(conn, cursor, su, dest):
-                ok_db += 1
+                stats["oms_copied"] += 1
                 try:
                     log_event(
                         "info",
@@ -454,19 +468,55 @@ def main() -> None:
                     )
                 except Exception:
                     pass
+            else:
+                stats["oms_db_failed"] += 1
         finally:
             cursor.close()
             conn.close()
 
-    print("-" * 60)
-    if args.apply:
-        print(f"Written disk + DB OK: {ok_db}")
+    log_fn("-" * 60)
+    if apply:
+        log_fn(f"Written disk + DB OK: {stats['oms_copied']}")
     else:
-        print(f"Preview (would pick): {preview_ok}")
-    print(
-        f"No Dropbox candidates: {skipped_no_file}, unreadable / save failed: {skipped_pixels}, "
-        f"sha conflict (other SKU): {skipped_sha_conflict}"
+        log_fn(f"Preview (would pick): {stats['oms_preview']}")
+    log_fn(
+        f"No Dropbox candidates: {stats['oms_no_dropbox']}, "
+        f"unreadable / save failed: {stats['oms_unreadable']}, "
+        f"sha conflict (other SKU): {stats['oms_sha_conflict']}"
     )
+    return stats
+
+
+def main() -> None:
+    base = Path(__file__).resolve().parent
+    ap = argparse.ArgumentParser(description="Backfill catalog_original from Dropbox")
+    ap.add_argument(
+        "--skus-file",
+        default=str(base / "catalog_missing_skus_raw.txt"),
+        help="Comma-separated SKU list (same format as report_catalog_missing)",
+    )
+    ap.add_argument(
+        "--oms",
+        action="store_true",
+        help="Use in-stock/ocean OMS styles instead of --skus-file (skips sold-out styles)",
+    )
+    ap.add_argument("--apply", action="store_true", help="Copy files and write DB (default is preview only)")
+    ap.add_argument("--limit", type=int, default=0, help="Process at most N SKUs (after filtering)")
+    args = ap.parse_args()
+
+    if args.oms:
+        from py.utilities.oms_catalog_backfill import run_oms_dropbox_catalog_backfill
+
+        run_oms_dropbox_catalog_backfill(apply=args.apply, log_fn=print, limit=args.limit)
+        return
+
+    skus_file = Path(args.skus_file)
+    if not skus_file.is_file():
+        print(f"SKU list not found: {skus_file}", file=sys.stderr)
+        sys.exit(1)
+
+    wanted = load_skus(str(skus_file))
+    run_backfill_for_skus(wanted, apply=args.apply, log_fn=print, limit=args.limit)
 
 
 if __name__ == "__main__":

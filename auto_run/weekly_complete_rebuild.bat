@@ -27,7 +27,7 @@ if "%DAM_SYNC_BASE_URL%"=="" set "DAM_SYNC_BASE_URL=http://127.0.0.1:5555"
 curl -s -S -X POST "!DAM_SYNC_BASE_URL!/dam/cron/start" ^
   -H "Content-Type: application/json" ^
   -H "X-DAM-Cron-Secret: !DAM_CRON_SECRET!" ^
-  -d "{\"force_rebuild_index\": true, \"include_fetch\": true, \"include_cleanup\": true, \"fetch_full\": true}" ^
+  -d "{\"force_rebuild_index\": true, \"include_fetch\": true, \"include_cleanup\": true, \"fetch_full\": true, \"include_oms_backfill\": true, \"include_oos_wipe\": true}" ^
   >> "%LOG%" 2>&1
 
 echo. >> "%LOG%"

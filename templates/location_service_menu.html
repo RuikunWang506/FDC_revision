@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('page.location_service.title') }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f8; }
+        .hub-wrap { max-width: 920px; margin: 48px auto 64px; padding: 0 16px; }
+        .hub-title { font-weight: 700; margin-bottom: 8px; }
+        .hub-sub { color: #6c757d; margin-bottom: 28px; }
+        .hub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .hub-card {
+            display: block;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 36px 24px;
+            text-align: center;
+            text-decoration: none;
+            color: #212529;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+        .hub-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+            border-color: #0d6efd;
+            color: #212529;
+            text-decoration: none;
+        }
+        .hub-card i { font-size: 2.4rem; margin-bottom: 14px; color: #0d6efd; }
+        .hub-card h3 { font-size: 1.25rem; margin-bottom: 8px; }
+        .hub-card p { margin: 0; color: #6c757d; }
+        @media (max-width: 768px) {
+            .hub-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="hub-wrap">
+        <h1 class="hub-title">{{ _('tool.location_service.title') }}</h1>
+        <p class="hub-sub">{{ _('tool.location_service.desc') }}</p>
+        <div class="hub-grid">
+            <a class="hub-card" href="{{ url_for('location_massive_audit.location_massive_update') }}">
+                <i class="fas fa-warehouse"></i>
+                <h3>{{ _('tool.location_massive_update.title') }}</h3>
+                <p>{{ _('tool.location_massive_update.desc') }}</p>
+            </a>
+            <a class="hub-card" href="/warehousemap">
+                <i class="fas fa-map"></i>
+                <h3>{{ _('tool.warehousemap.title') }}</h3>
+                <p>{{ _('tool.warehousemap.desc') }}</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

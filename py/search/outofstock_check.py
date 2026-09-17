@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, current_app
+from flask import Blueprint, request, jsonify, session, redirect, url_for, current_app
 from py.utilities.database_utils import get_mysql_connection, get_sql_server_connection_fdc
 from py.utilities.ocean_qty import PLOG_OCEAN_JOIN, ocean_qty_sql_sum
 from py.utilities.setting import login_required
-import pyodbc
 
 outofstock_check_bp = Blueprint('outofstock_check', __name__)
+
+_FDC_STOCK_CHUNK = 400
+
 
 def get_db_connection():
     """Establishes a connection to the MySQL database."""
@@ -14,106 +16,191 @@ def get_fdc_connection():
     """Establishes a connection to the SQL Server FDC database."""
     return get_sql_server_connection_fdc()
 
+
+def select_sold_out_located_styles(located_styles, stock_rows):
+    """Return styles that had a warehouse location and are now sold out.
+
+    A style qualifies when FDC available (in_stock - order_qty) is <= 0 and it
+    was once received (stock or sold is non-zero). Styles missing from FDC are skipped.
+    """
+    located = {(s or "").strip() for s in located_styles if (s or "").strip()}
+    sold_out = []
+    seen = set()
+    for row in stock_rows or []:
+        style = (row[0] or "").strip() if row else ""
+        if not style or style not in located or style in seen:
+            continue
+        stock = int(row[1] or 0)
+        sold = int(row[2] or 0)
+        available = int(row[3] or 0)
+        if available <= 0 and (stock != 0 or sold != 0):
+            sold_out.append(style)
+            seen.add(style)
+    return sold_out
+
+
+def _fetch_located_styles(mysql_conn):
+    cursor = mysql_conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT DISTINCT Style
+            FROM products
+            WHERE Location IS NOT NULL AND Location != ''
+            ORDER BY Style
+            """
+        )
+        return [(row[0] or "").strip() for row in cursor.fetchall() if row and (row[0] or "").strip()]
+    finally:
+        cursor.close()
+
+
+def _fetch_fdc_stock_for_styles(fdc_conn, style_list):
+    if not style_list:
+        return []
+    cursor = fdc_conn.cursor()
+    try:
+        rows = []
+        for i in range(0, len(style_list), _FDC_STOCK_CHUNK):
+            chunk = style_list[i : i + _FDC_STOCK_CHUNK]
+            placeholders = ",".join(["?" for _ in chunk])
+            stock_query = f"""
+                SELECT
+                    i.ALT_CD as Style,
+                    SUM(CAST(ISNULL(id.in_stock, 0) AS INT)) as Stock,
+                    SUM(CAST(ISNULL(id.order_qty, 0) AS INT)) as Sold,
+                    SUM(CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT)) as Available
+                FROM dbo.inv AS i
+                LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
+                WHERE i.ALT_CD IN ({placeholders})
+                GROUP BY i.ALT_CD
+            """
+            cursor.execute(stock_query, chunk)
+            rows.extend(cursor.fetchall() or [])
+        return rows
+    finally:
+        cursor.close()
+
+
+def _clear_locations_for_styles(mysql_conn, styles):
+    if not styles:
+        return 0
+    cursor = mysql_conn.cursor()
+    try:
+        updated = 0
+        for i in range(0, len(styles), _FDC_STOCK_CHUNK):
+            chunk = styles[i : i + _FDC_STOCK_CHUNK]
+            placeholders = ",".join(["%s" for _ in chunk])
+            cursor.execute(
+                f"""
+                UPDATE products
+                SET Location = '', Update_Date = NOW()
+                WHERE Style IN ({placeholders})
+                  AND Location IS NOT NULL AND Location != ''
+                """,
+                tuple(chunk),
+            )
+            updated += cursor.rowcount if cursor.rowcount and cursor.rowcount > 0 else 0
+        mysql_conn.commit()
+        return updated
+    except Exception:
+        mysql_conn.rollback()
+        raise
+    finally:
+        cursor.close()
+
+
+def wipe_sold_out_locations(actor="cron", log_fn=None):
+    """Clear MySQL product locations for styles that were received and are now sold out."""
+    def _log(message):
+        if log_fn:
+            try:
+                log_fn(message)
+            except Exception:
+                pass
+
+    mysql_conn = None
+    fdc_conn = None
+    try:
+        mysql_conn = get_db_connection()
+        if mysql_conn is None:
+            raise RuntimeError("Failed to connect to MySQL")
+        located = _fetch_located_styles(mysql_conn)
+        if not located:
+            result = {"success": True, "style_count": 0, "rows_updated": 0, "styles": []}
+            _log("OOS location wipe: no located styles")
+            return result
+
+        fdc_conn = get_fdc_connection()
+        if fdc_conn is None:
+            raise RuntimeError("Failed to connect to FDC")
+        stock_rows = _fetch_fdc_stock_for_styles(fdc_conn, located)
+        to_wipe = select_sold_out_located_styles(located, stock_rows)
+        rows_updated = _clear_locations_for_styles(mysql_conn, to_wipe) if to_wipe else 0
+        result = {
+            "success": True,
+            "style_count": len(to_wipe),
+            "rows_updated": rows_updated,
+            "styles": to_wipe,
+        }
+        _log(
+            f"OOS location wipe actor={actor} styles={len(to_wipe)} rows={rows_updated}"
+        )
+        try:
+            current_app.logger.info(
+                "***{actor}***___@@@Wiped Sold-Out Locations@@@__ styles={count} rows={rows}".format(
+                    actor=actor,
+                    count=len(to_wipe),
+                    rows=rows_updated,
+                )
+            )
+        except Exception:
+            pass
+        return result
+    finally:
+        if fdc_conn is not None:
+            try:
+                fdc_conn.close()
+            except Exception:
+                pass
+        if mysql_conn is not None:
+            try:
+                mysql_conn.close()
+            except Exception:
+                pass
+
+
 @outofstock_check_bp.route('/oosc', methods=['GET'])
 @login_required
 def outofstock_check():
-    """Display styles with locations and their stock levels"""
-    current_app.logger.info(f"***{session.get('username', 'Unknown')}***___@@@Accessed@@@__Out of Stock Check")
-    
-    current_user = session.get('username', 'Unknown')
-    
+    """Legacy OOS page — sold-out location cleanup now runs from Location Service."""
+    return redirect(url_for("location_massive_audit.location_massive_update"))
+
+
+@outofstock_check_bp.route('/wipe_sold_out_locations', methods=['POST'])
+@login_required
+def wipe_sold_out_locations_route():
+    """Manual bulk wipe for styles that were received and are now sold out."""
+    actor = session.get("username", "Unknown")
     try:
-        # Get all styles with locations from MySQL
-        mysql_conn = get_db_connection()
-        if mysql_conn is None:
-            return render_template('outofstock_check.html', 
-                                 error_message="Failed to connect to MySQL database",
-                                 current_user=current_user)
-        
-        mysql_cursor = mysql_conn.cursor(dictionary=True)
-        
-        # Get unique styles that have locations
-        query = """
-            SELECT DISTINCT Style 
-            FROM products 
-            WHERE Location IS NOT NULL AND Location != ''
-            ORDER BY Style
-        """
-        mysql_cursor.execute(query)
-        styles_with_locations = mysql_cursor.fetchall()
-        
-        mysql_cursor.close()
-        mysql_conn.close()
-        
-        if not styles_with_locations:
-            return render_template('outofstock_check.html',
-                                 styles_data=[],
-                                 current_user=current_user)
-        
-        # Get stock information from SQL Server for these styles
-        fdc_conn = get_fdc_connection()
-        if fdc_conn is None:
-            return render_template('outofstock_check.html',
-                                 error_message="Failed to connect to FDC database",
-                                 current_user=current_user)
-        
-        fdc_cursor = fdc_conn.cursor()
-        
-        # Build list of styles
-        style_list = [row['Style'] for row in styles_with_locations]
-        
-        # Query SQL Server for stock data
-        placeholders = ','.join(['?' for _ in style_list])
-        stock_query = f"""
-            SELECT 
-                i.ALT_CD as Style,
-                SUM(CAST(ISNULL(id.in_stock, 0) AS INT)) as Stock,
-                SUM(CAST(ISNULL(id.order_qty, 0) AS INT)) as Sold,
-                SUM(CAST(ISNULL(id.in_stock, 0) - ISNULL(id.order_qty, 0) AS INT)) as Available,
-                {ocean_qty_sql_sum()} as Ocean
-            FROM dbo.inv AS i
-            LEFT JOIN dbo.inv_data AS id ON i.PROD_CD = id.Prod_cd
-            {PLOG_OCEAN_JOIN}
-            WHERE i.ALT_CD IN ({placeholders})
-            GROUP BY i.ALT_CD
-        """
-        
-        fdc_cursor.execute(stock_query, style_list)
-        stock_results = fdc_cursor.fetchall()
-        
-        fdc_cursor.close()
-        fdc_conn.close()
-        
-        # Combine data
-        styles_data = []
-        for stock_row in stock_results:
-            style = stock_row[0] if stock_row[0] else ''
-            stock = int(stock_row[1]) if stock_row[1] else 0
-            sold = int(stock_row[2]) if stock_row[2] else 0
-            available = int(stock_row[3]) if stock_row[3] else 0
-            ocean = int(stock_row[4]) if stock_row[4] else 0
-            
-            styles_data.append({
-                'Style': style,
-                'Stock': stock,
-                'Sold': sold,
-                'Available': available,
-                'Ocean': ocean,
-                'has_negative': available < 0
-            })
-        
-        # Sort by available (negative values first)
-        styles_data.sort(key=lambda x: x['Available'])
-        
-        return render_template('outofstock_check.html',
-                             styles_data=styles_data,
-                             current_user=current_user)
-        
+        result = wipe_sold_out_locations(actor=actor)
+        return jsonify(
+            {
+                "success": True,
+                "message": (
+                    f"Cleared locations for {result['style_count']} sold-out style(s) "
+                    f"({result['rows_updated']} records)."
+                    if result["style_count"]
+                    else "No sold-out located styles to clear."
+                ),
+                "style_count": result["style_count"],
+                "rows_updated": result["rows_updated"],
+                "styles": result["styles"],
+            }
+        )
     except Exception as e:
-        current_app.logger.error(f"Error in outofstock_check: {str(e)}")
-        return render_template('outofstock_check.html',
-                             error_message=f"An error occurred: {str(e)}",
-                             current_user=current_user)
+        current_app.logger.error(f"Error wiping sold-out locations: {str(e)}")
+        return jsonify({"success": False, "message": f"An error occurred: {str(e)}"}), 500
 
 @outofstock_check_bp.route('/wipe_location', methods=['POST'])
 @login_required

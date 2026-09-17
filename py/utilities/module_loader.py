@@ -73,8 +73,8 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "import_path": "py.search.outofstock_check",
         "attr": "outofstock_check_bp",
         "kind": "blueprint",
-        "path_prefixes": ("/oosc", "/wipe_location", "/get_style_skus"),
-        "tool_ids": ("oosc",),
+        "path_prefixes": ("/oosc", "/wipe_location", "/wipe_sold_out_locations", "/get_style_skus"),
+        "tool_ids": ("location_service",),
     },
     {
         "name": "mobile_lite",
@@ -164,6 +164,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "kind": "blueprint",
         "path_prefixes": ("/box_price_checker",),
         "tool_ids": ("box_price_checker",),
+    },
+    {
+        "name": "mini_tools",
+        "import_path": "py.other.mini_tools",
+        "attr": "mini_tools_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/mini_tools",),
+        "tool_ids": ("mini_tools",),
     },
     {
         "name": "macy",
@@ -266,8 +274,8 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "import_path": "py.search.location_service",
         "attr": "location_service_bp",
         "kind": "blueprint",
-        "path_prefixes": ("/location_service",),
-        "tool_ids": (),
+        "path_prefixes": ("/location_service", "/locations"),
+        "tool_ids": ("location_service",),
     },
     {
         "name": "pallet_detail",

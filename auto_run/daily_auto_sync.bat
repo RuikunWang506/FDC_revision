@@ -1,5 +1,5 @@
 @echo off
-REM FDC Daily Auto Sync (every 24h via Task Scheduler) — Dropbox fetch + DAM index sync + cleanup
+REM FDC Daily Auto Sync (every 24h) — Dropbox fetch + OMS in-stock catalog backfill + DAM index + cleanup + sold-out location wipe
 REM Secret: DAM_CRON_SECRET env OR auto_run\dam_cron_secret.local.txt
 REM One-time setup (Admin PowerShell): .\Setup-DamCron.ps1 -RegisterScheduledTasks
 
@@ -30,7 +30,7 @@ if "%DAM_SYNC_BASE_URL%"=="" set "DAM_SYNC_BASE_URL=http://127.0.0.1:5555"
 curl -s -S -X POST "!DAM_SYNC_BASE_URL!/dam/cron/start" ^
   -H "Content-Type: application/json" ^
   -H "X-DAM-Cron-Secret: !DAM_CRON_SECRET!" ^
-  -d "{\"force_rebuild_index\": false, \"include_fetch\": true, \"include_cleanup\": true}" ^
+    -d "{\"force_rebuild_index\": false, \"include_fetch\": true, \"include_cleanup\": true, \"include_oms_backfill\": true, \"include_oos_wipe\": true}" ^
   >> "%LOG%" 2>&1
 
 echo. >> "%LOG%"

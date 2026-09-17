@@ -298,10 +298,12 @@ def parse_permissions_ui(raw: Any) -> Dict[str, Any]:
         parsed = {}
     tools = parsed.get("tools")
     cpd_sections = parsed.get("client_product_detail_sections")
+    from py.utilities.dashboard_permissions import tools_sel_for_ui
+
     return {
         "raw": parsed,
         "dashboard_restrict": "tools" in parsed,
-        "tools_sel": tools if isinstance(tools, list) else [],
+        "tools_sel": tools_sel_for_ui(tools if isinstance(tools, list) else []),
         "client_pd_restrict": bool(parsed.get("client_product_detail_restrict")),
         "client_pd_sections_sel": cpd_sections if isinstance(cpd_sections, list) else [],
         "customer_purchase_customer_id": str(

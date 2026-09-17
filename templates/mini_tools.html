@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('page.mini_tools.title') }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mini_tools.css') }}?v=3">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page mt-page">
+  <header class="page-header">
+    <div>
+      <p class="mt-kicker">{{ _('page.mini_tools.kicker') }}</p>
+      <h1>{{ _('page.mini_tools.title') }}</h1>
+      <p class="mt-lead">{{ _('page.mini_tools.lead') }}</p>
+      <p class="mt-privacy">{{ _('page.mini_tools.privacy') }}</p>
+    </div>
+  </header>
+
+  <nav class="mt-tabs" id="mtTabs" aria-label="{{ _('page.mini_tools.title') }}">
+    <button type="button" class="mt-tab is-active" data-tool="pdf">
+      <i class="fas fa-file-pdf"></i>
+      <strong>{{ _('page.mini_tools.pdf') }}</strong>
+      <span>{{ _('page.mini_tools.pdf_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="convert">
+      <i class="fas fa-file-word"></i>
+      <strong>{{ _('page.mini_tools.convert') }}</strong>
+      <span>{{ _('page.mini_tools.convert_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="compress">
+      <i class="fas fa-compress-alt"></i>
+      <strong>{{ _('page.mini_tools.compress') }}</strong>
+      <span>{{ _('page.mini_tools.compress_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="barcode">
+      <i class="fas fa-qrcode"></i>
+      <strong>{{ _('page.mini_tools.barcode') }}</strong>
+      <span>{{ _('page.mini_tools.barcode_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="excel">
+      <i class="fas fa-file-excel"></i>
+      <strong>{{ _('page.mini_tools.excel') }}</strong>
+      <span>{{ _('page.mini_tools.excel_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="ocr">
+      <i class="fas fa-eye"></i>
+      <strong>{{ _('page.mini_tools.ocr') }}</strong>
+      <span>{{ _('page.mini_tools.ocr_desc') }}</span>
+    </button>
+    <button type="button" class="mt-tab" data-tool="ai">
+      <i class="fas fa-robot"></i>
+      <strong>{{ _('page.mini_tools.ai') }}</strong>
+      <span>{{ _('page.mini_tools.ai_desc') }}</span>
+    </button>
+  </nav>
+
+  <section class="mt-panel is-active" data-panel="pdf">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.pdf') }}</h2>
+      <p class="mt-hint">{{ _('page.mini_tools.pdf_hint') }}</p>
+      <div class="mt-drop" id="mtPdfDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_pdf') }}</span>
+        <input id="mtPdfInput" type="file" accept="application/pdf,.pdf" multiple hidden>
+      </div>
+      <ul class="mt-file-list" id="mtPdfList"></ul>
+      <div class="mt-toolbar">
+        <button type="button" class="mt-btn mt-btn-primary" id="mtPdfMerge"><i class="fas fa-object-group"></i> {{ _('page.mini_tools.merge') }}</button>
+        <label class="mt-field">{{ _('page.mini_tools.from_page') }} <input id="mtPdfFrom" type="number" min="1" value="1"></label>
+        <label class="mt-field">{{ _('page.mini_tools.to_page') }} <input id="mtPdfTo" type="number" min="1" value="1"></label>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtPdfSplit"><i class="fas fa-cut"></i> {{ _('page.mini_tools.split') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtPdfSplitAll"><i class="fas fa-copy"></i> {{ _('page.mini_tools.split_all') }}</button>
+      </div>
+      <div class="mt-toolbar">
+        <label class="mt-field">{{ _('page.mini_tools.crop_left') }} <input id="mtCropL" type="number" min="0" step="0.05" value="0"></label>
+        <label class="mt-field">{{ _('page.mini_tools.crop_right') }} <input id="mtCropR" type="number" min="0" step="0.05" value="0"></label>
+        <label class="mt-field">{{ _('page.mini_tools.crop_top') }} <input id="mtCropT" type="number" min="0" step="0.05" value="0"></label>
+        <label class="mt-field">{{ _('page.mini_tools.crop_bottom') }} <input id="mtCropB" type="number" min="0" step="0.05" value="0"></label>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtPdfCrop"><i class="fas fa-crop"></i> {{ _('page.mini_tools.crop') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtPdfCrop46">4×6</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtPdfClear">{{ _('page.mini_tools.clear') }}</button>
+      </div>
+      <p class="mt-status" id="mtPdfStatus"></p>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="convert">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.convert') }}
+        {% if convert_available %}
+        <span class="mt-badge">{{ convert_engine }}</span>
+        {% else %}
+        <span class="mt-badge off">{{ _('page.mini_tools.convert_off') }}</span>
+        {% endif %}
+      </h2>
+      <p class="mt-hint">{{ _('page.mini_tools.convert_hint') }}</p>
+      <div class="mt-drop" id="mtConvertDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_office') }}</span>
+        <input id="mtConvertInput" type="file" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.csv,.txt,.html,.htm" multiple hidden>
+      </div>
+      <ul class="mt-file-list" id="mtConvertList"></ul>
+      <div class="mt-toolbar">
+        <button type="button" class="mt-btn mt-btn-primary" id="mtConvertBtn" {% if not convert_available %}disabled{% endif %}>
+          <i class="fas fa-file-pdf"></i> {{ _('page.mini_tools.convert_btn') }}
+        </button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtConvertClear">{{ _('page.mini_tools.clear') }}</button>
+      </div>
+      <p class="mt-status" id="mtConvertStatus"></p>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="compress">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.compress') }}</h2>
+      <p class="mt-hint">{{ _('page.mini_tools.compress_hint') }}</p>
+      <div class="mt-drop" id="mtCompressDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_compress') }}</span>
+        <input id="mtCompressInput" type="file" accept="image/*,.pdf,.xlsx,.xls,.csv" multiple hidden>
+      </div>
+      <ul class="mt-file-list" id="mtCompressList"></ul>
+      <div class="mt-toolbar">
+        <label class="mt-field">{{ _('page.mini_tools.target_size') }}
+          <select id="mtTargetSize">
+            <option value="auto">{{ _('page.mini_tools.target_auto') }}</option>
+            <option value="512000">500 KB</option>
+            <option value="1048576">1 MB</option>
+            <option value="2097152" selected>2 MB</option>
+            <option value="5242880">5 MB</option>
+            <option value="10485760">10 MB</option>
+          </select>
+        </label>
+        <label class="mt-field">{{ _('page.mini_tools.max_width') }} <input id="mtMaxWidth" type="number" min="200" max="6000" step="50" value="1920"></label>
+        <label class="mt-field">{{ _('page.mini_tools.quality') }} <input id="mtQuality" type="number" min="40" max="95" step="5" value="75"></label>
+        <button type="button" class="mt-btn mt-btn-primary" id="mtCompressBtn"><i class="fas fa-compress-alt"></i> {{ _('page.mini_tools.compress_btn') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtCompressClear">{{ _('page.mini_tools.clear') }}</button>
+      </div>
+      <p class="mt-status" id="mtCompressStatus"></p>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="barcode">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.barcode') }}</h2>
+      <p class="mt-hint">{{ _('page.mini_tools.barcode_hint') }}</p>
+      <div class="mt-row">
+        <label class="mt-field">{{ _('page.mini_tools.barcode_type') }}
+          <select id="mtBcType">
+            <option value="qrcode">QR</option>
+            <option value="code128" selected>Code 128</option>
+            <option value="code39">Code 39</option>
+            <option value="ean13">EAN-13</option>
+            <option value="upca">UPC-A</option>
+            <option value="datamatrix">Data Matrix</option>
+          </select>
+        </label>
+        <label class="mt-field">{{ _('page.mini_tools.scale') }} <input id="mtBcScale" type="number" min="1" max="8" value="3"></label>
+        <label class="mt-field"><span><input id="mtBcText" type="checkbox" checked> {{ _('page.mini_tools.includetext') }}</span></label>
+      </div>
+      <label class="mt-field" style="margin-top:12px">{{ _('page.mini_tools.barcode_text') }}
+        <textarea id="mtBcValues" placeholder="M1141&#10;BIN-A-12&#10;https://www.fdcef.com/"></textarea>
+      </label>
+      <p class="mt-hint">{{ _('page.mini_tools.batch_hint') }}</p>
+      <div class="mt-toolbar">
+        <button type="button" class="mt-btn mt-btn-primary" id="mtBcGenerate"><i class="fas fa-barcode"></i> {{ _('page.mini_tools.generate') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtBcPdf">{{ _('page.mini_tools.download') }} PDF</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtBcZip">ZIP</button>
+      </div>
+      <div class="mt-barcode-out" id="mtBcOut"></div>
+      <p class="mt-status" id="mtBcStatus"></p>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="excel">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.excel') }}</h2>
+      <p class="mt-hint">{{ _('page.mini_tools.excel_hint') }}</p>
+      <div class="mt-drop" id="mtExcelDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_excel') }}</span>
+        <input id="mtExcelInput" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden>
+      </div>
+      <div class="mt-toolbar">
+        <label class="mt-field">{{ _('page.mini_tools.excel_col') }}
+          <select id="mtExcelCol"></select>
+        </label>
+        <button type="button" class="mt-btn mt-btn-primary" id="mtExcelDups"><i class="fas fa-clone"></i> {{ _('page.mini_tools.excel_dups') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtExcelCsv">{{ _('page.mini_tools.excel_export_csv') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtExcelXlsx">{{ _('page.mini_tools.excel_export_xlsx') }}</button>
+      </div>
+      <p class="mt-hint" style="margin-top:16px">{{ _('page.mini_tools.excel_map') }}</p>
+      <div class="mt-map-grid" id="mtExcelMap"></div>
+      <div class="mt-toolbar">
+        <button type="button" class="mt-btn mt-btn-muted" id="mtExcelApply">{{ _('page.mini_tools.apply_map') }}</button>
+      </div>
+      <p class="mt-status" id="mtExcelStatus"></p>
+      <div class="mt-preview" id="mtExcelPreview"></div>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="ocr">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.ocr') }}
+        {% if (ai_status.vision_model if ai_status is defined else '') %}
+        <span class="mt-badge">{{ ai_status.vision_model }}</span>
+        {% elif ocr_available|default(false) %}
+        <span class="mt-badge">tesseract</span>
+        {% endif %}
+      </h2>
+      <p class="mt-hint">{{ _('page.mini_tools.ocr_hint') }}</p>
+      <div class="mt-drop" id="mtOcrDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_image') }}</span>
+        <input id="mtOcrInput" type="file" accept="image/*" hidden>
+      </div>
+      <img class="mt-thumb" id="mtOcrThumb" alt="" hidden>
+      <div class="mt-toolbar">
+        <label class="mt-field">{{ _('page.mini_tools.ocr_engine') }}
+          <select id="mtOcrEngine">
+            <option value="auto" selected>{{ _('page.mini_tools.ocr_auto') }}</option>
+            <option value="vision">{{ _('page.mini_tools.ocr_vision') }}</option>
+            <option value="tesseract">Tesseract</option>
+          </select>
+        </label>
+        <label class="mt-field">{{ _('page.mini_tools.ocr_lang') }}
+          <select id="mtOcrLang">
+            <option value="eng">{{ _('page.mini_tools.lang_eng') }}</option>
+            <option value="chi_sim">{{ _('page.mini_tools.lang_chi') }}</option>
+            <option value="eng+chi_sim">{{ _('page.mini_tools.lang_both') }}</option>
+          </select>
+        </label>
+        <button type="button" class="mt-btn mt-btn-primary" id="mtOcrRun"><i class="fas fa-eye"></i> {{ _('page.mini_tools.ocr_run') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtOcrCopy">{{ _('page.mini_tools.ocr_copy') }}</button>
+      </div>
+      <textarea class="mt-ocr-out" id="mtOcrOut" readonly></textarea>
+      <p class="mt-status" id="mtOcrStatus"></p>
+    </div>
+  </section>
+
+  <section class="mt-panel" data-panel="ai">
+    <div class="mt-card">
+      <h2>{{ _('page.mini_tools.ai') }}
+        {% if ai_status is defined and ai_status.text_model %}
+        <span class="mt-badge">{{ ai_status.text_model }}</span>
+        {% elif not (ai_available|default(false)) %}
+        <span class="mt-badge off">{{ _('page.mini_tools.ai_off') }}</span>
+        {% endif %}
+      </h2>
+      <p class="mt-hint">{{ _('page.mini_tools.ai_hint') }}</p>
+      <div class="mt-drop" id="mtAiDrop" tabindex="0">
+        <strong>{{ _('page.mini_tools.drop') }}</strong>
+        <span>{{ _('page.mini_tools.drop_image') }}</span>
+        <input id="mtAiInput" type="file" accept="image/*" hidden>
+      </div>
+      <img class="mt-thumb" id="mtAiThumb" alt="" hidden>
+      <label class="mt-field" style="margin-top:12px">{{ _('page.mini_tools.ai_input') }}
+        <textarea id="mtAiIn" class="mt-ocr-out" style="min-height:7rem" placeholder="{{ _('page.mini_tools.ai_placeholder') }}"></textarea>
+      </label>
+      <div class="mt-toolbar" id="mtAiTasks">
+        <button type="button" class="mt-btn mt-btn-primary" data-ai-task="translate_en">{{ _('page.mini_tools.ai_en') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" data-ai-task="translate_zh">{{ _('page.mini_tools.ai_zh') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" data-ai-task="cleanup">{{ _('page.mini_tools.ai_cleanup') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" data-ai-task="extract">{{ _('page.mini_tools.ai_extract') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" data-ai-task="tracking">{{ _('page.mini_tools.ai_tracking') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" data-ai-task="vendor_draft">{{ _('page.mini_tools.ai_draft') }}</button>
+      </div>
+      <textarea class="mt-ocr-out" id="mtAiOut" readonly></textarea>
+      <div class="mt-toolbar">
+        <button type="button" class="mt-btn mt-btn-muted" id="mtAiCopy">{{ _('page.mini_tools.ocr_copy') }}</button>
+        <button type="button" class="mt-btn mt-btn-muted" id="mtAiClear">{{ _('page.mini_tools.clear') }}</button>
+      </div>
+      <p class="mt-status" id="mtAiStatus"></p>
+    </div>
+  </section>
+</div>
+
+<script>
+  window.MINI_TOOLS = {
+    convertUrl: {{ url_for('mini_tools.mini_tools_convert')|tojson }},
+    ocrUrl: {{ url_for('mini_tools.mini_tools_ocr')|tojson }},
+    aiUrl: {{ url_for('mini_tools.mini_tools_ai')|tojson }},
+    statusUrl: {{ url_for('mini_tools.mini_tools_status')|tojson }},
+    convertAvailable: {{ convert_available|tojson }},
+    ocrAvailable: {{ (ocr_available|default(false))|tojson }},
+    aiAvailable: {{ (ai_available|default(false))|tojson }},
+    strings: {
+      drop: {{ _('page.mini_tools.drop')|tojson }},
+      files: {{ _('page.mini_tools.files')|tojson }},
+      noFiles: {{ _('page.mini_tools.no_files')|tojson }},
+      remove: {{ _('page.mini_tools.remove')|tojson }},
+      busy: {{ _('page.mini_tools.busy')|tojson }},
+      error: {{ _('page.mini_tools.error')|tojson }},
+      ready: {{ _('page.mini_tools.ready')|tojson }},
+      pages: {{ _('page.mini_tools.pages')|tojson }},
+      inches: {{ _('page.mini_tools.inches')|tojson }},
+      rows: {{ _('page.mini_tools.rows')|tojson }},
+      keep: {{ _('page.mini_tools.keep')|tojson }},
+      duplicatesFound: {{ _('page.mini_tools.duplicates_found')|tojson }},
+      noDuplicates: {{ _('page.mini_tools.no_duplicates')|tojson }},
+      convertOff: {{ _('page.mini_tools.convert_off_help')|tojson }},
+      needPdf: {{ _('page.mini_tools.need_pdf')|tojson }},
+      needOffice: {{ _('page.mini_tools.need_office')|tojson }},
+      needImage: {{ _('page.mini_tools.need_image')|tojson }},
+      copied: {{ _('page.mini_tools.copied')|tojson }},
+      done: {{ _('page.mini_tools.done')|tojson }},
+      targetMiss: {{ _('page.mini_tools.target_miss')|tojson }},
+      needText: {{ _('page.mini_tools.need_text')|tojson }},
+      aiOff: {{ _('page.mini_tools.ai_off_help')|tojson }}
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="{{ url_for('static', filename='js/mini_tools.js') }}?v=3"></script>
+</body>
+</html>

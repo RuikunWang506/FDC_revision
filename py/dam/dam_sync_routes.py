@@ -263,22 +263,47 @@ def _notify_dam_discord(message: str, *, success=None):
     Thread(target=_send, daemon=True).start()
 
 
-def _format_dam_run_options(force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index=False) -> str:
+def _format_dam_run_options(
+    force_rebuild_index,
+    include_fetch,
+    include_cleanup,
+    fetch_full,
+    include_china_ftp_index=False,
+    include_oms_backfill=False,
+    include_index_sync=True,
+) -> str:
     parts = []
     if include_fetch:
         parts.append('fetch: full scan' if fetch_full else 'fetch: incremental')
     else:
         parts.append('fetch: off')
+    parts.append('oms catalog backfill: yes' if include_oms_backfill else 'oms catalog backfill: no')
     parts.append('rebuild index: yes' if force_rebuild_index else 'rebuild index: no')
+    parts.append('index scan: yes' if include_index_sync else 'index scan: no')
     parts.append('cleanup: yes' if include_cleanup else 'cleanup: no')
     parts.append('china ftp index: yes' if include_china_ftp_index else 'china ftp index: no')
     return ' | '.join(parts)
 
 
-def _notify_dam_started(triggered_by, force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index=False):
+def _notify_dam_started(
+    triggered_by,
+    force_rebuild_index,
+    include_fetch,
+    include_cleanup,
+    fetch_full,
+    include_china_ftp_index=False,
+    include_oms_backfill=False,
+    include_index_sync=True,
+):
     kind = _run_kind_label(force_rebuild_index, fetch_full)
     opts = _format_dam_run_options(
-        force_rebuild_index, include_fetch, include_cleanup, fetch_full, include_china_ftp_index,
+        force_rebuild_index,
+        include_fetch,
+        include_cleanup,
+        fetch_full,
+        include_china_ftp_index,
+        include_oms_backfill=include_oms_backfill,
+        include_index_sync=include_index_sync,
     )
     _notify_dam_discord(
         f"**DAM sync started** ({kind})\n"
@@ -297,6 +322,8 @@ def _notify_dam_finished(
     stats=None,
     error=None,
     cleanup_count=0,
+    include_oms_backfill=False,
+    include_index_sync=True,
 ):
     kind = _run_kind_label(force_rebuild_index, fetch_full)
     if error:
@@ -309,11 +336,18 @@ def _notify_dam_finished(
         return
 
     st = stats or {}
+    oms_part = ""
+    if include_oms_backfill:
+        oms_part = (
+            f"OMS catalog filled: {st.get('oms_copied', 0)} | "
+            f"OMS missing: {st.get('oms_missing_catalog', 0)} | "
+        )
     _notify_dam_discord(
         f"**DAM sync finished** ({kind})\n"
         f"Triggered by: **{triggered_by}**\n"
         f"Dropbox found: {st.get('fetch_candidates', 0)} | "
         f"New files organized: {st.get('fetch_organized', 0)} | "
+        f"{oms_part}"
         f"DB records created: {st.get('fetch_db_added', 0)} | "
         f"DAM files checked: {st.get('total_processed', 0)} | "
         f"Unchanged: {st.get('total_skipped', 0)} | "
@@ -330,6 +364,8 @@ def run_sync_background(
     log_source='manual',
     fetch_full=False,
     include_china_ftp_index=False,
+    include_oms_backfill=False,
+    include_index_sync=True,
 ):
     """Run sync in background thread.
 
@@ -356,6 +392,8 @@ def run_sync_background(
             include_cleanup,
             fetch_full,
             include_china_ftp_index,
+            include_oms_backfill=include_oms_backfill,
+            include_index_sync=include_index_sync,
         )
 
         if log_source == 'cron':
@@ -364,6 +402,7 @@ def run_sync_background(
                     'info',
                     f'🟢 INFO DAM scheduled sync START (cron) fetch={include_fetch} '
                     f'fetch_full={fetch_full} rebuild_index={force_rebuild_index} cleanup={include_cleanup} '
+                    f'oms_backfill={include_oms_backfill} index_sync={include_index_sync} '
                     f'china_ftp_index={include_china_ftp_index}',
                 )
             except Exception:
@@ -451,31 +490,63 @@ def run_sync_background(
                 except Exception as fetch_err:
                     _sync_log(f"Error running Smart Auto-Filter: {fetch_err}")
 
-            sync_service = DAMSyncServiceV2(log=_sync_log)
-            sync_service.run_full_sync(force_rebuild_index=force_rebuild_index)
-            sync_service.stats.update(fetch_stats)
+            oms_stats = {}
+            if include_oms_backfill:
+                try:
+                    from py.utilities.oms_catalog_backfill import run_oms_dropbox_catalog_backfill
+
+                    oms_stats = run_oms_dropbox_catalog_backfill(apply=True, log_fn=_sync_log) or {}
+                except Exception as oms_err:
+                    _sync_log(f"Error running OMS catalog backfill: {oms_err}")
+                    try:
+                        log_event('error', f'DAM OMS catalog backfill failed: {oms_err}')
+                    except Exception:
+                        pass
+
+            combined_stats = dict(fetch_stats)
+            combined_stats.update(oms_stats)
+
+            if include_index_sync:
+                sync_service = DAMSyncServiceV2(log=_sync_log)
+                sync_service.run_full_sync(force_rebuild_index=force_rebuild_index)
+                sync_service.stats.update(combined_stats)
+                combined_stats = sync_service.stats
+            else:
+                _sync_log("DAM disk index scan skipped for this run.")
+
             _sync_log("\n=== USEFUL SYNC SUMMARY ===")
             if include_fetch:
                 _sync_log(
-                    f"Dropbox: {fetch_stats.get('fetch_candidates', 0)} new/modified found, "
-                    f"{fetch_stats.get('fetch_organized', 0)} newly organized, "
-                    f"{fetch_stats.get('fetch_already_organized', 0)} already organized"
+                    f"Dropbox: {combined_stats.get('fetch_candidates', 0)} new/modified found, "
+                    f"{combined_stats.get('fetch_organized', 0)} newly organized, "
+                    f"{combined_stats.get('fetch_already_organized', 0)} already organized"
                 )
                 _sync_log(
-                    f"Database during import: {fetch_stats.get('fetch_db_added', 0)} created, "
-                    f"{fetch_stats.get('fetch_db_updated', 0)} updated, "
-                    f"{fetch_stats.get('fetch_db_unchanged', 0)} unchanged"
+                    f"Database during import: {combined_stats.get('fetch_db_added', 0)} created, "
+                    f"{combined_stats.get('fetch_db_updated', 0)} updated, "
+                    f"{combined_stats.get('fetch_db_unchanged', 0)} unchanged"
                 )
-            _sync_log(
-                f"DAM verification: {sync_service.stats['total_processed']} files checked, "
-                f"{sync_service.stats['total_added']} missing records created, "
-                f"{sync_service.stats['total_updated']} repaired, "
-                f"{sync_service.stats['total_skipped']} unchanged, "
-                f"{sync_service.stats['total_errors']} errors"
-            )
+            if include_oms_backfill:
+                _sync_log(
+                    f"OMS catalog backfill: active={combined_stats.get('oms_active_styles', 0)}, "
+                    f"missing={combined_stats.get('oms_missing_catalog', 0)}, "
+                    f"copied={combined_stats.get('oms_copied', 0)}, "
+                    f"no Dropbox file={combined_stats.get('oms_no_dropbox', 0)}"
+                )
+            if include_index_sync and sync_service is not None:
+                _sync_log(
+                    f"DAM verification: {sync_service.stats['total_processed']} files checked, "
+                    f"{sync_service.stats['total_added']} missing records created, "
+                    f"{sync_service.stats['total_updated']} repaired, "
+                    f"{sync_service.stats['total_skipped']} unchanged, "
+                    f"{sync_service.stats['total_errors']} errors"
+                )
             
-            sync_status['last_stats'] = sync_service.stats
-            sync_status['last_run'] = str(sync_service.stats.get('end_time'))
+            sync_status['last_stats'] = combined_stats
+            if include_index_sync and sync_service is not None:
+                sync_status['last_run'] = str(sync_service.stats.get('end_time'))
+            else:
+                sync_status['last_run'] = _utc_now_iso()
             
             # Optional: cleanup broken links after sync
             if include_cleanup:
@@ -544,6 +615,7 @@ def run_sync_background(
                         f"processed={st.get('total_processed')} added={st.get('total_added')} "
                         f"updated={st.get('total_updated')} skipped={st.get('total_skipped')} "
                         f"errors={st.get('total_errors')} last_run={sync_status.get('last_run')} "
+                        f"oms_copied={st.get('oms_copied')} oms_missing={st.get('oms_missing_catalog')} "
                         f"china_ftp_index={include_china_ftp_index}",
                     )
                     dam_cron_audit(
@@ -553,6 +625,7 @@ def run_sync_background(
                         updated=st.get('total_updated'),
                         skipped=st.get('total_skipped'),
                         errors=st.get('total_errors'),
+                        oms_copied=st.get('oms_copied'),
                         last_run=sync_status.get('last_run'),
                     )
                 except Exception:
@@ -583,6 +656,8 @@ def run_sync_background(
                 stats=sync_status.get('last_stats'),
                 error=sync_status.get('error'),
                 cleanup_count=cleanup_count,
+                include_oms_backfill=include_oms_backfill,
+                include_index_sync=include_index_sync,
             )
         except Exception:
             pass
@@ -600,6 +675,8 @@ def run_sync_background(
                     'include_cleanup': include_cleanup,
                     'fetch_full': fetch_full,
                     'include_china_ftp_index': include_china_ftp_index,
+                    'include_oms_backfill': include_oms_backfill,
+                    'include_index_sync': include_index_sync,
                 },
                 stats=sync_status.get('last_stats'),
                 added=(sync_service.recent_added if sync_service else None),
@@ -632,6 +709,40 @@ def _dam_cron_secret():
     except Exception:
         pass
     return ''
+
+
+def _cron_wipe_sold_out_locations():
+    """Daily sold-out location cleanup; runs alongside DAM cron, not inside the DAM lock."""
+    app = None
+    try:
+        app = current_app._get_current_object()
+    except Exception:
+        app = None
+    ctx = app.app_context() if app is not None else None
+    if ctx is not None:
+        ctx.push()
+    try:
+        from py.search.outofstock_check import wipe_sold_out_locations
+
+        result = wipe_sold_out_locations(
+            actor='cron',
+            log_fn=lambda message: log_event('info', message),
+        )
+        log_event(
+            'info',
+            'OOS location wipe finished styles={} rows={}'.format(
+                result.get('style_count', 0),
+                result.get('rows_updated', 0),
+            ),
+        )
+    except Exception as err:
+        try:
+            log_event('error', f'OOS location wipe failed: {err}')
+        except Exception:
+            pass
+    finally:
+        if ctx is not None:
+            ctx.pop()
 
 
 def _cron_authorized():
@@ -711,7 +822,9 @@ def dam_cron_start():
     Requires header: X-DAM-Cron-Secret: <same value as server env DAM_CRON_SECRET>.
 
     POST JSON body matches /dam/start:
-      force_rebuild_index, include_fetch, include_cleanup, include_china_ftp_index (optional booleans).
+      force_rebuild_index, include_fetch, include_cleanup, fetch_full,
+      include_oms_backfill (default true), include_index_sync (default true),
+      include_china_ftp_index, include_oos_wipe (optional booleans).
     """
     client = _cron_request_client()
 
@@ -730,7 +843,10 @@ def dam_cron_start():
     include_fetch = data.get('include_fetch', True)
     include_cleanup = data.get('include_cleanup', True)
     fetch_full = data.get('fetch_full', False)
+    include_oms_backfill = data.get('include_oms_backfill', True)
+    include_index_sync = data.get('include_index_sync', True)
     include_china_ftp_index = data.get('include_china_ftp_index', True)
+    include_oos_wipe = data.get('include_oos_wipe', True)
     if include_china_ftp_index and not _china_ftp_index_rebuild_due():
         include_china_ftp_index = False
         log_event(
@@ -744,27 +860,36 @@ def dam_cron_start():
         fetch_full=fetch_full,
         rebuild_index=force_rebuild_index,
         cleanup=include_cleanup,
+        oms_backfill=include_oms_backfill,
+        index_sync=include_index_sync,
         china_ftp_index=include_china_ftp_index,
+        oos_wipe=include_oos_wipe,
         **client,
     )
 
     try:
         current_app.logger.info(
-            '***cron*** scheduled DAM sync start (fetch=%s fetch_full=%s rebuild=%s cleanup=%s china_ftp_index=%s)',
+            '***cron*** scheduled DAM sync start (fetch=%s fetch_full=%s rebuild=%s cleanup=%s oms=%s china_ftp_index=%s oos_wipe=%s)',
             include_fetch,
             fetch_full,
             force_rebuild_index,
             include_cleanup,
+            include_oms_backfill,
             include_china_ftp_index,
+            include_oos_wipe,
         )
         log_event(
             'info',
             f'CRON scheduled DAM sync start (fetch={include_fetch} fetch_full={fetch_full} '
             f'rebuild={force_rebuild_index} cleanup={include_cleanup} '
-            f'china_ftp_index={include_china_ftp_index})',
+            f'oms_backfill={include_oms_backfill} china_ftp_index={include_china_ftp_index} '
+            f'oos_wipe={include_oos_wipe})',
         )
     except Exception:
         pass
+
+    if include_oos_wipe:
+        Thread(target=_cron_wipe_sold_out_locations, daemon=True).start()
 
     if not claim_sync_run(sync_status):
         dam_cron_audit('cron_start_rejected', outcome='sync_already_running', **client)
@@ -779,6 +904,8 @@ def dam_cron_start():
                 log_source='cron',
                 fetch_full=fetch_full,
                 include_china_ftp_index=include_china_ftp_index,
+                include_oms_backfill=include_oms_backfill,
+                include_index_sync=include_index_sync,
             ),
             daemon=True,
         )
@@ -850,6 +977,10 @@ def start_sync():
     include_fetch = data.get('include_fetch', False)
     include_cleanup = data.get('include_cleanup', False)
     fetch_full = data.get('fetch_full', False)
+    include_oms_backfill = data.get('include_oms_backfill')
+    if include_oms_backfill is None:
+        include_oms_backfill = bool(include_fetch)
+    include_index_sync = data.get('include_index_sync', True)
     
     # Log DAM sync access with username
     from flask import current_app, session
@@ -868,6 +999,8 @@ def start_sync():
                 'include_cleanup': include_cleanup,
                 'log_source': 'manual',
                 'fetch_full': fetch_full,
+                'include_oms_backfill': include_oms_backfill,
+                'include_index_sync': include_index_sync,
             },
             daemon=True,
         )

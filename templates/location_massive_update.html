@@ -260,12 +260,17 @@
             color: #666;
         }
 
-        /* View Map button in navbar */
+        .location-page-header {
+            gap: 12px;
+        }
+        .location-page-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-end;
+        }
         #map-btn-navbar {
-            position: fixed;
-            top: 8px;
-            right: 200px;
-            z-index: 1050;
             background: #17a2b8 !important;
             border-color: #17a2b8 !important;
             color: white !important;
@@ -273,18 +278,13 @@
             font-size: 14px;
             border-radius: 4px;
             cursor: pointer;
+            white-space: nowrap;
         }
         #map-btn-navbar:hover {
             background: #138496 !important;
             border-color: #117a8b !important;
         }
-        
-        /* Pallet Details button in navbar */
         #pallet-btn-navbar {
-            position: fixed;
-            top: 8px;
-            right: 340px;
-            z-index: 1050;
             background: #28a745 !important;
             border-color: #28a745 !important;
             color: white !important;
@@ -294,6 +294,7 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            white-space: nowrap;
         }
         #pallet-btn-navbar:hover {
             background: #218838 !important;
@@ -301,15 +302,29 @@
             color: white !important;
             text-decoration: none;
         }
+        #oos-wipe-btn-navbar {
+            background: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        #oos-wipe-btn-navbar:hover {
+            background: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
+        #oos-wipe-btn-navbar:disabled {
+            opacity: 0.7;
+            cursor: wait;
+        }
 
     </style>
 </head>
 <body>
     {% include 'navbar.html' %}
-    
-    <!-- Action Buttons in Navbar -->
-    <a href="/palletdetail/L1-A BOT" class="btn btn-success" id="pallet-btn-navbar">{{ te('📦 Pallet Details') }}</a>
-    <button type="button" class="btn btn-info" id="map-btn-navbar">{{ te('🗺️ View Map') }}</button>
     
     <div id="notification" class="alert alert-success" style="display:none; position:fixed; top:0; left:0; width:100%; z-index:9999; text-align:center; font-size:1.5em; font-weight:bold; margin:0;"></div>
     
@@ -327,8 +342,13 @@
     </div>
     
     <div class="container-fluid main-content">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>{{ te('Massive Location Update') }}</h2>
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 location-page-header">
+        <h2 class="mb-0">{{ te('Massive Location Update') }}</h2>
+        <div class="location-page-actions">
+            <button type="button" class="btn btn-danger" id="oos-wipe-btn-navbar">{{ te('Remove Out of Stock Location') }}</button>
+            <a href="/palletdetail/L1-A BOT" class="btn btn-success" id="pallet-btn-navbar">{{ te('📦 Pallet Details') }}</a>
+            <button type="button" class="btn btn-info" id="map-btn-navbar">{{ te('🗺️ View Map') }}</button>
+        </div>
         <span id="map-close-btn" style="display:none; cursor:pointer; font-size:1.5em; position:fixed; top:10px; right:10px; z-index:2200; background:#fff; border-radius:50%; padding:0 10px; border:1px solid #ccc;">&times;</span>
     </div>
     
@@ -791,6 +811,33 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             notification.style.display = 'none';
         }, 5000);
+    }
+
+    const oosWipeBtn = document.getElementById('oos-wipe-btn-navbar');
+    if (oosWipeBtn) {
+        oosWipeBtn.addEventListener('click', function () {
+            const ok = confirm('Clear warehouse locations for styles that were received and are now sold out?');
+            if (!ok) return;
+            oosWipeBtn.disabled = true;
+            fetch('/wipe_sold_out_locations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(data.success ? 'success' : 'error', data.message || 'Done');
+                if (data.success && data.style_count > 0) {
+                    window.location.reload();
+                }
+            })
+            .catch(() => {
+                showNotification('error', 'Failed to clear sold-out locations');
+            })
+            .finally(() => {
+                oosWipeBtn.disabled = false;
+            });
+        });
     }
 
     // Map tooltip with occupied location indicators

@@ -24,7 +24,7 @@ from user_agents import parse
 import re
 import secrets
 from py.utilities.setting import Config, login_required
-from py.utilities.database_utils import get_mysql_connection
+from py.utilities.database_utils import get_mysql_connection, get_mysql_connection_unpooled
 from py.utilities.logging_setup import log_event
 from datetime import datetime, timedelta
 import json
@@ -167,8 +167,8 @@ def login():
                 pass
             return login_page()
 
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = (request.form.get("username") or "").strip()
+        password = (request.form.get("password") or "").strip()
         remember = request.form.get("remember")
         login_user_key = client_limit_key(client_ip, f"login:{(username or '').strip().lower() or 'unknown'}")
         login_ip_key = client_limit_key(client_ip, "login")
@@ -176,7 +176,14 @@ def login():
             flash("Too many login attempts. Please wait a few minutes and try again.")
             return login_page()
 
-        if check_credentials(username, password):
+        authed = check_credentials(username, password)
+        if authed is None:
+            flash("Login is temporarily unavailable. Please try again in a moment.")
+            log_event("ERROR", f"LOGIN_DB_UNAVAILABLE: Username: \"{username}\", IP: {client_ip}")
+            return login_page()
+
+        if authed:
+            username = authed
             update_last_login(username)
             # Check if user has an email address
             connection = get_db_connection()
@@ -1172,37 +1179,46 @@ def update_last_login(username):
 
 
 def check_credentials(username, password):
-    connection = get_db_connection()
-    if connection:
-        try:
-            cursor = connection.cursor()
-            query = "SELECT password FROM users WHERE username = %s"
-            cursor.execute(query, (username,))
-            result = cursor.fetchone()
-            if not result:
-                return False
-            stored = result[0]
-            if not verify_password(password, stored):
-                return False
-            if needs_rehash(stored):
-                try:
-                    cursor.execute(
-                        "UPDATE users SET password = %s WHERE username = %s",
-                        (hash_password(password), username),
-                    )
-                    connection.commit()
-                except Error:
-                    connection.rollback()
-            return True
-        except Error as e:
-            print(f"Database error during credential check: {e}")
+    """Verify a login.
+
+    Returns the canonical username on success, False on mismatch, or None if
+    the user database cannot be reached (do not treat that as a bad password).
+    """
+    uname = (username or "").strip()
+    secret = password if not isinstance(password, str) else password.strip()
+    if not uname or not secret:
+        return False
+    connection = get_mysql_connection_unpooled()
+    if not connection:
+        return None
+    try:
+        cursor = connection.cursor()
+        query = "SELECT username, password FROM users WHERE username = %s"
+        cursor.execute(query, (uname,))
+        result = cursor.fetchone()
+        if not result:
             return False
-        finally:
-            if 'cursor' in locals():
-                cursor.close()
-            if connection and connection.is_connected():
-                connection.close()
-    return False
+        canonical, stored = result[0], result[1]
+        if not verify_password(secret, stored):
+            return False
+        if needs_rehash(stored):
+            try:
+                cursor.execute(
+                    "UPDATE users SET password = %s WHERE username = %s",
+                    (hash_password(secret), canonical),
+                )
+                connection.commit()
+            except Error:
+                connection.rollback()
+        return canonical or uname
+    except Error as e:
+        print(f"Database error during credential check: {e}")
+        return None
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 _USER_GROUPS_SCHEMA_INITIALIZED = False

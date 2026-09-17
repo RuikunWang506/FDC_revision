@@ -56,5 +56,16 @@ class RewriteHtmlCsrfMetaTests(unittest.TestCase):
         self.assertEqual(out.count("fdc-csrf.js"), 1)
 
 
+class ProductDetailCsrfTests(unittest.TestCase):
+    def test_client_portal_page_includes_csrf_and_get_search(self):
+        html = (ROOT / "product_detail_module" / "product_detail.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("{% include '_csrf.html' %}", html)
+        self.assertNotIn('method="POST" class="search-form"', html)
+        self.assertIn('method="GET"', html)
+        self.assertIn('name="search"', html)
+
+
 if __name__ == "__main__":
     unittest.main()

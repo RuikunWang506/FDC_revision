@@ -342,21 +342,6 @@
           </div>
         </a>
         {%- endif %}
-
-        {%- if tool_allowed('burlington_highlight') %}
-        <a href="/burlington_highlight" class="tool-card" data-category="catalog" data-tool="burlington_highlight">
-          <div class="card-header">
-            <i class="fas fa-highlighter"></i>
-            <h3>{{ te('Burlington-highight') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_highlight')"></i>
-          </div>
-          <p>{{ te('Search files in the Burlington folder and return matching file path and file name') }}</p>
-          <div class="card-footer">
-            <span class="category">{{ _('dashboard.category.catalog') }}</span>
-            <span class="badge">{{ _('dashboard.badge.new') }}</span>
-          </div>
-        </a>
-        {%- endif %}
           </div>
         </section>
 
@@ -468,34 +453,6 @@
             <span class="count"><span class="section-count">0</span> {{ _('dashboard.tools_label') }}</span>
           </div>
           <div class="dashboard-grid">
-        {%- if tool_allowed('external_stock_check') %}
-        <a href="{{ url_for('external_stock_check.external_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="external_stock_check">
-          <div class="card-header">
-            <i class="fas fa-globe"></i>
-            <h3>{{ _('tool.external_stock_check.title') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'external_stock_check')"></i>
-          </div>
-          <p>{{ _('tool.external_stock_check.desc') }}</p>
-          <div class="card-footer">
-            <span class="category">{{ _('dashboard.category.inventory') }}</span>
-          </div>
-        </a>
-        {%- endif %}
-
-        {%- if tool_allowed('internal_stock_check') %}
-        <a href="{{ url_for('internal_stock_check.internal_stock_check_page') }}" class="tool-card" data-category="inventory" data-tool="internal_stock_check">
-          <div class="card-header">
-            <i class="fas fa-layer-group"></i>
-            <h3>{{ _('tool.internal_stock_check.title') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'internal_stock_check')"></i>
-          </div>
-          <p>{{ _('tool.internal_stock_check.desc') }}</p>
-          <div class="card-footer">
-            <span class="category">{{ _('dashboard.category.inventory') }}</span>
-          </div>
-        </a>
-        {%- endif %}
-
         {%- if tool_allowed('inventory_manual_adjuster') %}
         <a href="{{ url_for('inventory_manual_adjuster.inventory_manual_adjuster_page') }}" class="tool-card" data-category="inventory" data-tool="inventory_manual_adjuster">
           <div class="card-header">
@@ -507,35 +464,6 @@
           <div class="card-footer">
             <span class="category">{{ _('dashboard.category.inventory') }}</span>
             <span class="badge">{{ _('dashboard.badge.new') }}</span>
-          </div>
-        </a>
-        {%- endif %}
-
-        {%- if tool_allowed('oosc') %}
-        <a href="/oosc" class="tool-card" data-category="inventory" data-tool="oosc">
-          <div class="card-header">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>{{ _('tool.oosc.title') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'oosc')"></i>
-          </div>
-          <p>{{ _('tool.oosc.desc') }}</p>
-          <div class="card-footer">
-            <span class="category">{{ _('dashboard.category.inventory') }}</span>
-            <span class="badge">{{ _('dashboard.badge.new') }}</span>
-          </div>
-        </a>
-        {%- endif %}
-
-        {%- if tool_allowed('location_massive_update') %}
-        <a href="{{ url_for('location_massive_audit.location_massive_update') }}" class="tool-card" data-category="inventory" data-tool="location_massive_update">
-          <div class="card-header">
-            <i class="fas fa-warehouse"></i>
-            <h3>{{ _('tool.location_massive_update.title') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_massive_update')"></i>
-          </div>
-          <p>{{ _('tool.location_massive_update.desc') }}</p>
-          <div class="card-footer">
-            <span class="category">{{ _('dashboard.category.inventory') }}</span>
           </div>
         </a>
         {%- endif %}
@@ -579,14 +507,14 @@
         </a>
         {%- endif %}
 
-        {%- if tool_allowed('warehousemap') %}
-        <a href="/warehousemap" class="tool-card" data-category="warehouse" data-tool="warehousemap">
+        {%- if tool_allowed('location_service') %}
+        <a href="/locations" class="tool-card" data-category="warehouse" data-tool="location_service">
           <div class="card-header">
-            <i class="fas fa-map"></i>
-            <h3>{{ _('tool.warehousemap.title') }}</h3>
-            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'warehousemap')"></i>
+            <i class="fas fa-map-marker-alt"></i>
+            <h3>{{ _('tool.location_service.title') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'location_service')"></i>
           </div>
-          <p>{{ te('Interactive warehouse layout and location mapping system') }}</p>
+          <p>{{ _('tool.location_service.desc') }}</p>
           <div class="card-footer">
             <span class="category">{{ _('dashboard.category.warehouse') }}</span>
           </div>
@@ -639,7 +567,7 @@
         {%- if tool_allowed('burlington_label_processor') %}
         <a href="{{ url_for('burlington_label_processor.burlington_label_processor_page') }}" class="tool-card" data-category="warehouse" data-tool="burlington_label_processor">
           <div class="card-header">
-            <i class="fas fa-scissors"></i>
+            <i class="fas fa-cut"></i>
             <h3>{{ _('tool.burlington_label_processor.title') }}</h3>
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'burlington_label_processor')"></i>
           </div>
@@ -685,6 +613,21 @@
             <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'box_price_checker')"></i>
           </div>
           <p>{{ _('tool.box_price_checker.desc') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
+
+        {%- if tool_allowed('mini_tools') %}
+        <a href="/mini_tools" class="tool-card" data-category="admin" data-tool="mini_tools">
+          <div class="card-header">
+            <i class="fas fa-tools"></i>
+            <h3>{{ _('tool.mini_tools.title') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'mini_tools')"></i>
+          </div>
+          <p>{{ _('tool.mini_tools.desc') }}</p>
           <div class="card-footer">
             <span class="category">{{ _('dashboard.category.admin') }}</span>
             <span class="badge">{{ _('dashboard.badge.new') }}</span>

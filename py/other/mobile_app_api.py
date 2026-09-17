@@ -278,7 +278,7 @@ def mobile_login():
     login_ip_key = client_limit_key(client_ip, "login")
     if auth_limiter.is_limited(login_user_key, 8, 600) or auth_limiter.is_limited(login_ip_key, 30, 600):
         return jsonify({"ok": False, "error": "Too many login attempts. Wait a few minutes."}), 429
-    if not username or not password or not check_credentials(username, password):
+    if not username or not password:
         auth_limiter.record(login_user_key)
         auth_limiter.record(login_ip_key)
         log_event(
@@ -286,6 +286,18 @@ def mobile_login():
             f'RED FAILED_LOGIN mobile: Username: "{username}", IP: {client_ip}',
         )
         return jsonify({"ok": False, "error": "Invalid username or password"}), 401
+    authed = check_credentials(username, password)
+    if authed is None:
+        return jsonify({"ok": False, "error": "Login is temporarily unavailable. Try again."}), 503
+    if not authed:
+        auth_limiter.record(login_user_key)
+        auth_limiter.record(login_ip_key)
+        log_event(
+            "WARNING",
+            f'RED FAILED_LOGIN mobile: Username: "{username}", IP: {client_ip}',
+        )
+        return jsonify({"ok": False, "error": "Invalid username or password"}), 401
+    username = authed
 
     update_last_login(username)
     session["username"] = username

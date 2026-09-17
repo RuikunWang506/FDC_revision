@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>{{ _('page.product_detail.title') }}</title>
-    
+    {% include '_csrf.html' %}
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -1842,8 +1843,8 @@
         <div class="search-section">
             <h1><i class="fas fa-search"></i> Search</h1>
             <p>{{ te('By SKU or Style') }}</p>
-            <form method="POST" class="search-form">
-                <input type="text" name="search_input" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
+            <form method="GET" action="{{ '/clientview/product_detail' if is_tiktok_view|default(false) else '/product_detail' }}" class="search-form">
+                <input type="text" name="search" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
                 <button type="submit">{{ te('Search') }}</button>
             </form>
             {% if not is_tiktok_view %}
@@ -1927,8 +1928,8 @@
             <div class="search-section" style="max-width: 600px; margin: 60px auto 0; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <h1><i class="fas fa-search"></i> Product Detail</h1>
                 <p style="margin-bottom: 15px;">{{ te('Search by single SKU or Style (e.g., M1141 or M1141 BK)') }}</p>
-                <form method="POST" class="search-form">
-                    <input type="text" name="search_input" id="productSearchInput" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
+                <form method="GET" action="{{ '/clientview/product_detail' if is_tiktok_view|default(false) else '/product_detail' }}" class="search-form">
+                    <input type="text" name="search" id="productSearchInput" placeholder="{{ te('e.g., M1141') }}" value="{{ search_input }}" autocomplete="off">
                     <button type="submit" id="productSearchBtn">{{ te('Search') }}</button>
                 </form>
                 {% if not is_tiktok_view %}
@@ -3342,7 +3343,7 @@
                         if (!sidebarContainerCheckbox.checked) return;
 
                         e.preventDefault();
-                        const inputEl = sidebarSearchForm.querySelector('input[name="search_input"]');
+                        const inputEl = sidebarSearchForm.querySelector('input[name="search"], input[name="search_input"]');
                         const containerInput = (inputEl?.value || '').trim();
                         if (!containerInput) {
                             alert('Please enter a container number');
@@ -3378,7 +3379,7 @@
                 style = document.querySelector('.product-wrapper')?.getAttribute('data-search') || '';
             }
             if (!style) {
-                const searchInput = document.querySelector('input[name="search_input"]');
+                const searchInput = document.querySelector('input[name="search_input"], input[name="search"]');
                 if (searchInput) style = searchInput.value;
             }
             return style;

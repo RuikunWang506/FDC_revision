@@ -200,6 +200,13 @@ register_security_headers(app)
 register_routes(app)
 register_navigation_audit(app)
 
+try:
+    from py.utilities.database_utils import start_mysql_pool_watchdog
+
+    start_mysql_pool_watchdog()
+except Exception:
+    pass
+
 @app.errorhandler(404)
 def _not_found(_e):
     return render_template("errors/404.html"), 404

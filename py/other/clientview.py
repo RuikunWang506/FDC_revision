@@ -164,9 +164,14 @@ def clientview_login():
         flash("请输入用户名和密码 / Enter username and password.", "danger")
         return redirect(url_for("home"))
 
-    if not check_credentials(username, password):
+    authed = check_credentials(username, password)
+    if authed is None:
+        flash("登录暂时不可用 / Login is temporarily unavailable.", "danger")
+        return redirect(url_for("home"))
+    if not authed:
         flash("用户名或密码错误 / Invalid username or password.", "danger")
         return redirect(url_for("home"))
+    username = authed
 
     if not user_has_portal_tool_access(username):
         flash(
@@ -217,6 +222,8 @@ def clientview_product_detail(search_input=None):
         search_input = request.args.get("search_id", "").strip()
         if not search_input:
             search_input = request.args.get("search", "").strip()
+        if not search_input:
+            search_input = request.args.get("search_input", "").strip()
         if not search_input:
             search_input = ""
     search_input = normalize_product_search_input(search_input)

@@ -29,6 +29,21 @@ def allowed_file(filename):
     allowed_extensions = {'xlsx', 'xls'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
+@location_service_bp.route('/locations', methods=['GET'])
+def location_service_menu():
+    """Hub for Massive Location Update and Warehouse Map."""
+    if 'username' not in session:
+        session['next'] = request.url
+        return redirect(url_for("auth.login"))
+    current_app.logger.info(
+        f"***{session.get('username', 'Unknown')}***___@@@Accessed@@@__Location Service Menu"
+    )
+    return render_template(
+        'location_service_menu.html',
+        current_user=session.get('username'),
+    )
+
+
 @location_service_bp.route('/location_service', methods=['GET', 'POST'])
 def location_service():
     current_app.logger.info(f"***{session.get('username', 'Unknown')}***___@@@Accessed@@@__Location Service")

@@ -39,6 +39,8 @@ class SecurityHeaderTests(unittest.TestCase):
         self.assertIn("https://cdn.jsdelivr.net", style_src)
         self.assertIn("https://cdn.jsdelivr.net", script_src)
         self.assertIn("blob:", frame_src)
+        self.assertIn("'wasm-unsafe-eval'", script_src)
+        self.assertIn("https://tessdata.projectnaptha.com", policy)
 
 
 if __name__ == "__main__":

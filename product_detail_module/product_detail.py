@@ -1509,6 +1509,8 @@ def product_detail(search_input=None):
         if not search_input:
             search_input = request.args.get("search", "").strip()
         if not search_input:
+            search_input = request.args.get("search_input", "").strip()
+        if not search_input:
             search_input = ""
     search_input = normalize_product_search_input(search_input)
 

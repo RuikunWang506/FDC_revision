@@ -40,7 +40,15 @@ _TEXT_MODEL_HINTS = (
     'yi',
     'deepseek',
 )
-_VISION_HINTS = ('llava', 'bakllava', 'moondream', 'minicpm-v')
+_VISION_HINTS = (
+    'llava',
+    'bakllava',
+    'moondream',
+    'minicpm-v',
+    'qwen2.5vl',
+    'qwen2-vl',
+    'qwen-vl',
+)
 
 # GTX 10-series / Pascal often crash newer Ollama CUDA builds. After the first
 # CUDA/PTX failure on THIS machine, keep using CPU so we do not keep killing llama-server.

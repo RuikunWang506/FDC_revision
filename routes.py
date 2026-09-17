@@ -265,12 +265,25 @@ def register_routes(app):
     def health_check():
         """Health check endpoint for monitoring. Core up => healthy; failed tools listed separately."""
         modules = health_modules_payload(app)
+        try:
+            from py.utilities.database_utils import mysql_pool_stats
+
+            pool = mysql_pool_stats()
+            pool_out = {
+                "size": pool.get("size"),
+                "checked_out": pool.get("checked_out"),
+                "resets": pool.get("resets"),
+                "oldest_hold_sec": pool.get("oldest_hold_sec"),
+            }
+        except Exception:
+            pool_out = None
         return jsonify({
             "status": "healthy",
             "degraded": bool(modules.get("failed_count")),
             "timestamp": time.time(),
             "service": "FDC Flask App",
             "modules": modules,
+            "mysql_pool": pool_out,
         })
     
     @app.route("/tk")

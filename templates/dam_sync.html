@@ -157,7 +157,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <button id="btn-sync" class="btn btn-success btn-lg btn-block" onclick="startSync(false, true, true)" style="height: 100px;">
+                    <button id="btn-sync" class="btn btn-success btn-lg btn-block" onclick="startSync(false, true, true, false)" style="height: 100px;">
                         <i class="fas fa-sync fa-2x d-block mb-2"></i>
                         <strong>{{ te('Auto Sync (fetch + scan)') }}</strong>
                     </button>
@@ -165,17 +165,19 @@
                         <div class="mb-2"><i class="fas fa-check-circle text-success me-1"></i><strong>{{ te('Recommended for manual runs') }}</strong></div>
                         <small class="text-muted">
                             <strong>{{ te('What it does:') }}</strong><br>
-                            • Runs <code>{{ te('smart_auto_filter.py') }}</code> (missing style images from Dropbox → server folders)<br>
-                            • Runs DAM sync into the database + optional cleanup<br>
+                            • {{ te('Dropbox incremental: new/changed files → catalog and big-picture folders') }}<br>
+                            • {{ te('OMS in-stock/ocean styles missing catalog_original → highest-res Dropbox copy (sold-out styles skipped)') }}<br>
+                            • {{ te('Scan local folders into the DAM database + cleanup broken links') }}<br>
+                            • {{ te('Clear warehouse locations for styles that were received and are now sold out') }}<br>
                             <br>
-                            ⏱️ Often 5–15 minutes depending on volume<br>
+                            ⏱️ Often 5–20 minutes depending on volume<br>
                             <span class="badge bg-warning text-dark mt-1">{{ te('Server automation') }}</span>
                             <span class="d-block mt-2">Daily automation only runs if Task Scheduler calls <code>{{ te('auto_run/daily_auto_sync.bat') }}</code> <strong>{{ te('and') }}</strong> the server has <code>{{ te('DAM_CRON_SECRET') }}</code> set (see below). Posting to <code>{{ te('/dam/start') }}</code> from curl without a login <strong>{{ te('does not work') }}</strong> — use <code>{{ te('POST /dam/cron/start') }}</code> with header <code>{{ te('X-DAM-Cron-Secret') }}</code>.</span>
                         </small>
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <button id="btn-sync-rebuild" class="btn btn-warning btn-lg btn-block" onclick="startSync(true, true, true)" style="height: 100px;">
+                    <button id="btn-sync-rebuild" class="btn btn-warning btn-lg btn-block" onclick="startSync(true, true, true, true)" style="height: 100px;">
                         <i class="fas fa-tools fa-2x d-block mb-2"></i>
                         <strong>{{ te('Complete Rebuild') }}</strong>
                     </button>
@@ -183,10 +185,11 @@
                         <div class="mb-2"><i class="fas fa-wrench text-warning me-1"></i><strong>{{ te('For troubleshooting only') }}</strong></div>
                         <small class="text-muted">
                             <strong>{{ te('What it does:') }}</strong><br>
-                            • Rescans ALL directories from scratch<br>
-                            • Full database sync + cleanup<br>
+                            • {{ te('Full Dropbox scan (all files, not just new/changed)') }}<br>
+                            • {{ te('OMS in-stock/ocean missing-catalog backfill from Dropbox') }}<br>
+                            • {{ te('Rescans ALL local directories from scratch + cleanup') }}<br>
                             <br>
-                            ⏱️ 20-40 minutes<br>
+                            ⏱️ 20-40+ minutes<br>
                             <span class="badge bg-warning text-dark">{{ te('Use only when having issues') }}</span>
                         </small>
                     </div>
@@ -223,6 +226,22 @@
                         </button>
                         <small class="text-muted d-block mt-1">
                             Manually run cleanup (also runs automatically after each scheduled DAM sync when cleanup is enabled)
+                        </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <button class="btn btn-outline-success btn-block" onclick="startOmsCatalogBackfill()">
+                            <i class="fas fa-images"></i> {{ te('Fill missing OMS catalog from Dropbox') }}
+                        </button>
+                        <small class="text-muted d-block mt-1">
+                            {{ te('In-stock or ocean styles only. Sold-out historical styles are skipped.') }}
+                        </small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <button class="btn btn-outline-warning btn-block" onclick="fetchDropboxFull()">
+                            <i class="fas fa-cloud-download-alt"></i> {{ te('Full Dropbox fetch only') }}
+                        </button>
+                        <small class="text-muted d-block mt-1">
+                            {{ te('Walk all Dropbox files (not incremental). Does not run OMS backfill or folder scan.') }}
                         </small>
                     </div>
                 </div>
@@ -330,11 +349,13 @@
                         <li><strong>{{ te('Green "Auto Sync" button:') }}</strong>
                             <ul>
                                 <li>{{ te('Click after uploading many files (don\'t wait for the daily sync)') }}</li>
+                                <li>{{ te('Also fills missing catalog pictures for OMS styles that still have stock or ocean qty') }}</li>
                                 <li>{{ te('Or let the Windows scheduled task run once every 24 hours') }}</li>
                             </ul>
                         </li>
                         <li><strong>{{ te('Yellow "Complete Rebuild" button:') }}</strong>
                             <ul>
+                                <li>{{ te('Full Dropbox scan + OMS missing-catalog fill + local index rebuild') }}</li>
                                 <li>{{ te('Only if having database issues') }}</li>
                                 <li>{{ te('Or after major file reorganization') }}</li>
                             </ul>
@@ -467,11 +488,13 @@ function fetchSchedulerNext() {
         });
 }
 
-function startSync(forceRebuild, includeFetch, includeCleanup) {
+function startSync(forceRebuild, includeFetch, includeCleanup, fetchFull) {
     const data = { 
         force_rebuild_index: forceRebuild, 
         include_fetch: !!includeFetch,
-        include_cleanup: !!includeCleanup
+        include_cleanup: !!includeCleanup,
+        fetch_full: !!fetchFull,
+        include_oms_backfill: true
     };
     
     fetch('/dam/start', {
@@ -490,6 +513,33 @@ function startSync(forceRebuild, includeFetch, includeCleanup) {
     })
     .catch(error => {
         alert('Error starting sync: ' + error);
+    });
+}
+
+function startOmsCatalogBackfill() {
+    fetch('/dam/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            force_rebuild_index: false,
+            include_fetch: false,
+            include_cleanup: false,
+            fetch_full: false,
+            include_oms_backfill: true,
+            include_index_sync: false
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('OMS catalog backfill started. Sold-out styles are skipped. Check progress below.');
+            startPolling();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error starting OMS catalog backfill: ' + error);
     });
 }
 

@@ -52,7 +52,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "inventory_manual_adjuster": "inventory_manual_adjuster",
     "four_seller": "four_seller",
     "location_massive_audit": "location_massive_update",
-    "outofstock_check": "oosc",
+    "outofstock_check": "location_service",
     "dam_sync": "dam",
     "image_upload": "image_upload",
     "master_image_viewer": "master_image_viewer",
@@ -73,6 +73,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "whatnot_live": "whatnot_live",
     "smart_search": "smart_search",
     "box_price_checker": "box_price_checker",
+    "mini_tools": "mini_tools",
     "bulletin": "bulletin",
 }
 
@@ -86,27 +87,23 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "master_image_viewer", "title": "Master Image Viewer", "category": "Catalog"},
     {"id": "dam", "title": "DAM System", "category": "Catalog"},
     {"id": "image_upload", "title": "Smart Image Upload", "category": "Catalog"},
-    {"id": "burlington_highlight", "title": "Burlington-highlight", "category": "Catalog"},
     {"id": "order_lookup", "title": "Sales Orders", "category": "Sales"},
     {"id": "order_processor", "title": "Order Processor", "category": "Sales"},
     {"id": "customer", "title": "Customer Analytics", "category": "Sales"},
     {"id": "invoice_lookup", "title": "Invoice Lookup", "category": "Sales"},
     {"id": "four_seller", "title": "4Seller Stock Sync", "category": "Sales"},
     {"id": "whatnot_live", "title": "Whatnot Live", "category": "Sales"},
-    {"id": "external_stock_check", "title": "External Stock Check", "category": "Inventory"},
-    {"id": "internal_stock_check", "title": "Internal Stock Check", "category": "Inventory"},
     {"id": "inventory_manual_adjuster", "title": "Inventory Manual Adjuster", "category": "Inventory"},
-    {"id": "oosc", "title": "Out of Stock Check", "category": "Inventory"},
-    {"id": "location_massive_update", "title": "Massive Location Update", "category": "Inventory"},
     {"id": "boat", "title": "Shipping Intelligence", "category": "Warehouse"},
     {"id": "fdcef_container_search", "title": "FDCEF container search", "category": "Warehouse"},
-    {"id": "warehousemap", "title": "Warehouse Map", "category": "Warehouse"},
+    {"id": "location_service", "title": "Location Service", "category": "Warehouse"},
     {"id": "loris_fedex", "title": "Loris Automation", "category": "Warehouse"},
     {"id": "print_center", "title": "打印中心", "category": "Warehouse"},
     {"id": "mobile_scanner", "title": "Mobile Barcode Scanner", "category": "Warehouse"},
     {"id": "burlington_label_processor", "title": "Burlington Label Processor", "category": "Warehouse"},
     {"id": "smart_search", "title": "Smart Search", "category": "Admin"},
     {"id": "box_price_checker", "title": "Box Price Checker", "category": "Admin"},
+    {"id": "mini_tools", "title": "Mini Tools", "category": "Admin"},
     {"id": "bulletin", "title": "Bulletin", "category": "Admin"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
@@ -120,19 +117,17 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "customer": {"href": "/customer", "label": "Customers"},
     "order_lookup": {"href": "/order_lookup", "label": "Orders"},
     "order_processor": {"href": "/order_processor", "label": "Processor"},
-    "external_stock_check": {"href": "/external_stock_check", "label": "Ext Stock"},
-    "internal_stock_check": {"href": "/internal_stock_check", "label": "Int Stock"},
     "inventory_manual_adjuster": {"href": "/inventory_manual_adjuster", "label": "Inv Adjust"},
     "four_seller": {"href": "/4seller", "label": "4Seller"},
-    "location_massive_update": {"href": "/location_massive_update", "label": "Locations"},
-    "oosc": {"href": "/oosc", "label": "OOS"},
+    "location_service": {"href": "/locations", "label": "Locations"},
+    "location_massive_update": {"href": "/locations", "label": "Locations"},
+    "oosc": {"href": "/locations", "label": "Locations"},
     "dam": {"href": "/dam", "label": "DAM"},
     "image_upload": {"href": "/image_upload", "label": "Upload"},
     "master_image_viewer": {"href": "/master_image_viewer", "label": "Images"},
     "clientview": {"href": "/clientview/product_detail", "label": "Client PD"},
     "client_product_detail": {"href": "/clientview/product_detail", "label": "Client PD"},
     "bag_style_viewer": {"href": "/bag_style_viewer", "label": "Bag Style"},
-    "burlington_highlight": {"href": "/burlington_highlight", "label": "Burl Highlight"},
     "v7_listcreator": {"href": "/v7_listcreator", "label": "V7 List"},
     "v6_listcreator": {"href": "/v7_listcreator", "label": "V7 List"},
     "loris_fedex": {"href": "/lori_automation/loris_fedex", "label": "Loris"},
@@ -143,9 +138,10 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "whatnot_live": {"href": "/whatnot_live", "label": "Whatnot"},
     "boat": {"href": "/boat", "label": "Boat"},
     "fdcef_container_search": {"href": "/container_search", "label": "Containers"},
-    "warehousemap": {"href": "/warehousemap", "label": "Whs Map"},
+    "warehousemap": {"href": "/locations", "label": "Locations"},
     "smart_search": {"href": "/smart_search", "label": "Search"},
     "box_price_checker": {"href": "/box_price_checker", "label": "Box Price"},
+    "mini_tools": {"href": "/mini_tools", "label": "Mini Tools"},
     "bulletin": {"href": "/bulletin", "label": "Bulletin"},
     "audit": {"href": "/audit", "label": "Audit"},
     "manage_users": {"href": "/manage_users", "label": "Users"},
@@ -154,6 +150,19 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
 
 
 WHATNOT_LIVE_USERS = frozenset({"yeti", "elaine"})
+
+# Combined Location Service hub (legacy cards still grant access).
+LOCATION_SERVICE_TOOLS = frozenset(
+    {"location_service", "location_massive_update", "warehousemap", "oosc"}
+)
+
+
+def tools_sel_for_ui(tools: List[str]) -> List[str]:
+    """Map legacy location-tool ids onto Location Service for the admin checkbox UI."""
+    sel = [str(t).strip() for t in (tools or []) if str(t).strip()]
+    if any(t in LOCATION_SERVICE_TOOLS for t in sel) and "location_service" not in sel:
+        sel = sel + ["location_service"]
+    return sel
 
 # Unrestricted groups that get Bulletin unless Manage Users turns on a tools list.
 BULLETIN_DEFAULT_GROUP_SLUGS = frozenset({"yeti", "superadmin", "manager", "warehouse"})
@@ -206,7 +215,11 @@ def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_i
         "switch_number": "inventory_manual_adjuster",
     }
     legacy = aliases.get(tool_id)
-    return legacy in tools if legacy else False
+    if legacy and legacy in tools:
+        return True
+    if tool_id in LOCATION_SERVICE_TOOLS:
+        return any(t in tools for t in LOCATION_SERVICE_TOOLS)
+    return False
 
 
 def _wants_json_forbidden_response() -> bool:

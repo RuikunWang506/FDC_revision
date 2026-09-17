@@ -19,7 +19,7 @@ import time
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
 
-from py.utilities.database_utils import get_mysql_connection
+from py.utilities.database_utils import get_mysql_connection_unpooled
 from py.utilities.logging_setup import log_event
 
 # Ensure stdout/stderr can handle Unicode on Windows consoles
@@ -70,8 +70,8 @@ class DAMSyncServiceV2:
             pass
 
     def _mysql(self):
-        """Return a live MySQL connection, or None if DAM DB is down."""
-        connection = get_mysql_connection()
+        """Unpooled connection so a 40-minute scan cannot occupy an app pool slot."""
+        connection = get_mysql_connection_unpooled()
         if connection is None:
             self._emit("Cannot connect to MySQL; skipping this DAM sync step")
             try:
@@ -79,6 +79,18 @@ class DAMSyncServiceV2:
             except Exception:
                 pass
         return connection
+
+    def _release_mysql(self, cursor=None, connection=None):
+        try:
+            if cursor is not None:
+                cursor.close()
+        except Exception:
+            pass
+        try:
+            if connection is not None:
+                connection.close()
+        except Exception:
+            pass
 
     def _note_added(self, filename: str, sku: str, source: str, path: str) -> None:
         if len(self.recent_added) >= self._recent_added_cap:
@@ -92,7 +104,7 @@ class DAMSyncServiceV2:
         
     def get_db_connection(self):
         """Get database connection"""
-        return get_mysql_connection()
+        return get_mysql_connection_unpooled()
     
     def calculate_file_hash(self, file_path):
         """Calculate SHA-256 hash of file for duplicate detection"""
@@ -209,168 +221,170 @@ class DAMSyncServiceV2:
             return
         # Buffered cursor: SELECT ... fetchone() must not leave unread rows or the next
         # execute() raises "Unread result found" when duplicate sha256/filename rows exist.
-        cursor = connection.cursor(buffered=True)
+        cursor = None
+        try:
+            cursor = connection.cursor(buffered=True)
         
-        batch_count = 0
+            batch_count = 0
         
-        for idx, relative_path in enumerate(file_list, 1):
-            try:
-                file_path = Path(self.catalog_dir) / relative_path
+            for idx, relative_path in enumerate(file_list, 1):
+                try:
+                    file_path = Path(self.catalog_dir) / relative_path
                 
-                if not file_path.exists():
-                    self.stats['total_errors'] += 1
-                    continue
+                    if not file_path.exists():
+                        self.stats['total_errors'] += 1
+                        continue
                 
-                filename = file_path.name
-                sku = self.extract_sku_from_filename(filename)
+                    filename = file_path.name
+                    sku = self.extract_sku_from_filename(filename)
                 
-                if not sku:
-                    self.stats['total_skipped'] += 1
-                    continue
-                
-                # Get image info and hash first
-                image_info = self.get_image_info(str(file_path))
-                if not image_info:
-                    self.stats['total_errors'] += 1
-                    continue
-                
-                sha256_hash = self.calculate_file_hash(str(file_path))
-                
-                # PRIORITY 1: Check if this SHA256 already exists (regardless of source)
-                # Catalog images take priority - update existing record to use catalog path
-                cursor.execute(
-                    "SELECT id, source, path FROM image_assets WHERE sha256 = %s",
-                    (sha256_hash,)
-                )
-                existing_by_hash = cursor.fetchone()
-                
-                if existing_by_hash:
-                    img_id, existing_source, existing_path = existing_by_hash
-                    
-                    # If existing source is dropbox or lower priority, update to catalog
-                    if existing_source in ['dropbox', 'big_picture']:
-                        self._emit(f"  → Updating {filename}: {existing_source} → catalog_original")
-                        
-                        # Determine version
-                        import re
-                        version_match = re.search(r'_v(\d+)', filename)
-                        version = int(version_match.group(1)) if version_match else 1
-                        
-                        # Determine if canonical
-                        is_canonical = Path(filename).stem == sku
-                        
-                        cursor.execute("""
-                            UPDATE image_assets SET 
-                                sku = %s, version = %s, filename = %s, path = %s, source = %s,
-                                width = %s, height = %s, file_size = %s,
-                                is_active = TRUE, is_canonical = %s, updated_at = %s
-                            WHERE id = %s
-                        """, (
-                            sku, version, filename, str(file_path), 'catalog_original',
-                            image_info['width'], image_info['height'], image_info['size_bytes'],
-                            is_canonical, datetime.now(), img_id
-                        ))
-                        self.stats['total_updated'] += 1
-                    else:
-                        # Already catalog or higher priority - skip
+                    if not sku:
                         self.stats['total_skipped'] += 1
+                        continue
+                
+                    # Get image info and hash first
+                    image_info = self.get_image_info(str(file_path))
+                    if not image_info:
+                        self.stats['total_errors'] += 1
+                        continue
+                
+                    sha256_hash = self.calculate_file_hash(str(file_path))
+                
+                    # PRIORITY 1: Check if this SHA256 already exists (regardless of source)
+                    # Catalog images take priority - update existing record to use catalog path
+                    cursor.execute(
+                        "SELECT id, source, path FROM image_assets WHERE sha256 = %s",
+                        (sha256_hash,)
+                    )
+                    existing_by_hash = cursor.fetchone()
+                
+                    if existing_by_hash:
+                        img_id, existing_source, existing_path = existing_by_hash
                     
+                        # If existing source is dropbox or lower priority, update to catalog
+                        if existing_source in ['dropbox', 'big_picture']:
+                            self._emit(f"  → Updating {filename}: {existing_source} → catalog_original")
+                        
+                            # Determine version
+                            import re
+                            version_match = re.search(r'_v(\d+)', filename)
+                            version = int(version_match.group(1)) if version_match else 1
+                        
+                            # Determine if canonical
+                            is_canonical = Path(filename).stem == sku
+                        
+                            cursor.execute("""
+                                UPDATE image_assets SET 
+                                    sku = %s, version = %s, filename = %s, path = %s, source = %s,
+                                    width = %s, height = %s, file_size = %s,
+                                    is_active = TRUE, is_canonical = %s, updated_at = %s
+                                WHERE id = %s
+                            """, (
+                                sku, version, filename, str(file_path), 'catalog_original',
+                                image_info['width'], image_info['height'], image_info['size_bytes'],
+                                is_canonical, datetime.now(), img_id
+                            ))
+                            self.stats['total_updated'] += 1
+                        else:
+                            # Already catalog or higher priority - skip
+                            self.stats['total_skipped'] += 1
+                    
+                        self.stats['total_processed'] += 1
+                        batch_count += 1  # Count updates for batch commits
+                    
+                        # Commit batch if needed
+                        if batch_count >= self.batch_size:
+                            connection.commit()
+                            batch_count = 0
+                    
+                        continue
+                
+                    # PRIORITY 2: Check if already exists by filename and source
+                    cursor.execute(
+                        "SELECT id, is_active, path FROM image_assets WHERE filename = %s AND source = %s",
+                        (filename, 'catalog_original')
+                    )
+                    existing = cursor.fetchone()
+                
+                    if existing:
+                        img_id, is_active, existing_path = existing
+                    
+                        # Only update if inactive or path changed
+                        if not is_active or existing_path != str(file_path):
+                            cursor.execute("""
+                                UPDATE image_assets SET 
+                                    path = %s, is_active = TRUE, 
+                                    width = %s, height = %s, file_size = %s, sha256 = %s,
+                                    updated_at = %s
+                                WHERE id = %s
+                            """, (
+                                str(file_path), image_info['width'], image_info['height'],
+                                image_info['size_bytes'], sha256_hash, datetime.now(), img_id
+                            ))
+                            self.stats['total_updated'] += 1
+                        else:
+                            self.stats['total_skipped'] += 1
+                    
+                        self.stats['total_processed'] += 1
+                        batch_count += 1  # Count filename updates for batch commits
+                    
+                        # Commit batch if needed
+                        if batch_count >= self.batch_size:
+                            connection.commit()
+                            batch_count = 0
+                    
+                        continue
+                
+                    # NEW IMAGE - Insert new record
+                
+                    # NEW IMAGE - Insert new record
+                
+                    # Determine version
+                    import re
+                    version_match = re.search(r'_v(\d+)', filename)
+                    version = int(version_match.group(1)) if version_match else 1
+                
+                    # Determine if canonical
+                    is_canonical = Path(filename).stem == sku
+                
+                    cursor.execute("""
+                        INSERT INTO image_assets 
+                        (sku, version, filename, path, source, width, height, file_size, sha256, 
+                         is_active, is_canonical, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        sku, version, filename, str(file_path), 'catalog_original',
+                        image_info['width'], image_info['height'], image_info['size_bytes'],
+                        sha256_hash, True, is_canonical,
+                        datetime.now(), datetime.now()
+                    ))
+                
+                    self.stats['total_added'] += 1
                     self.stats['total_processed'] += 1
-                    batch_count += 1  # Count updates for batch commits
-                    
-                    # Commit batch if needed
+                    self._note_added(filename, sku, 'catalog_original', str(file_path))
+                    batch_count += 1
+                
+                    # Commit every batch_size records
                     if batch_count >= self.batch_size:
                         connection.commit()
                         batch_count = 0
-                    
-                    continue
                 
-                # PRIORITY 2: Check if already exists by filename and source
-                cursor.execute(
-                    "SELECT id, is_active, path FROM image_assets WHERE filename = %s AND source = %s",
-                    (filename, 'catalog_original')
-                )
-                existing = cursor.fetchone()
+                    # Print progress every progress_interval
+                    if idx % self.progress_interval == 0:
+                        self.print_progress(idx, total_files, "Catalog Progress")
                 
-                if existing:
-                    img_id, is_active, existing_path = existing
-                    
-                    # Only update if inactive or path changed
-                    if not is_active or existing_path != str(file_path):
-                        cursor.execute("""
-                            UPDATE image_assets SET 
-                                path = %s, is_active = TRUE, 
-                                width = %s, height = %s, file_size = %s, sha256 = %s,
-                                updated_at = %s
-                            WHERE id = %s
-                        """, (
-                            str(file_path), image_info['width'], image_info['height'],
-                            image_info['size_bytes'], sha256_hash, datetime.now(), img_id
-                        ))
-                        self.stats['total_updated'] += 1
-                    else:
-                        self.stats['total_skipped'] += 1
-                    
-                    self.stats['total_processed'] += 1
-                    batch_count += 1  # Count filename updates for batch commits
-                    
-                    # Commit batch if needed
-                    if batch_count >= self.batch_size:
-                        connection.commit()
-                        batch_count = 0
-                    
-                    continue
-                
-                # NEW IMAGE - Insert new record
-                
-                # NEW IMAGE - Insert new record
-                
-                # Determine version
-                import re
-                version_match = re.search(r'_v(\d+)', filename)
-                version = int(version_match.group(1)) if version_match else 1
-                
-                # Determine if canonical
-                is_canonical = Path(filename).stem == sku
-                
-                cursor.execute("""
-                    INSERT INTO image_assets 
-                    (sku, version, filename, path, source, width, height, file_size, sha256, 
-                     is_active, is_canonical, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    sku, version, filename, str(file_path), 'catalog_original',
-                    image_info['width'], image_info['height'], image_info['size_bytes'],
-                    sha256_hash, True, is_canonical,
-                    datetime.now(), datetime.now()
-                ))
-                
-                self.stats['total_added'] += 1
-                self.stats['total_processed'] += 1
-                self._note_added(filename, sku, 'catalog_original', str(file_path))
-                batch_count += 1
-                
-                # Commit every batch_size records
-                if batch_count >= self.batch_size:
-                    connection.commit()
-                    batch_count = 0
-                
-                # Print progress every progress_interval
-                if idx % self.progress_interval == 0:
-                    self.print_progress(idx, total_files, "Catalog Progress")
-                
-            except Exception as e:
-                self._emit(f"Error processing {relative_path}: {e}")
-                self.stats['total_errors'] += 1
+                except Exception as e:
+                    self._emit(f"Error processing {relative_path}: {e}")
+                    self.stats['total_errors'] += 1
         
-        # Final commit for remaining records
-        if batch_count > 0:
-            connection.commit()
-        
-        cursor.close()
-        connection.close()
-        
-        self.print_progress(total_files, total_files, "Catalog Complete")
+            # Final commit for remaining records
+            if batch_count > 0:
+                connection.commit()
+
+            self.print_progress(total_files, total_files, "Catalog Complete")
+        finally:
+            self._release_mysql(cursor, connection)
+
     
     def sync_big_picture_images_batch(self):
         """Sync Individual_big_picture folder with DAM database using batch processing"""
@@ -392,99 +406,101 @@ class DAMSyncServiceV2:
         connection = self._mysql()
         if not connection:
             return
-        cursor = connection.cursor(buffered=True)
+        cursor = None
+        try:
+            cursor = connection.cursor(buffered=True)
         
-        batch_count = 0
+            batch_count = 0
         
-        for idx, relative_path in enumerate(file_list, 1):
-            try:
-                file_path = Path(self.big_picture_dir) / relative_path
+            for idx, relative_path in enumerate(file_list, 1):
+                try:
+                    file_path = Path(self.big_picture_dir) / relative_path
                 
-                if not file_path.exists():
-                    self.stats['total_errors'] += 1
-                    continue
+                    if not file_path.exists():
+                        self.stats['total_errors'] += 1
+                        continue
                 
-                filename = file_path.name
-                sku = self.extract_sku_from_filename(filename)
+                    filename = file_path.name
+                    sku = self.extract_sku_from_filename(filename)
                 
-                if not sku:
-                    self.stats['total_skipped'] += 1
-                    continue
+                    if not sku:
+                        self.stats['total_skipped'] += 1
+                        continue
                 
-                # Get image info and hash first
-                image_info = self.get_image_info(str(file_path))
-                if not image_info:
-                    self.stats['total_errors'] += 1
-                    continue
+                    # Get image info and hash first
+                    image_info = self.get_image_info(str(file_path))
+                    if not image_info:
+                        self.stats['total_errors'] += 1
+                        continue
                 
-                sha256_hash = self.calculate_file_hash(str(file_path))
+                    sha256_hash = self.calculate_file_hash(str(file_path))
                 
-                # Check if this SHA256 already exists from higher priority source
-                cursor.execute(
-                    "SELECT id, source FROM image_assets WHERE sha256 = %s",
-                    (sha256_hash,)
-                )
-                existing_by_hash = cursor.fetchone()
+                    # Check if this SHA256 already exists from higher priority source
+                    cursor.execute(
+                        "SELECT id, source FROM image_assets WHERE sha256 = %s",
+                        (sha256_hash,)
+                    )
+                    existing_by_hash = cursor.fetchone()
                 
-                if existing_by_hash:
-                    # Any existing record with same content hash should be skipped to avoid UNIQUE constraint violations
-                    img_id, existing_source = existing_by_hash
-                    self.stats['total_skipped'] += 1
+                    if existing_by_hash:
+                        # Any existing record with same content hash should be skipped to avoid UNIQUE constraint violations
+                        img_id, existing_source = existing_by_hash
+                        self.stats['total_skipped'] += 1
+                        self.stats['total_processed'] += 1
+                        # Optionally log why
+                        # print(f"  → Skipping {filename}: duplicate content already stored as {existing_source}")
+                        continue
+                
+                    # Check if already exists by filename/source/sku
+                    cursor.execute(
+                        "SELECT id FROM image_assets WHERE filename = %s AND source = %s AND sku = %s",
+                        (filename, 'big_picture', sku)
+                    )
+                
+                    if cursor.fetchone():
+                        self.stats['total_skipped'] += 1
+                        self.stats['total_processed'] += 1
+                        continue
+                    version = 1
+                
+                    cursor.execute("""
+                        INSERT INTO image_assets 
+                        (sku, version, filename, path, source, width, height, file_size, sha256, 
+                         is_active, is_canonical, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        sku, version, filename, str(file_path), 'big_picture',
+                        image_info['width'], image_info['height'], image_info['size_bytes'],
+                        sha256_hash, True, False,
+                        datetime.now(), datetime.now()
+                    ))
+                
+                    self.stats['total_added'] += 1
                     self.stats['total_processed'] += 1
-                    # Optionally log why
-                    # print(f"  → Skipping {filename}: duplicate content already stored as {existing_source}")
-                    continue
+                    self._note_added(filename, sku, 'big_picture', str(file_path))
+                    batch_count += 1
                 
-                # Check if already exists by filename/source/sku
-                cursor.execute(
-                    "SELECT id FROM image_assets WHERE filename = %s AND source = %s AND sku = %s",
-                    (filename, 'big_picture', sku)
-                )
+                    # Commit every batch_size records
+                    if batch_count >= self.batch_size:
+                        connection.commit()
+                        batch_count = 0
                 
-                if cursor.fetchone():
-                    self.stats['total_skipped'] += 1
-                    self.stats['total_processed'] += 1
-                    continue
-                version = 1
+                    # Print progress every progress_interval
+                    if idx % self.progress_interval == 0:
+                        self.print_progress(idx, total_files, "Big Picture Progress")
                 
-                cursor.execute("""
-                    INSERT INTO image_assets 
-                    (sku, version, filename, path, source, width, height, file_size, sha256, 
-                     is_active, is_canonical, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    sku, version, filename, str(file_path), 'big_picture',
-                    image_info['width'], image_info['height'], image_info['size_bytes'],
-                    sha256_hash, True, False,
-                    datetime.now(), datetime.now()
-                ))
-                
-                self.stats['total_added'] += 1
-                self.stats['total_processed'] += 1
-                self._note_added(filename, sku, 'big_picture', str(file_path))
-                batch_count += 1
-                
-                # Commit every batch_size records
-                if batch_count >= self.batch_size:
-                    connection.commit()
-                    batch_count = 0
-                
-                # Print progress every progress_interval
-                if idx % self.progress_interval == 0:
-                    self.print_progress(idx, total_files, "Big Picture Progress")
-                
-            except Exception as e:
-                self._emit(f"Error processing {relative_path}: {e}")
-                self.stats['total_errors'] += 1
+                except Exception as e:
+                    self._emit(f"Error processing {relative_path}: {e}")
+                    self.stats['total_errors'] += 1
         
-        # Final commit
-        if batch_count > 0:
-            connection.commit()
-        
-        cursor.close()
-        connection.close()
-        
-        self.print_progress(total_files, total_files, "Big Picture Complete")
+            # Final commit
+            if batch_count > 0:
+                connection.commit()
+
+            self.print_progress(total_files, total_files, "Big Picture Complete")
+        finally:
+            self._release_mysql(cursor, connection)
+
     
     def update_canonical_flags(self):
         """Update canonical image flags for each SKU"""
@@ -493,48 +509,51 @@ class DAMSyncServiceV2:
         connection = self._mysql()
         if not connection:
             return
-        cursor = connection.cursor()
+        cursor = None
+        try:
+            cursor = connection.cursor()
         
-        # Get all unique SKUs
-        cursor.execute("SELECT DISTINCT sku FROM image_assets WHERE is_active = TRUE")
-        skus = [row[0] for row in cursor.fetchall()]
+            # Get all unique SKUs
+            cursor.execute("SELECT DISTINCT sku FROM image_assets WHERE is_active = TRUE")
+            skus = [row[0] for row in cursor.fetchall()]
         
-        self._emit(f"Updating canonical flags for {len(skus)} SKUs...")
+            self._emit(f"Updating canonical flags for {len(skus)} SKUs...")
         
-        for idx, sku in enumerate(skus, 1):
-            # Find best catalog image (highest resolution)
-            cursor.execute("""
-                SELECT id, filename
-                FROM image_assets
-                WHERE sku = %s AND source = 'catalog_original' AND is_active = TRUE
-                ORDER BY width * height DESC, filename ASC
-            """, (sku,))
+            for idx, sku in enumerate(skus, 1):
+                # Find best catalog image (highest resolution)
+                cursor.execute("""
+                    SELECT id, filename
+                    FROM image_assets
+                    WHERE sku = %s AND source = 'catalog_original' AND is_active = TRUE
+                    ORDER BY width * height DESC, filename ASC
+                """, (sku,))
             
-            catalog_images = cursor.fetchall()
+                catalog_images = cursor.fetchall()
             
-            if catalog_images:
-                # Clear all canonical flags for this SKU
-                cursor.execute(
-                    "UPDATE image_assets SET is_canonical = FALSE WHERE sku = %s",
-                    (sku,)
-                )
+                if catalog_images:
+                    # Clear all canonical flags for this SKU
+                    cursor.execute(
+                        "UPDATE image_assets SET is_canonical = FALSE WHERE sku = %s",
+                        (sku,)
+                    )
                 
-                # Set best image as canonical
-                best_image_id = catalog_images[0][0]
-                cursor.execute(
-                    "UPDATE image_assets SET is_canonical = TRUE WHERE id = %s",
-                    (best_image_id,)
-                )
+                    # Set best image as canonical
+                    best_image_id = catalog_images[0][0]
+                    cursor.execute(
+                        "UPDATE image_assets SET is_canonical = TRUE WHERE id = %s",
+                        (best_image_id,)
+                    )
             
-            if idx % 100 == 0:
-                connection.commit()
-                self._emit(f"Canonical flags updated: {idx}/{len(skus)}")
+                if idx % 100 == 0:
+                    connection.commit()
+                    self._emit(f"Canonical flags updated: {idx}/{len(skus)}")
         
-        connection.commit()
-        cursor.close()
-        connection.close()
-        
-        self._emit(f"Canonical flags updated for {len(skus)} SKUs")
+            connection.commit()
+
+            self._emit(f"Canonical flags updated for {len(skus)} SKUs")
+        finally:
+            self._release_mysql(cursor, connection)
+
     
     def print_final_stats(self):
         """Print final synchronization statistics"""
