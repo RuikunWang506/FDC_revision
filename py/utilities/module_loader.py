@@ -174,6 +174,14 @@ OPTIONAL_MODULES: List[Dict[str, Any]] = [
         "tool_ids": ("mini_tools",),
     },
     {
+        "name": "attendance_log",
+        "import_path": "py.other.attendance_log",
+        "attr": "attendance_log_bp",
+        "kind": "blueprint",
+        "path_prefixes": ("/attendance_log",),
+        "tool_ids": ("attendance_log",),
+    },
+    {
         "name": "macy",
         "import_path": "py.order.macy_special",
         "attr": "macy_bp",

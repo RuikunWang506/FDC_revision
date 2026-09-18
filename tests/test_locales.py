@@ -30,6 +30,8 @@ class LocaleTests(unittest.TestCase):
             "page.box_price_checker.title",
             "tool.mini_tools.title",
             "page.mini_tools.title",
+            "tool.attendance_log.title",
+            "page.attendance_log.title",
             "bulletin.title",
             "tool.bulletin.title",
         ):

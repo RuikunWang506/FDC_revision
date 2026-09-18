@@ -65,6 +65,11 @@ class Config:
     SLACK_WEBHOOK_URL_V7_LIST_CREATOR = _env("SLACK_WEBHOOK_URL_V7_LIST_CREATOR")
     # Optional override for webmail “message sent” Slack posts (defaults to V7 webhook in notify_mail_sent_optional).
     SLACK_WEBHOOK_URL_MAIL_SENT = os.getenv('SLACK_WEBHOOK_URL_MAIL_SENT', '').strip()
+    # Private DM target (Attendance / ops alerts to Tristen only).
+    SLACK_DM_USER = _env("SLACK_DM_USER", "tristen")
+    SLACK_DM_USER_ID = _env("SLACK_DM_USER_ID")
+    # Attendance Wi-Fi join/leave channel (e.g. #attedence private channel id C…).
+    SLACK_ATTENDANCE_CHANNEL = _env("SLACK_ATTENDANCE_CHANNEL")
     SERVICE_ACCOUNT_FILE = r'C:/FDC_FLASK_APP/credentials.json'
     
     # Update these scopes to be consistent

@@ -74,6 +74,7 @@ TOOL_BY_BLUEPRINT: Dict[str, str] = {
     "smart_search": "smart_search",
     "box_price_checker": "box_price_checker",
     "mini_tools": "mini_tools",
+    "attendance_log": "attendance_log",
     "bulletin": "bulletin",
 }
 
@@ -104,6 +105,7 @@ DASHBOARD_TOOLS: List[Dict[str, str]] = [
     {"id": "smart_search", "title": "Smart Search", "category": "Admin"},
     {"id": "box_price_checker", "title": "Box Price Checker", "category": "Admin"},
     {"id": "mini_tools", "title": "Mini Tools", "category": "Admin"},
+    {"id": "attendance_log", "title": "Attendance Log", "category": "Admin"},
     {"id": "bulletin", "title": "Bulletin", "category": "Admin"},
     {"id": "audit", "title": "Master Audit", "category": "Admin"},
     {"id": "manage_users", "title": "User Management", "category": "Admin"},
@@ -142,6 +144,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
     "smart_search": {"href": "/smart_search", "label": "Search"},
     "box_price_checker": {"href": "/box_price_checker", "label": "Box Price"},
     "mini_tools": {"href": "/mini_tools", "label": "Mini Tools"},
+    "attendance_log": {"href": "/attendance_log", "label": "Attendance"},
     "bulletin": {"href": "/bulletin", "label": "Bulletin"},
     "audit": {"href": "/audit", "label": "Audit"},
     "manage_users": {"href": "/manage_users", "label": "Users"},
@@ -150,6 +153,7 @@ DASHBOARD_TOOL_NAV: Dict[str, Dict[str, str]] = {
 
 
 WHATNOT_LIVE_USERS = frozenset({"yeti", "elaine"})
+ATTENDANCE_LOG_USERS = frozenset({"yeti", "elaine"})
 
 # Combined Location Service hub (legacy cards still grant access).
 LOCATION_SERVICE_TOOLS = frozenset(
@@ -186,6 +190,8 @@ def tool_visible_for_user(perms: Optional[Dict[str, Any]], username: str, tool_i
     uname = (username or "").strip().lower()
     if tool_id == "whatnot_live":
         return uname in WHATNOT_LIVE_USERS
+    if tool_id == "attendance_log":
+        return uname in ATTENDANCE_LOG_USERS
     if uname == "yeti":
         return True
     if tool_id == "bulletin":

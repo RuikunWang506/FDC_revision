@@ -79,9 +79,11 @@ class SmartSearchCategoryGateTests(unittest.TestCase):
         self.assertFalse(ss.should_run_category("skus", "18432"))
         where_sql, params = ss._customer_match_sql("1141")
         self.assertIn("cus_id", where_sql)
+        self.assertIn("PHONE", where_sql)
         self.assertNotIn("ADDRESS", where_sql)
         self.assertIn("01141", params)
         self.assertIn("%1141", params)
+        self.assertIn("%1141%", params)
 
     def test_style_words_run_catalog_not_orders(self):
         for word in ("satchel", "crossbody"):
@@ -124,6 +126,17 @@ class SmartSearchPatternTests(unittest.TestCase):
         self.assertTrue(ss.should_run_category("customers", "5858721823"))
         self.assertFalse(ss.should_run_category("orders", "5858721823"))
         self.assertFalse(ss.should_run_category("skus", "5858721823"))
+
+    def test_area_code_searches_phone_not_just_customer_id(self):
+        self.assertFalse(ss.looks_like_phone("626"))
+        self.assertTrue(ss.should_run_category("customers", "626"))
+        where_sql, params = ss._customer_match_sql("626")
+        self.assertIn("cus_id", where_sql)
+        self.assertIn("PHONE", where_sql)
+        self.assertNotIn("ADDRESS", where_sql)
+        self.assertIn("%626%", params)
+        self.assertTrue(ss._text_matches("626", "(626) 555-1212"))
+        self.assertTrue(ss._text_matches("6268721823", "(626) 872-1823"))
 
 
 class SmartSearchFilterTests(unittest.TestCase):

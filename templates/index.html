@@ -635,6 +635,21 @@
         </a>
         {%- endif %}
 
+        {%- if tool_allowed('attendance_log') and module_loaded('attendance_log') %}
+        <a href="/attendance_log" class="tool-card" data-category="admin" data-tool="attendance_log">
+          <div class="card-header">
+            <i class="fas fa-user-clock"></i>
+            <h3>{{ _('tool.attendance_log.title') }}</h3>
+            <i class="fas fa-star favorite-star" onclick="toggleFavorite(event, 'attendance_log')"></i>
+          </div>
+          <p>{{ _('tool.attendance_log.desc') }}</p>
+          <div class="card-footer">
+            <span class="category">{{ _('dashboard.category.admin') }}</span>
+            <span class="badge">{{ _('dashboard.badge.new') }}</span>
+          </div>
+        </a>
+        {%- endif %}
+
         {%- if tool_allowed('audit') %}
         <a href="/audit" class="tool-card" data-category="admin" data-tool="audit">
           <div class="card-header">

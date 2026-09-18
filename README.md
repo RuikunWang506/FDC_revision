@@ -20,6 +20,16 @@ Staff also open the app over LAN HTTP (`http://192.168.254.30:5555`). Leave `FDC
 
 After moving secrets out of `setting.py`, rotate Slack tokens, SMTP, and any password that previously lived in git.
 
+### Attendance Wi-Fi poller (separate service)
+
+Presence polling can run outside `fdcef` so a hung web process does not freeze Online/Slack:
+
+1. `powershell -ExecutionPolicy Bypass -File auto_run\Install-AttendancePoller.ps1`
+2. Set `ATTENDANCE_EXTERNAL_POLLER=1` in `nssm-fdcef-environment.env`
+3. Restart `fdcef` (disables the in-process thread) and keep `fdcef-attendance` running
+
+Manual: `python py\standalone\attendance_poller.py`
+
 ## Auth and client portal
 
 - Passwords are stored with bcrypt. Existing plaintext rows are upgraded on the next successful login.

@@ -26,6 +26,8 @@ smart_search_bp = Blueprint("smart_search", __name__)
 MIN_QUERY_LEN = 2
 MAX_RESULTS = 100
 SEARCH_TIMEOUT_SEC = 12
+MIN_PHONE_DIGITS = 3
+_PHONE_COLS = ("c.PHONE", "c.PHONE_2", "c.PHONE_3", "c.PHONE_4")
 _SKU_RE = re.compile(r"^[A-Za-z]{1,4}\d{3,6}(?:[-\s][A-Za-z0-9]{1,8})?$")
 _DOC_RE = re.compile(r"^\d{3,6}$")
 _CONTAINER_RE = re.compile(r"^(?:[A-Za-z]{1,4}\d{3,}|[A-Z]{4}\d{6,7})$", re.I)
@@ -347,6 +349,16 @@ def _sql_digits_expr(column: str) -> str:
     return expr
 
 
+def _phone_digits_match_sql(query: str) -> tuple[str, List[str]]:
+    """Match PHONE* after stripping punctuation so 626 hits (626) 555-1212."""
+    digits = compile_search_pattern(query).digits
+    if len(digits) < MIN_PHONE_DIGITS:
+        return "", []
+    dlike = f"%{digits}%"
+    clauses = [f"{_sql_digits_expr(col)} LIKE ?" for col in _PHONE_COLS]
+    return "(" + " OR ".join(clauses) + ")", [dlike] * len(_PHONE_COLS)
+
+
 def _customer_id_match_sql(query: str) -> tuple[str, List[str]]:
     """Digit-only queries match customer ID (01141), not street numbers like 11410."""
     token = re.sub(r"\D", "", (query or "").strip())
@@ -362,7 +374,11 @@ def _customer_match_sql(query: str) -> tuple[str, List[str]]:
     pat = compile_search_pattern(query)
     token = (pat.core or query or "").strip()
     if re.fullmatch(r"\d{3,6}", token) and not looks_like_phone(query) and not pat.has_wildcard:
-        return _customer_id_match_sql(token)
+        id_sql, id_params = _customer_id_match_sql(token)
+        phone_sql, phone_params = _phone_digits_match_sql(query)
+        if phone_sql:
+            return f"({id_sql} OR {phone_sql})", id_params + phone_params
+        return id_sql, id_params
     like = _like_contains(query)
     columns = (
         "c.cus_nm",
@@ -386,11 +402,10 @@ def _customer_match_sql(query: str) -> tuple[str, List[str]]:
     )
     clauses = [f"{col} LIKE ?" for col in columns]
     params: List[str] = [like] * len(columns)
-    if pat.digits and len(pat.digits) >= 7:
-        dlike = f"%{pat.digits}%"
-        for col in ("c.PHONE", "c.PHONE_2", "c.PHONE_3", "c.PHONE_4"):
-            clauses.append(f"{_sql_digits_expr(col)} LIKE ?")
-            params.append(dlike)
+    phone_sql, phone_params = _phone_digits_match_sql(query)
+    if phone_sql:
+        clauses.append(phone_sql)
+        params.extend(phone_params)
     return "(" + " OR ".join(clauses) + ")", params
 
 
@@ -474,10 +489,10 @@ def _text_matches(query: str, text: str) -> bool:
         return False
     if needle.lower() in hay.lower():
         return True
-    if looks_like_money(query):
-        qdigits = re.sub(r"\D", "", needle)
-        hdigits = re.sub(r"\D", "", hay)
-        return bool(qdigits) and qdigits in hdigits
+    qdigits = re.sub(r"\D", "", needle)
+    hdigits = re.sub(r"\D", "", hay)
+    if len(qdigits) >= MIN_PHONE_DIGITS and qdigits in hdigits:
+        return True
     return False
 
 

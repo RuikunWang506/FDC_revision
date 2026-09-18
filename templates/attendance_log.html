@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _('page.attendance_log.title') }}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance_log.css') }}?v=15">
+</head>
+<body class="fdc-staff-page has-navbar">
+{% include 'navbar.html' %}
+<div class="fdc-page al-page">
+  <header class="page-header">
+    <div>
+      <p class="al-kicker">{{ _('page.attendance_log.kicker') }}</p>
+      <h1>{{ _('page.attendance_log.title') }}</h1>
+      <p class="al-lead">{{ _('page.attendance_log.lead') }}</p>
+      <p class="al-muted">{{ _('page.attendance_log.edit_hint') }}</p>
+    </div>
+  </header>
+
+  <div class="al-status" id="alStatus"></div>
+  <div class="al-toolbar al-toolbar-top">
+    <button type="button" class="al-btn al-btn-primary" id="alPollBtn">{{ _('page.attendance_log.poll_now') }}</button>
+    <button type="button" class="al-btn" id="alRestartPollerBtn" title="{{ _('page.attendance_log.restart_poller_hint') }}">{{ _('page.attendance_log.restart_poller') }}</button>
+    <span class="al-muted" id="alPollHint">{{ _('page.attendance_log.poll_hint') }}</span>
+  </div>
+  <div class="al-stats" id="alStats"></div>
+
+  <nav class="al-tabs" id="alTabs">
+    <button type="button" class="al-tab is-active" data-tab="roll">{{ _('page.attendance_log.tab_roll') }}</button>
+    <button type="button" class="al-tab" data-tab="phones">{{ _('page.attendance_log.tab_phones') }}</button>
+    <button type="button" class="al-tab" data-tab="devices">{{ _('page.attendance_log.tab_devices') }}</button>
+    <button type="button" class="al-tab" data-tab="dns">{{ _('page.attendance_log.tab_dns') }}</button>
+  </nav>
+
+  <div class="al-toolbar" id="alFilters">
+    <input class="al-search" id="alSearch" type="search" placeholder="{{ _('page.attendance_log.search') }}">
+    <select class="al-select" id="alFilterOnline">
+      <option value="all">{{ _('page.attendance_log.filter_all') }}</option>
+      <option value="online">{{ _('page.attendance_log.filter_online') }}</option>
+      <option value="offline">{{ _('page.attendance_log.filter_offline') }}</option>
+    </select>
+    <select class="al-select" id="alFilterOwner">
+      <option value="">{{ _('page.attendance_log.owner_any') }}</option>
+      <option value="unset">{{ _('page.attendance_log.unset') }}</option>
+      <option value="personal">{{ _('page.attendance_log.personal') }}</option>
+      <option value="business">{{ _('page.attendance_log.business') }}</option>
+    </select>
+    <select class="al-select" id="alFilterType">
+      <option value="">{{ _('page.attendance_log.type_any') }}</option>
+      <option value="phone">{{ _('page.attendance_log.phone') }}</option>
+      <option value="computer">{{ _('page.attendance_log.computer') }}</option>
+      <option value="printer">{{ _('page.attendance_log.printer') }}</option>
+      <option value="other">{{ _('page.attendance_log.other') }}</option>
+    </select>
+    <select class="al-select" id="alFilterAuto">
+      <option value="">{{ _('page.attendance_log.auto_any') }}</option>
+      <option value="unknown">{{ _('page.attendance_log.unknown') }}</option>
+      <option value="phone">{{ _('page.attendance_log.phone') }}</option>
+      <option value="warehouse_service">{{ _('page.attendance_log.warehouse') }}</option>
+    </select>
+  </div>
+
+  <section data-panel="roll" class="al-panel">
+    <div class="al-card">
+      <div class="al-table-wrap">
+        <table class="al-table">
+          <thead>
+            <tr>
+              <th data-sort="status">{{ _('page.attendance_log.status') }}</th>
+              <th data-sort="alias">{{ _('page.attendance_log.alias') }}</th>
+              <th data-sort="ip">{{ _('page.attendance_log.ip') }}</th>
+              <th class="al-daybar-th" data-sort="today">
+                <div class="al-daybar-label">{{ _('page.attendance_log.today_presence') }}</div>
+                <div class="al-daybar-scale" aria-hidden="true">
+                  <span>0</span><span>6</span><span>12</span><span>18</span><span>24</span>
+                </div>
+              </th>
+              <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
+              <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
+              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
+            </tr>
+          </thead>
+          <tbody id="alRollBody"></tbody>
+        </table>
+      </div>
+      <div class="al-empty" id="alRollEmpty" hidden>{{ _('page.attendance_log.empty_roll') }}</div>
+    </div>
+  </section>
+
+  <section data-panel="devices" class="al-panel" hidden>
+    <div class="al-card">
+      <div class="al-table-wrap">
+        <table class="al-table">
+          <thead>
+            <tr>
+              <th data-sort="status">{{ _('page.attendance_log.status') }}</th>
+              <th data-sort="alias">{{ _('page.attendance_log.alias') }}</th>
+              <th data-sort="mac">{{ _('page.attendance_log.mac') }}</th>
+              <th data-sort="ip">{{ _('page.attendance_log.ip') }}</th>
+              <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
+              <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
+              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
+              <th data-sort="first_seen">{{ _('page.attendance_log.first_seen') }}</th>
+              <th data-sort="last_seen">{{ _('page.attendance_log.last_seen') }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="alDevBody"></tbody>
+        </table>
+      </div>
+      <div class="al-empty" id="alDevEmpty" hidden>{{ _('page.attendance_log.empty_devices') }}</div>
+    </div>
+  </section>
+
+  <section data-panel="phones" class="al-panel" hidden>
+    <div class="al-card">
+      <div class="al-table-wrap">
+        <table class="al-table">
+          <thead>
+            <tr>
+              <th data-sort="status">{{ _('page.attendance_log.status') }}</th>
+              <th data-sort="alias">{{ _('page.attendance_log.alias') }}</th>
+              <th data-sort="mac">{{ _('page.attendance_log.mac') }}</th>
+              <th data-sort="ip">{{ _('page.attendance_log.ip') }}</th>
+              <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
+              <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
+              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
+              <th data-sort="first_seen">{{ _('page.attendance_log.first_seen') }}</th>
+              <th data-sort="last_seen">{{ _('page.attendance_log.last_seen') }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="alPhoneBody"></tbody>
+        </table>
+      </div>
+      <div class="al-empty" id="alPhoneEmpty" hidden>{{ _('page.attendance_log.empty_phones') }}</div>
+    </div>
+  </section>
+
+  <section data-panel="dns" class="al-panel" hidden>
+    <div class="al-card">
+      <p class="al-muted" id="alDnsHint">{{ _('page.attendance_log.dns_hint') }}</p>
+      <div class="al-toolbar">
+        <label class="al-muted">{{ _('page.attendance_log.dns_client') }}
+          <select class="al-select" id="alDnsIp"></select>
+        </label>
+        <label class="al-muted">{{ _('page.attendance_log.dns_hours') }}
+          <select class="al-select" id="alDnsHours">
+            <option value="4">4</option>
+            <option value="12">12</option>
+            <option value="24" selected>24</option>
+            <option value="72">72</option>
+            <option value="168">168</option>
+          </select>
+        </label>
+        <button type="button" class="al-btn al-btn-primary" id="alDnsRefresh">{{ _('page.attendance_log.dns_refresh') }}</button>
+        <button type="button" class="al-btn" id="alDnsIngest">{{ _('page.attendance_log.dns_ingest') }}</button>
+        <button type="button" class="al-btn" id="alDnsDownload">{{ _('page.attendance_log.dns_download') }}</button>
+        <span class="al-muted" id="alDnsMeta"></span>
+      </div>
+      <div class="al-table-wrap">
+        <table class="al-table">
+          <thead>
+            <tr>
+              <th>{{ _('page.attendance_log.dns_time') }}</th>
+              <th>{{ _('page.attendance_log.dns_site') }}</th>
+              <th>{{ _('page.attendance_log.dns_type') }}</th>
+              <th>{{ _('page.attendance_log.dns_proto') }}</th>
+            </tr>
+          </thead>
+          <tbody id="alDnsBody"></tbody>
+        </table>
+      </div>
+      <div class="al-empty" id="alDnsEmpty" hidden>{{ _('page.attendance_log.dns_empty') }}</div>
+    </div>
+  </section>
+</div>
+
+<div class="al-modal" id="alModal" hidden>
+  <div class="al-modal-backdrop" data-close-modal="1"></div>
+  <div class="al-modal-card" role="dialog" aria-modal="true" aria-labelledby="alModalTitle">
+    <div class="al-modal-head">
+      <div>
+        <h2 id="alModalTitle">{{ _('page.attendance_log.hours') }}</h2>
+        <p class="al-muted" id="alModalSub"></p>
+      </div>
+      <button type="button" class="al-btn" id="alModalClose" data-close-modal="1">{{ _('page.attendance_log.close') }}</button>
+    </div>
+    <div class="al-modal-filters">
+      <label>{{ _('page.attendance_log.month') }}
+        <input class="al-input" type="month" id="alMonth">
+      </label>
+      <label>{{ _('page.attendance_log.from') }}
+        <input class="al-input" type="date" id="alStart">
+      </label>
+      <label>{{ _('page.attendance_log.to') }}
+        <input class="al-input" type="date" id="alEnd">
+      </label>
+      <button type="button" class="al-btn al-btn-primary" id="alApplyRange">{{ _('page.attendance_log.apply') }}</button>
+      <span class="al-pill" id="alTotalHours"></span>
+    </div>
+    <p class="al-muted al-chart-hint" id="alChartHint">{{ _('page.attendance_log.chart_hint') }}</p>
+    <div class="al-modal-chart-wrap">
+      <canvas id="alHoursChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.ATTENDANCE_LOG = {
+    summary: {{ url_for('attendance_log.api_summary')|tojson }},
+    device: {{ url_for('attendance_log.api_device', mac='MAC')|tojson }},
+    poll: {{ url_for('attendance_log.api_poll')|tojson }},
+    restartPoller: {{ url_for('attendance_log.api_restart_poller')|tojson }},
+    dnsClients: {{ url_for('attendance_log.api_dns_clients')|tojson }},
+    dnsQueries: {{ url_for('attendance_log.api_dns_queries')|tojson }},
+    dnsQueriesCsv: {{ url_for('attendance_log.api_dns_queries_csv')|tojson }},
+    dnsIngest: {{ url_for('attendance_log.api_dns_ingest')|tojson }},
+    strings: {
+      online: {{ _('page.attendance_log.online')|tojson }},
+      offline: {{ _('page.attendance_log.offline')|tojson }},
+      present: {{ _('page.attendance_log.present')|tojson }},
+      total: {{ _('page.attendance_log.total')|tojson }},
+      rollPresent: {{ _('page.attendance_log.roll_present')|tojson }},
+      services: {{ _('page.attendance_log.services')|tojson }},
+      unknown: {{ _('page.attendance_log.unknown')|tojson }},
+      sourceNetgear: {{ _('page.attendance_log.source_netgear')|tojson }},
+      sourceArp: {{ _('page.attendance_log.source_arp')|tojson }},
+      sourceNone: {{ _('page.attendance_log.source_none')|tojson }},
+      unknownStatus: {{ _('page.attendance_log.unknown_status')|tojson }},
+      personal: {{ _('page.attendance_log.personal')|tojson }},
+      business: {{ _('page.attendance_log.business')|tojson }},
+      phone: {{ _('page.attendance_log.phone')|tojson }},
+      computer: {{ _('page.attendance_log.computer')|tojson }},
+      printer: {{ _('page.attendance_log.printer')|tojson }},
+      other: {{ _('page.attendance_log.other')|tojson }},
+      warehouse: {{ _('page.attendance_log.warehouse')|tojson }},
+      owner: {{ _('page.attendance_log.owner')|tojson }},
+      type: {{ _('page.attendance_log.type')|tojson }},
+      alias: {{ _('page.attendance_log.alias')|tojson }},
+      hours: {{ _('page.attendance_log.hours')|tojson }},
+      close: {{ _('page.attendance_log.close')|tojson }},
+      noName: {{ _('page.attendance_log.no_name')|tojson }},
+      error: {{ _('page.attendance_log.error')|tojson }},
+      polling: {{ _('page.attendance_log.polling')|tojson }},
+      unset: {{ _('page.attendance_log.unset')|tojson }},
+      totalHours: {{ _('page.attendance_log.total_hours')|tojson }},
+      dblClick: {{ _('page.attendance_log.dblclick_hint')|tojson }},
+      clickEdit: {{ _('page.attendance_log.click_edit')|tojson }},
+      chartHint: {{ _('page.attendance_log.chart_hint')|tojson }},
+      chartX: {{ _('page.attendance_log.chart_x')|tojson }},
+      chartY: {{ _('page.attendance_log.chart_y')|tojson }},
+      remove: {{ _('page.attendance_log.remove')|tojson }},
+      removeConfirm: {{ _('page.attendance_log.remove_confirm')|tojson }},
+      todayPresence: {{ _('page.attendance_log.today_presence')|tojson }},
+      firstToday: {{ _('page.attendance_log.first_today')|tojson }},
+      lastToday: {{ _('page.attendance_log.last_today')|tojson }},
+      dnsPick: {{ _('page.attendance_log.dns_pick')|tojson }},
+      dnsEmpty: {{ _('page.attendance_log.dns_empty')|tojson }},
+      dnsIngesting: {{ _('page.attendance_log.dns_ingesting')|tojson }},
+      dnsMeta: {{ _('page.attendance_log.dns_meta')|tojson }},
+      dnsDownload: {{ _('page.attendance_log.dns_download')|tojson }},
+      dnsDownloadNeedIp: {{ _('page.attendance_log.dns_download_need_ip')|tojson }},
+      dnsShowing: {{ _('page.attendance_log.dns_showing')|tojson }},
+      pollStale: {{ _('page.attendance_log.poll_stale')|tojson }},
+      restartPoller: {{ _('page.attendance_log.restart_poller')|tojson }},
+      restartPollerHint: {{ _('page.attendance_log.restart_poller_hint')|tojson }},
+      restartPollerConfirm: {{ _('page.attendance_log.restart_poller_confirm')|tojson }},
+      restartPollerDone: {{ _('page.attendance_log.restart_poller_done')|tojson }},
+      restartingPoller: {{ _('page.attendance_log.restarting_poller')|tojson }}
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/attendance_log.js') }}?v=26"></script>
+</body>
+</html>

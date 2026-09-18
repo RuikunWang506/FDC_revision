@@ -48,6 +48,14 @@ class DashboardPermissionTests(unittest.TestCase):
         self.assertFalse(perms.tool_visible_for_user({"tools": ["item_lookup"]}, "rose", "bulletin"))
         self.assertTrue(perms.tool_visible_for_user({"tools": []}, "yeti", "bulletin"))
 
+    def test_attendance_log_yeti_elaine_only(self):
+        self.assertEqual(perms.TOOL_BY_BLUEPRINT["attendance_log"], "attendance_log")
+        self.assertTrue(any(t["id"] == "attendance_log" for t in perms.DASHBOARD_TOOLS))
+        self.assertEqual(perms.DASHBOARD_TOOL_NAV["attendance_log"]["href"], "/attendance_log")
+        self.assertTrue(perms.tool_visible_for_user({}, "yeti", "attendance_log"))
+        self.assertTrue(perms.tool_visible_for_user({"tools": []}, "elaine", "attendance_log"))
+        self.assertFalse(perms.tool_visible_for_user({}, "rose", "attendance_log"))
+
     def test_location_service_replaces_legacy_cards(self):
         ids = {t["id"] for t in perms.DASHBOARD_TOOLS}
         self.assertIn("location_service", ids)
