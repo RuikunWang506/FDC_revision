@@ -377,6 +377,8 @@
         {% if login_popup %}
         <input type="hidden" name="popup" value="1">
         {% endif %}
+        <input type="hidden" name="lan_ip" id="lan_ip" value="">
+        <input type="hidden" name="lan_probe_id" id="lan_probe_id" value="{{ lan_probe_id or '' }}">
         <div class="form-group">
           <label for="username"><i class="fas fa-user mr-1"></i>{{ _('login.username') }}</label>
           <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
@@ -458,6 +460,67 @@
     <img src="/static/icons/giraffe.ico" alt="">
     <span>{{ te('Giraffie — Powered by FlamingYeti') }}</span>
   </footer>
+
+  <script type="application/json" id="lan-probe-origins">{{ lan_probe_origins|default(['http://192.168.254.30:5555', 'http://127.0.0.1:5555'])|tojson }}</script>
+  <script>
+    (function captureOfficeLanIp() {
+      var input = document.getElementById('lan_ip');
+      var probeInput = document.getElementById('lan_probe_id');
+      var form = document.querySelector('.login-card form');
+      var origins = [];
+      try {
+        var raw = document.getElementById('lan-probe-origins');
+        origins = raw ? JSON.parse(raw.textContent || '[]') : [];
+      } catch (err) {
+        origins = ['http://192.168.254.30:5555', 'http://127.0.0.1:5555'];
+      }
+
+      function pingLanBeacon() {
+        if (!probeInput || !probeInput.value) return;
+        origins.forEach(function (origin) {
+          if (!origin) return;
+          var img = new Image();
+          img.referrerPolicy = 'no-referrer';
+          img.src = String(origin).replace(/\/$/, '') + '/login/lan-beacon.png?id=' +
+            encodeURIComponent(probeInput.value) + '&t=' + Date.now();
+        });
+      }
+
+      function accept(ip) {
+        if (!ip || !input || input.value) return;
+        if (/^192\.168\.254\.([1-9]|[1-9]\d|1\d\d|2[0-4]\d|25[0-4])$/.test(ip)) {
+          input.value = ip;
+        }
+      }
+
+      pingLanBeacon();
+
+      if (typeof RTCPeerConnection !== 'undefined') {
+        try {
+          var pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel('fdc-lan');
+          pc.onicecandidate = function (event) {
+            if (!event || !event.candidate || !event.candidate.candidate) return;
+            var match = event.candidate.candidate.match(/([0-9]{1,3}(?:\.[0-9]{1,3}){3})/);
+            if (match) accept(match[1]);
+          };
+          pc.createOffer().then(function (offer) {
+            return pc.setLocalDescription(offer);
+          }).catch(function () {});
+        } catch (err) {}
+      }
+
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          if (form.getAttribute('data-lan-waited') === '1') return;
+          form.setAttribute('data-lan-waited', '1');
+          e.preventDefault();
+          pingLanBeacon();
+          setTimeout(function () { form.submit(); }, 450);
+        });
+      }
+    })();
+  </script>
 
   <script>
     (function initLoginMap() {

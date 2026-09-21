@@ -57,6 +57,7 @@ _SKIP_POLL_PREFIXES = (
     "/dam/status",
     "/lori_automation/get_",
     "/tradeshowtool/lan_ping",
+    "/login/lan-beacon",
 )
 
 _SKIP_ENDPOINTS_EXACT = frozenset(
@@ -65,6 +66,7 @@ _SKIP_ENDPOINTS_EXACT = frozenset(
         "robots_txt",
         "favicon",
         "auth.login",
+        "auth.login_lan_beacon",
         "clientview.clientview_login",
     }
 )

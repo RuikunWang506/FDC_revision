@@ -1,6 +1,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, send_file, session, redirect, url_for, current_app, flash
 from py.utilities.setting import login_required
+import logging
 import os, re
 import io
 import json
@@ -12,7 +13,7 @@ from pypdf import PdfReader, PdfWriter
 PdfMerger = PdfWriter
 from openpyxl import load_workbook, Workbook
 from py.utilities.setting import Config
-from py.utilities.database_utils import get_mysql_connection
+from py.utilities.database_utils import close_mysql_connection, get_mysql_connection
 from decimal import Decimal
 import copy
 import zipfile
@@ -163,6 +164,14 @@ def parse_pdf_to_database(pdf_content, batch_date, email_date=None):
         connection.commit()
         cursor.close()
         connection.close()
+
+        try:
+            from py.loris.loris_address_check import enqueue_address_check
+            enqueue_address_check(po_number)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Could not queue address check for %s", po_number
+            )
         
         return {
             'success': True,
@@ -507,6 +516,8 @@ def fetch_email_attachments():
 def process_email_pdfs(selected_batch_date=None):
     """Parse downloaded PDFs and store order data in database"""
     try:
+        from py.loris.loris_address_check import purge_expired_prompts
+        purge_expired_prompts()
         # Get all PDF files from download directory
         pdf_files = []
         seen_files = set()
@@ -822,6 +833,8 @@ def edit_store_info():
         sql = f"UPDATE loris_store_info SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP WHERE store_number = %s"
         cursor.execute(sql, update_values + [store_number])
         connection.commit()
+        from py.loris.loris_address_check import invalidate_and_enqueue_store
+        invalidate_and_enqueue_store(store_number)
         return jsonify({'message': 'Store info updated.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -842,6 +855,8 @@ def delete_store_info():
         cursor = connection.cursor()
         cursor.execute("DELETE FROM loris_store_info WHERE store_number = %s", (store_number,))
         connection.commit()
+        from py.loris.loris_address_check import invalidate_and_enqueue_store
+        invalidate_and_enqueue_store(store_number)
         return jsonify({'message': 'Store deleted.'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -891,6 +906,8 @@ def add_store_info():
         )
         cursor.execute(sql, values)
         connection.commit()
+        from py.loris.loris_address_check import invalidate_and_enqueue_store
+        invalidate_and_enqueue_store(data['store_number'])
         
         return jsonify({'message': 'Store added successfully'})
         
@@ -986,11 +1003,30 @@ _US_STATES = set(
 )
 _ZIP_LINE_RE = re.compile(r"^(\d{5}(?:-\d{4})?)$")
 _ZIP_INLINE_RE = re.compile(r"(\d{5}(?:-\d{4})?)")
+_ZIP_BARE_RE = re.compile(r"^(\d{5})(\d{4})?$")
+_STORE_NUMBER_LINE_RE = re.compile(r"^\d{3,4}$")
 _STREET_RE = re.compile(
     r"(^\d+\s)|(\b(AVE|AVENUE|ST|STREET|RD|ROAD|HWY|HIGHWAY|BLVD|DR|DRIVE|"
     r"LN|LANE|PKWY|PARKWAY|CT|COURT|WAY|PL|PLACE)\b)",
     re.IGNORECASE,
 )
+
+
+def _zip_from_own_line(line):
+    """ZIP on its own PDF line: 75093, 76104-3907, or 761043907.
+
+    Store numbers are 4 digits and must not be treated as a ZIP.
+    """
+    hyphenated = _ZIP_LINE_RE.fullmatch(line)
+    if hyphenated:
+        return hyphenated.group(1)
+    bare = _ZIP_BARE_RE.fullmatch(line)
+    if not bare:
+        return ""
+    zip5, plus4 = bare.group(1), bare.group(2)
+    if plus4:
+        return f"{zip5}-{plus4}"
+    return zip5
 
 
 def extract_clean_address(text_content):
@@ -1023,11 +1059,12 @@ def extract_clean_address(text_content):
     leftover = []
 
     for line in lines:
-        if re.fullmatch(r"\d{3,5}", line):
+        parsed_zip = _zip_from_own_line(line)
+        if parsed_zip:
+            zip_code = parsed_zip
             continue
-        zip_only = _ZIP_LINE_RE.match(line)
-        if zip_only:
-            zip_code = zip_only.group(1)
+        # Store number sits on its own line (0018). Do not skip 5-digit ZIPs.
+        if _STORE_NUMBER_LINE_RE.fullmatch(line):
             continue
         if re.fullmatch(r"[A-Z]{2}", line) and line in _US_STATES:
             state = line
@@ -1931,6 +1968,9 @@ def upload_and_process_pdfs():
         files = request.files.getlist('files[]')
         if not files:
             return jsonify({'error': 'No files uploaded'}), 400
+
+        from py.loris.loris_address_check import purge_expired_prompts
+        purge_expired_prompts()
         
         processed_orders = []
         skipped_orders = 0
@@ -2133,19 +2173,15 @@ def lori_automation():
                 cursor = connection.cursor(dictionary=True)
                 orders = _fetch_orders_for_api(cursor)
                 cursor.close()
-                connection.close()
-
                 return jsonify({
                     'success': True,
                     'orders': orders,
                     'total_orders': len(orders)
                 })
-                
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
             finally:
-                if connection and connection.is_connected():
-                    connection.close()
+                close_mysql_connection(connection)
         else:
             # Regular web request - render template
             return render_template("loris_fedex.html", current_user=session['username'])
@@ -2157,6 +2193,8 @@ def lori_automation():
         files = request.files.getlist('files[]')
         processed_orders = []
         upload_errors = []
+        from py.loris.loris_address_check import purge_expired_prompts
+        purge_expired_prompts()
         
         # Use current date as batch date for user uploads
         batch_date = datetime.now().date()
@@ -2218,6 +2256,9 @@ def get_orders():
     try:
         cursor = connection.cursor(dictionary=True)
         orders = _fetch_orders_for_api(cursor)
+        from py.loris.loris_address_check import attach_ai_checks, enqueue_missing_pending
+        attach_ai_checks(cursor, orders)
+        enqueue_missing_pending(orders)
         cursor.close()
 
         return jsonify({
@@ -2232,8 +2273,74 @@ def get_orders():
         current_app.logger.error("Traceback: %s", traceback.format_exc())
         return jsonify({'error': str(e)}), 500
     finally:
-        if connection and connection.is_connected():
-            connection.close()
+        close_mysql_connection(connection)
+
+
+@lori_automation_bp.route("/address_ai_checks", methods=["GET"])
+def address_ai_checks():
+    """Return saved address checks for the given PO numbers."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    raw = (request.args.get("pos") or "").strip()
+    po_numbers = [part.strip() for part in raw.split(",") if part.strip()]
+    po_numbers = [po for po in po_numbers if re.fullmatch(r"[\d-]+", po)][:200]
+    if not po_numbers:
+        return jsonify({"success": True, "checks": {}})
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor(dictionary=True)
+        from py.loris.loris_address_check import load_checks
+        return jsonify({"success": True, "checks": load_checks(cursor, po_numbers)})
+    except Exception as e:
+        current_app.logger.error("Error in address_ai_checks: %s", str(e))
+        return jsonify({'error': str(e)}), 500
+    finally:
+        close_mysql_connection(connection)
+
+
+@lori_automation_bp.route("/store_shipment_history", methods=["GET"])
+def store_shipment_history():
+    """Past shipments for the same store, with tracking and an address match."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    po_number = str(request.args.get("po") or "").strip()
+    if not po_number or not re.fullmatch(r"[\d-]+", po_number):
+        return jsonify({'error': 'Missing po_number'}), 400
+    connection = get_db_connection()
+    if not connection:
+        return jsonify({'error': 'Database connection failed'}), 500
+    try:
+        cursor = connection.cursor(dictionary=True)
+        from py.loris.loris_address_check import shipment_history
+        orders = shipment_history(cursor, po_number)
+        connection.commit()
+        return jsonify({"success": True, "orders": orders})
+    except Exception as e:
+        current_app.logger.error("Error in store_shipment_history: %s", str(e))
+        return jsonify({'error': str(e)}), 500
+    finally:
+        close_mysql_connection(connection)
+
+
+@lori_automation_bp.route("/recheck_address_ai", methods=["POST"])
+def recheck_address_ai():
+    """Run the address comparison again for one order and return the new result."""
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.get_json(silent=True) or {}
+    po_number = str(data.get("po_number") or "").strip()
+    if not po_number or not re.fullmatch(r"[\d-]+", po_number):
+        return jsonify({'error': 'Missing po_number'}), 400
+    try:
+        from py.loris.loris_address_check import run_address_check
+        check = run_address_check(po_number)
+        return jsonify({"success": True, "po_number": po_number, "ai_check": check})
+    except Exception as e:
+        current_app.logger.exception("Recheck address AI failed for %s", po_number)
+        return jsonify({'error': str(e)}), 500
+
 
 @lori_automation_bp.route("/get_order_items/<string:po_number>", methods=["GET"])
 def get_order_items(po_number):
@@ -2259,9 +2366,6 @@ def get_order_items(po_number):
         cursor.execute(query, (po_number,))
         items = cursor.fetchall()
         
-        cursor.close()
-        connection.close()
-        
         return jsonify({
             'success': True,
             'items': items
@@ -2270,9 +2374,7 @@ def get_order_items(po_number):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
+        close_mysql_connection(connection)
 
 
 @lori_automation_bp.route("/update_order_actual_quantities", methods=["POST"])
@@ -2322,8 +2424,6 @@ def update_order_actual_quantities():
             updated += cursor.rowcount
 
         connection.commit()
-        cursor.close()
-        connection.close()
 
         return jsonify({
             'success': True,
@@ -2335,8 +2435,7 @@ def update_order_actual_quantities():
         current_app.logger.error("Error updating actual quantities: %s", str(e))
         return jsonify({'error': str(e)}), 500
     finally:
-        if connection and connection.is_connected():
-            connection.close()
+        close_mysql_connection(connection)
 
 
 @lori_automation_bp.route("/set_order_perfect_quantities", methods=["POST"])
@@ -2367,8 +2466,6 @@ def set_order_perfect_quantities():
         )
         updated = cursor.rowcount
         connection.commit()
-        cursor.close()
-        connection.close()
 
         return jsonify({
             'success': True,
@@ -2380,8 +2477,7 @@ def set_order_perfect_quantities():
         current_app.logger.error("Error setting perfect quantities: %s", str(e))
         return jsonify({'error': str(e)}), 500
     finally:
-        if connection and connection.is_connected():
-            connection.close()
+        close_mysql_connection(connection)
 
 
 @lori_automation_bp.route("/download_pivot_table", methods=["POST"])
@@ -2579,8 +2675,13 @@ def update_order_status():
             SET status = %s, updated_at = CURRENT_TIMESTAMP 
             WHERE po_number = %s
         """, (status, po_number))
+        updated = cursor.rowcount
         
-        if cursor.rowcount == 0:
+        if updated and status in ("shipped", "completed"):
+            from py.loris.loris_address_check import freeze_shipped_internal_addresses
+            freeze_shipped_internal_addresses(cursor, [po_number])
+        
+        if updated == 0:
             return jsonify({'error': 'Order not found'}), 404
         
         connection.commit()
@@ -4369,6 +4470,8 @@ def process_selected_orders():
             update_query = "UPDATE lori_orders SET status = 'shipped', updated_at = NOW() WHERE po_number = %s"
             for po_number in processed_orders:
                 cursor.execute(update_query, (po_number,))
+            from py.loris.loris_address_check import freeze_shipped_internal_addresses
+            freeze_shipped_internal_addresses(cursor, list(processed_orders))
             
             connection.commit()
             cursor.close()
@@ -5436,6 +5539,8 @@ def send_to_shipped_only():
             print(f"DEBUG send_to_shipped: Rowcount: {cursor.rowcount}")
             if cursor.rowcount > 0:
                 updated += 1
+        from py.loris.loris_address_check import freeze_shipped_internal_addresses
+        freeze_shipped_internal_addresses(cursor, list(po_numbers))
         connection.commit()
         print(f"DEBUG send_to_shipped: Total updated: {updated}")
         return jsonify({'success': True, 'message': f'Status updated to shipped for {updated} orders.'})

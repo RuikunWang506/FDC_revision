@@ -331,9 +331,11 @@
         .pkg-fields-group {
             display: flex;
             align-items: flex-end;
+            flex-wrap: wrap;
             gap: 0.5rem;
-            flex: 1 1 auto;
+            flex: 1 1 0;
             min-width: 0;
+            max-width: 100%;
         }
 
         .pkg-dims-wrap {
@@ -432,8 +434,38 @@
             color: #475569;
             white-space: nowrap;
             cursor: pointer;
-            padding-bottom: 0.35rem;
+            padding-bottom: 0.4rem;
             flex-shrink: 0;
+        }
+
+        .pkg-dim-conversion {
+            flex: 1 1 100%;
+            align-self: flex-start;
+            max-width: 100%;
+            padding-bottom: 0;
+            margin-top: 0;
+            white-space: normal;
+        }
+
+        .pkg-side {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.3rem;
+            flex: 0 0 108px;
+            width: 108px;
+        }
+
+        .pkg-side .preset-dimensions {
+            width: 100%;
+            min-width: 0;
+            max-width: 108px;
+        }
+
+        .pkg-side .pkg-row-actions {
+            flex-direction: column;
+            align-items: stretch;
+            padding-bottom: 0;
         }
 
         .pkg-cm-toggle .form-check-input,
@@ -480,7 +512,7 @@
             text-align: left;
             font-style: italic;
             line-height: 1.2;
-            white-space: nowrap;
+            white-space: normal;
         }
         
         /* Hide number input spinners */
@@ -724,7 +756,9 @@
 
         .addresses-combined-cell {
             vertical-align: top;
-            min-width: 180px;
+            min-width: 240px;
+            max-width: 320px;
+            text-align: left;
         }
 
         .address-block {
@@ -741,6 +775,7 @@
             text-transform: uppercase;
             color: #6c757d;
             margin-bottom: 2px;
+            text-decoration: underline;
         }
 
         .address-text {
@@ -791,6 +826,67 @@
             background: #fff3cd;
         }
 
+        .address-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ai-check-badge {
+            border: 0;
+            width: 100%;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 4px;
+            display: block;
+            text-align: center;
+        }
+
+        button.ai-check-badge {
+            cursor: pointer;
+        }
+
+        .ai-check-confirm {
+            color: #155724;
+            background: #d4edda;
+        }
+
+        .ai-check-wrong {
+            color: #721c24;
+            background: #f8d7da;
+        }
+
+        .ai-check-fail {
+            color: #383d41;
+            background: #e2e3e5;
+        }
+
+        .ai-check-pending {
+            color: #084298;
+            background: #e7f1ff;
+            cursor: default;
+        }
+
+        .ai-history-address {
+            white-space: pre-wrap;
+            font-size: 0.78rem;
+            min-width: 160px;
+        }
+
+        .ai-history-match {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .ai-history-match.match {
+            color: #155724;
+        }
+
+        .ai-history-match.nomatch {
+            color: #721c24;
+        }
+
         .qty-stepper {
             gap: 4px;
         }
@@ -830,11 +926,25 @@
             border-top: 1px solid #dee2e6;
         }
         
+        .package-col,
+        .package-cell {
+            width: 560px;
+            min-width: 560px;
+            max-width: 560px;
+            box-sizing: border-box;
+        }
+
         .package-cell {
             padding: 12px;
             text-align: center;
-            min-width: 400px;
-            width: auto;
+            overflow: hidden;
+        }
+
+        .package-cell .package-info-container {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         
         /* Spacer row for batch spacing */
@@ -863,11 +973,6 @@
         }
 
         @media (max-width: 1334px) {
-            .ship-to-address-column,
-            .internal-add-column {
-                display: none;
-            }
-            
             .package-box-row {
                 gap: 0.35rem;
             }
@@ -883,8 +988,8 @@
                 min-width: 50px;
             }
 
-            .pkg-options .preset-dimensions {
-                display: none;
+            .pkg-side .preset-dimensions {
+                max-width: 96px;
             }
         }
 
@@ -1043,9 +1148,8 @@
                                         <input type="checkbox" id="select-all-pending" title="{{ te('Select All') }}">
                                     </th>
                                     <th class="table-header-cell">{{ te('Order Info') }}</th>
-                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
-                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
-                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Addresses') }}</th>
+                                    <th class="table-header-cell package-col">{{ te('Package Info') }}</th>
                                     <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Actual Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Status') }}</th>                                            
@@ -1105,9 +1209,8 @@
                                         <input type="checkbox" id="select-all-shipped" title="{{ te('Select All') }}">
                                     </th>
                                     <th class="table-header-cell">{{ te('Order Info') }}</th>
-                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
-                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
-                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Addresses') }}</th>
+                                    <th class="table-header-cell package-col">{{ te('Package Info') }}</th>
                                     <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Actual Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Status') }}</th>                                            
@@ -1165,9 +1268,8 @@
                                         <input type="checkbox" id="select-all-canceled" title="{{ te('Select All') }}">
                                     </th>
                                     <th class="table-header-cell">{{ te('Order Info') }}</th>
-                                    <th class="table-header-cell ship-to-address-column">{{ te('Ship To Address') }}</th>
-                                    <th class="table-header-cell internal-add-column">{{ te('Internal Add') }}</th>
-                                    <th class="table-header-cell">{{ te('Package Info') }}</th>
+                                    <th class="table-header-cell">{{ te('Addresses') }}</th>
+                                    <th class="table-header-cell package-col">{{ te('Package Info') }}</th>
                                     <th class="table-header-cell">{{ te('Invoice Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Actual Qty') }}</th>
                                     <th class="table-header-cell">{{ te('Status') }}</th>
@@ -1256,6 +1358,55 @@
                             </div>
                             <p class="mt-2">{{ te('Loading...') }}</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="aiCheckModal" tabindex="-1" aria-labelledby="aiCheckModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header" id="ai-check-modal-header">
+                        <h5 class="modal-title" id="aiCheckModalLabel">AI confirm</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="fw-bold small">Response</div>
+                        <p id="ai-check-message" class="mb-3"></p>
+                        <dl class="row mb-0 small">
+                            <dt class="col-4">Confidence</dt>
+                            <dd class="col-8" id="ai-check-confidence"></dd>
+                            <dt class="col-4">Ran</dt>
+                            <dd class="col-8" id="ai-check-ran"></dd>
+                            <dt class="col-4">Elapsed</dt>
+                            <dd class="col-8" id="ai-check-elapsed"></dd>
+                            <dt class="col-4">Model</dt>
+                            <dd class="col-8" id="ai-check-model"></dd>
+                            <dt class="col-4">Computer</dt>
+                            <dd class="col-8" id="ai-check-computer"></dd>
+                        </dl>
+                        <div class="mt-3" id="ai-check-history">
+                            <div class="fw-bold small mb-2">Previous shipments to this store</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>PO #</th>
+                                            <th>Internal address</th>
+                                            <th>Tracking</th>
+                                            <th>Match</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ai-check-history-body">
+                                        <tr><td colspan="4">No history</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="ai-recheck-btn">Recheck</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -1743,13 +1894,14 @@
         <option value="22x19x16">22×19×16</option>
     `;
 
-    function buildPackageBoxRowHtml(boxNumber, boxData, isMain) {
+    function buildPackageBoxRowHtml(boxNumber, boxData, isMain, poNumber) {
         const length = boxData?.length ? parseFloat(boxData.length).toFixed(1) : '';
         const width = boxData?.width ? parseFloat(boxData.width).toFixed(1) : '';
         const height = boxData?.height ? parseFloat(boxData.height).toFixed(1) : '';
         const weight = boxData?.weight ? parseFloat(boxData.weight).toFixed(1) : '';
         const rowClass = isMain ? 'package-box-row main-box-row' : 'package-box-row package-row';
-        const cmId = isMain ? `cm-check-main-${boxNumber}` : `cm-check-${boxNumber}`;
+        const poKey = String(poNumber || 'order').replace(/[^A-Za-z0-9_-]/g, '');
+        const cmId = `cm-check-${poKey}-${boxNumber}`;
         const actionsHtml = isMain
             ? `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">{{ te('Duplicate') }}</button>`
             : `<button type="button" class="btn btn-outline-info btn-sm duplicate-row-btn" title="Duplicate this row">{{ te('Duplicate') }}</button>
@@ -1776,22 +1928,22 @@
                                 <input type="number" class="compact-dimension-input box-height box-input" placeholder="in" min="0.1" step="0.1" value="${height}">
                             </div>
                         </div>
-                        <div class="compact-conversion-display conversion-display pkg-dim-conversion" style="display: none;"></div>
                     </div>
                     <div class="pkg-field pkg-weight-field">
                         <span class="pkg-field-label">Wt (lbs)</span>
                         <input type="number" class="compact-weight-input box-weight box-input" placeholder="lbs" min="0.1" step="0.1" value="${weight}"
                                data-placeholder-metric="lb" data-placeholder-imperial="lbs">
                     </div>
-                </div>
-                <div class="pkg-options">
                     <label class="pkg-cm-toggle" for="${cmId}">
                         <input class="form-check-input cm-checkbox" type="checkbox" id="${cmId}" data-box="${boxNumber}">
                         <span class="pkg-cm-toggle-text">CM</span>
                     </label>
-                    <select class="form-select form-select-sm preset-dimensions" data-box="${boxNumber}">${PRESET_DIMENSIONS_OPTIONS}</select>
+                    <div class="compact-conversion-display conversion-display pkg-dim-conversion" style="display: none;"></div>
                 </div>
-                <div class="pkg-row-actions">${actionsHtml}</div>
+                <div class="pkg-side">
+                    <select class="form-select form-select-sm preset-dimensions" data-box="${boxNumber}">${PRESET_DIMENSIONS_OPTIONS}</select>
+                    <div class="pkg-row-actions">${actionsHtml}</div>
+                </div>
             </div>
         `;
     }
@@ -1800,7 +1952,7 @@
         const saveButtonsHtml = buildSaveQtyButtonsHtml(order.po_number);
         return `
             <div class="package-info-container" id="pkg-container-${order.po_number}" data-po="${order.po_number}">
-                ${buildPackageBoxRowHtml(1, null, true)}
+                ${buildPackageBoxRowHtml(1, null, true, order.po_number)}
                 <div class="d-flex flex-wrap justify-content-between gap-2 mt-3 pt-2 package-actions-border">
                     ${saveButtonsHtml}
                     <button class="btn btn-primary btn-sm flex-fill add-row-btn" data-po="${order.po_number}">
@@ -2239,11 +2391,10 @@
             console.log('Loading store info and orders in parallel...');
             const [, response] = await Promise.all([
                 loadStoreInfo(),
-                fetch('/lori_automation', {
+                fetch('/lori_automation/get_orders', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     }
                 })
@@ -2280,32 +2431,21 @@
                 renderCanceledOrders();
             }
             console.log('Orders rendered successfully');
+            startAiPoll();
             
         } catch (error) {
             console.error('Error loading orders:', error);
             console.error('Error details:', error.message);
             
-            // If it's an authentication error, show a more helpful message
-            if (error.message.includes('401') || error.message.includes('Not authenticated')) {
+            allOrders = [];
+            renderPendingOrders();
+            const msg = String(error && error.message ? error.message : '');
+            if (msg.includes('401') || msg.includes('Not authenticated')) {
                 console.error('Authentication failed. Please check if you are logged in.');
-                alert('Authentication error. Please refresh the page and log in again.');
+                showToast('Authentication error. Please refresh the page and log in again.', 'error');
                 return;
             }
-            
-            // Show sample data if API fails
-            allOrders = [
-                {
-                    po_number: '0002-2025-001',
-                    batch_date: '2025-09-18',
-                    ship_to_address: 'xxxxxxxxx',
-                    total_qty: 50,
-                    total_cost: 1250.00,
-                    status: 'pending'
-                }
-            ];
-            renderPendingOrders();
-            // Don't render shipped orders until user expands the section
-            console.log('Showing sample orders due to API error:', error.message);
+            showToast('Could not load orders: ' + (msg || 'unknown error'), 'error', 8000);
         } finally {
             hideShippingPageOverlay();
             setTimeout(cleanupOrphanedModalBackdrops, 200);
@@ -2469,7 +2609,7 @@
         if (!container) return;
 
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildPackageBoxRowHtml(boxNumber, boxData, false);
+        wrapper.innerHTML = buildPackageBoxRowHtml(boxNumber, boxData, false, poNumber);
         const newRow = wrapper.firstElementChild;
 
         const buttonsContainer = container.querySelector('.d-flex.justify-content-between.gap-2.mt-3');
@@ -2966,6 +3106,268 @@
         return `<div class="zip-check-indicator zip-check-warn"><i class="fas fa-exclamation-triangle"></i> Zip mismatch (${shipZip} vs ${internalZip})</div>`;
     }
 
+    const aiChecksByPo = {};
+    const aiWatchPos = new Set();
+    let aiPollTimer = null;
+
+    function rememberAiCheck(po, check) {
+        if (!po) return;
+        if (check) aiChecksByPo[po] = check;
+        else delete aiChecksByPo[po];
+        const order = (allOrders || []).find(item => item.po_number === po);
+        if (order) order.ai_check = check || null;
+    }
+
+    function aiConfidenceScore(check) {
+        if (!check || check.confidence == null || check.confidence === '') return null;
+        const score = Number(check.confidence);
+        return Number.isFinite(score) ? Math.round(score) : null;
+    }
+
+    function aiCheckLabel(check) {
+        const score = aiConfidenceScore(check);
+        if (check && check.status === 'confirm' && score != null) {
+            return `AI confidence ${score}%`;
+        }
+        const labels = { confirm: 'AI confirm', wrong: 'AI wrong', fail: 'AI fail' };
+        return labels[check && check.status] || 'AI fail';
+    }
+
+    function buildAiBadgeHtml(order) {
+        const po = order.po_number || '';
+        const check = order.ai_check || aiChecksByPo[po];
+        if (check && check.status) {
+            rememberAiCheck(po, check);
+            const classes = { confirm: 'ai-check-confirm', wrong: 'ai-check-wrong', fail: 'ai-check-fail' };
+            const label = aiCheckLabel(check);
+            const cls = classes[check.status] || 'ai-check-fail';
+            return `<button type="button" class="ai-check-badge ${cls}" data-po="${po}">${label}</button>`;
+        }
+        if (order.status === 'pending') {
+            return '<div class="ai-check-badge ai-check-pending">AI …</div>';
+        }
+        return `<button type="button" class="ai-check-badge ai-check-fail" data-po="${po}">AI check</button>`;
+    }
+
+    function buildCombinedAddressCellHtml(order, storeNumber) {
+        const shipToRaw = order.ship_to_address || '';
+        const internalContent = getStoreInfo(storeNumber, shipToRaw);
+        const zipIndicator = internalContent.includes('add-store-btn')
+            ? '<div class="zip-check-indicator zip-check-warn"><i class="fas fa-exclamation-triangle"></i> No internal store</div>'
+            : buildZipCheckIndicator(shipToRaw, storeNumber);
+        const po = order.po_number || '';
+        return `
+            <div class="address-cell-with-footer">
+                <div class="address-block">
+                    <div class="address-label">Ship to</div>
+                    <div class="address-text">${formatAddressTextHtml(shipToRaw || 'N/A')}</div>
+                </div>
+                <div class="address-block">
+                    <div class="address-label">Internal address</div>
+                    <div class="address-text internal-address-content">${internalContent}</div>
+                </div>
+                <div class="address-cell-footer address-badges">
+                    ${zipIndicator}
+                    <div class="address-ai-slot" data-po="${po}">${buildAiBadgeHtml(order)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function applyAiBadge(po, check) {
+        rememberAiCheck(po, check);
+        const order = (allOrders || []).find(item => item.po_number === po) || { po_number: po, status: 'pending', ai_check: check };
+        document.querySelectorAll(`.address-ai-slot[data-po="${po}"]`).forEach(slot => {
+            slot.innerHTML = buildAiBadgeHtml(order);
+        });
+    }
+
+    function pendingPosNeedingAi() {
+        const needsScore = (order) => {
+            if (!order || order.status !== 'pending') return !order;
+            const check = order.ai_check;
+            return !(check && check.status) || check.confidence == null;
+        };
+        const pending = (allOrders || [])
+            .filter(needsScore)
+            .map(order => order.po_number)
+            .filter(Boolean);
+        const watched = Array.from(aiWatchPos).filter(po => {
+            const order = (allOrders || []).find(item => item.po_number === po);
+            return needsScore(order);
+        });
+        return Array.from(new Set(pending.concat(watched)));
+    }
+
+    function startAiPoll() {
+        if (aiPollTimer) return;
+        const tick = async () => {
+            const needing = pendingPosNeedingAi();
+            if (!needing.length) {
+                clearInterval(aiPollTimer);
+                aiPollTimer = null;
+                return;
+            }
+            try {
+                const response = await fetch('/lori_automation/address_ai_checks?pos=' + encodeURIComponent(needing.slice(0, 80).join(',')), {
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                const checks = data.checks || {};
+                Object.keys(checks).forEach(po => {
+                    aiWatchPos.delete(po);
+                    applyAiBadge(po, checks[po]);
+                });
+            } catch (error) {
+                console.warn('Address AI poll failed', error);
+            }
+        };
+        tick();
+        aiPollTimer = setInterval(tick, 4000);
+    }
+
+    function clearPendingAiForStore(storeNumber) {
+        const prefix = String(storeNumber || '').replace(/\D/g, '').padStart(4, '0');
+        if (!prefix) return;
+        (allOrders || []).forEach(order => {
+            if (String(order.po_number || '').startsWith(prefix)) {
+                order.ai_check = null;
+                delete aiChecksByPo[order.po_number];
+                aiWatchPos.add(order.po_number);
+            }
+        });
+    }
+
+    function fillAiCheckModal(po, check) {
+        const header = document.getElementById('ai-check-modal-header');
+        const title = document.getElementById('aiCheckModalLabel');
+        const status = check && check.status ? check.status : 'fail';
+        title.textContent = check && check.status ? aiCheckLabel(check) : 'AI check';
+        header.className = 'modal-header';
+        if (status === 'confirm') header.classList.add('bg-success', 'text-white');
+        else if (status === 'wrong') header.classList.add('bg-danger', 'text-white');
+        else header.classList.add('bg-secondary', 'text-white');
+        document.getElementById('ai-check-message').textContent = (check && check.message) || 'This address has not been checked yet.';
+        const score = aiConfidenceScore(check);
+        document.getElementById('ai-check-confidence').textContent = score == null ? '—' : `${score}%`;
+        document.getElementById('ai-check-ran').textContent = (check && check.ran_at) || '—';
+        document.getElementById('ai-check-elapsed').textContent = (check && (check.elapsed_label || (check.elapsed_ms != null ? check.elapsed_ms + ' ms' : ''))) || '—';
+        document.getElementById('ai-check-model').textContent = (check && check.model) || '—';
+        document.getElementById('ai-check-computer').textContent = (check && check.computer) || '—';
+        const recheckBtn = document.getElementById('ai-recheck-btn');
+        recheckBtn.dataset.po = po;
+        recheckBtn.disabled = false;
+        recheckBtn.textContent = 'Recheck';
+        loadStoreShipmentHistory(po);
+    }
+
+    let storeHistoryRequest = 0;
+
+    function renderStoreShipmentHistory(orders) {
+        const body = document.getElementById('ai-check-history-body');
+        body.replaceChildren();
+        if (!orders || !orders.length) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 4;
+            cell.textContent = 'No history';
+            row.appendChild(cell);
+            body.appendChild(row);
+            return;
+        }
+        orders.forEach(item => {
+            const row = document.createElement('tr');
+            const poCell = document.createElement('td');
+            poCell.textContent = item.po_number || '';
+            const addressCell = document.createElement('td');
+            addressCell.className = 'ai-history-address';
+            addressCell.textContent = item.address || '—';
+            const trackingCell = document.createElement('td');
+            const tracking = String(item.tracking || '').trim();
+            if (tracking) {
+                const link = document.createElement('a');
+                link.className = 'btn btn-sm btn-outline-primary';
+                link.href = 'https://www.fedex.com/fedextrack/?trknbr=' + encodeURIComponent(tracking);
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.textContent = tracking;
+                trackingCell.appendChild(link);
+            } else {
+                trackingCell.textContent = '—';
+            }
+            const matchCell = document.createElement('td');
+            if (item.match == null || !item.address) {
+                matchCell.className = 'ai-history-match';
+                matchCell.textContent = '—';
+            } else {
+                matchCell.className = 'ai-history-match ' + (item.match ? 'match' : 'nomatch');
+                matchCell.textContent = item.match ? 'match' : 'no match';
+            }
+            if (!item.address) addressCell.textContent = 'Not saved';
+            row.append(poCell, addressCell, trackingCell, matchCell);
+            body.appendChild(row);
+        });
+    }
+
+    async function loadStoreShipmentHistory(po) {
+        const requestId = ++storeHistoryRequest;
+        const body = document.getElementById('ai-check-history-body');
+        body.replaceChildren();
+        const loading = document.createElement('tr');
+        const loadingCell = document.createElement('td');
+        loadingCell.colSpan = 4;
+        loadingCell.textContent = 'Loading…';
+        loading.appendChild(loadingCell);
+        body.appendChild(loading);
+        try {
+            const response = await fetch('/lori_automation/store_shipment_history?po=' + encodeURIComponent(po), {
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (requestId !== storeHistoryRequest) return;
+            if (!response.ok || data.error) throw new Error(data.error || 'Could not load history');
+            renderStoreShipmentHistory(data.orders || []);
+        } catch (error) {
+            if (requestId !== storeHistoryRequest) return;
+            renderStoreShipmentHistory([]);
+        }
+    }
+
+    function openAiCheckModal(po) {
+        const check = aiChecksByPo[po] || null;
+        fillAiCheckModal(po, check);
+        showBootstrapModal('aiCheckModal');
+    }
+
+    async function recheckAddressAi(po) {
+        const recheckBtn = document.getElementById('ai-recheck-btn');
+        recheckBtn.disabled = true;
+        recheckBtn.textContent = 'Checking…';
+        document.getElementById('ai-check-message').textContent = 'Checking the ship-to address against the internal address…';
+        try {
+            const response = await fetch('/lori_automation/recheck_address_ai', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ po_number: po })
+            });
+            const data = await response.json();
+            if (!response.ok || data.error) throw new Error(data.error || 'Recheck failed');
+            applyAiBadge(po, data.ai_check);
+            fillAiCheckModal(po, data.ai_check);
+        } catch (error) {
+            document.getElementById('ai-check-message').textContent = error.message || 'Recheck failed';
+            recheckBtn.disabled = false;
+            recheckBtn.textContent = 'Recheck';
+        }
+    }
+
+    document.getElementById('ai-recheck-btn').addEventListener('click', function() {
+        const po = this.dataset.po;
+        if (po) recheckAddressAi(po);
+    });
+
     function buildOrderInfoCellHtml(order) {
         const po = order.po_number || 'N/A';
         const batch = formatBatchDate(order.batch_date || 'N/A');
@@ -3124,7 +3526,7 @@
         container.innerHTML = '';
         
         if (orderList.length === 0) {
-            container.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No orders found</td></tr>';
+            container.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No orders found</td></tr>';
             return;
         }
         
@@ -3169,7 +3571,7 @@
             batchHeaderRow.id = `batch-header-${batchId}`;
             batchHeaderRow.setAttribute('data-batch-id', batchId);
             batchHeaderRow.innerHTML = `
-                <td colspan="9" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
+                <td colspan="8" class="text-center fw-bold py-1 batch-header-row" onclick="toggleBatch('${batchId}')">
                     <i class="${chevronClass}" id="icon-${batchId}"></i>
                     <i class="fas fa-calendar-alt ms-2"></i> Batch Date: ${formatBatchDate(batchDate)} 
                     <button class="btn btn-sm btn-outline-primary ms-3 select-batch-btn" 
@@ -3189,8 +3591,7 @@
                 const storeNumber = order.po_number ? order.po_number.substring(0, 4) : '';
                 const storePrefixDigits = (order.po_number || '').substring(0, 4).replace(/\D/g, '').slice(0, 4);
                 const editStoreNumberFromPo = storePrefixDigits.length ? storePrefixDigits.padStart(4, '0') : '';
-                const shipToCellHtml = buildShipToCellHtml(order, storeNumber);
-                const internalAddCellHtml = buildInternalAddCellHtml(order, storeNumber);
+                const addressCellHtml = buildCombinedAddressCellHtml(order, storeNumber);
 
                 const isPendingTable = containerId === 'pending-orders-table-body';
                 const isShippedTable = containerId === 'shipped-orders-table-body';
@@ -3216,8 +3617,7 @@
                         <input type="checkbox" class="order-checkbox" value="${order.po_number}" data-po="${order.po_number}">
                     </td>
                     <td class="order-cell order-info-cell">${buildOrderInfoCellHtml(order)}</td>
-                    <td class="address-cell ship-to-address-column">${shipToCellHtml}</td>
-                    <td class="internal-address-cell internal-add-column">${internalAddCellHtml}</td>
+                    <td class="addresses-combined-cell">${addressCellHtml}</td>
                     <td class="package-cell">${packageCellHtml}</td>
                     <td class="order-cell qty-cost-cell${qtyMismatchClass}">${invoiceQtyCell}</td>
                     <td class="order-cell qty-cost-cell${qtyMismatchClass}">${actualQtyCell}</td>
@@ -3269,7 +3669,7 @@
                 spacingRow.className = 'batch-spacing-row';
                 spacingRow.id = `batch-spacer-${batchId}`;
                 spacingRow.setAttribute('data-batch-id', batchId);
-                spacingRow.innerHTML = '<td colspan="9" class="batch-spacer"></td>';
+                spacingRow.innerHTML = '<td colspan="8" class="batch-spacer"></td>';
                 
                 // Set initial visibility based on default collapsed state
                 if (defaultCollapsed) {
@@ -3324,7 +3724,7 @@
             }
             
             paginationRow.innerHTML = `
-                <td colspan="9" class="text-center py-3">
+                <td colspan="8" class="text-center py-3">
                     <nav aria-label="Batch pagination">
                         <ul class="pagination justify-content-center mb-0">
                             <li class="page-item">
@@ -4073,6 +4473,10 @@
                 } else if (sn) {
                     alert('Store editor is still loading. Expand Store Information once or refresh the page.');
                 }
+            }
+            if (e.target.closest('.ai-check-badge') && !e.target.closest('.ai-check-pending')) {
+                const poNumber = e.target.closest('.ai-check-badge').getAttribute('data-po');
+                if (poNumber) openAiCheckModal(poNumber);
             }
             if (e.target.closest('.add-store-btn')) {
                 const btn = e.target.closest('.add-store-btn');
@@ -6304,6 +6708,7 @@
                 alert('店铺信息更新成功！');
                 
                 hideBootstrapModal('editStoreModal');
+                clearPendingAiForStore(storeNumber);
                 
                 loadStoreInfoForManagement();
                 
@@ -6321,6 +6726,7 @@
                         renderCanceledOrders();
                     }
                 }
+                startAiPoll();
                 
                 currentEditingStoreNumber = null;
                 
@@ -6420,6 +6826,7 @@
                 alert('店铺添加成功！');
                 
                 hideBootstrapModal('addStoreModal');
+                clearPendingAiForStore(storeNumber);
                 
                 // Clear form
                 document.getElementById('addStoreModal').querySelectorAll('input, select, textarea').forEach(input => {
@@ -6443,6 +6850,7 @@
                         renderCanceledOrders();
                     }
                 }
+                startAiPoll();
                 
             } catch (error) {
                 console.error('Error adding store:', error);
@@ -6467,7 +6875,10 @@
                 if (data.error) throw new Error(data.error);
                 
                 alert('店铺删除成功！');
+                clearPendingAiForStore(storeNumber);
                 loadStoreInfoForManagement();
+                await loadStoreInfo();
+                startAiPoll();
                 
             } catch (error) {
                 console.error('Error deleting store:', error);

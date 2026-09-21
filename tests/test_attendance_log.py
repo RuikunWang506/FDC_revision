@@ -172,7 +172,58 @@ Interface: 192.168.254.30 --- 0x3
         from py.utilities import attendance_store as store
 
         self.assertEqual(store.DEFAULT_POLL_SECONDS, 30)
-        self.assertEqual(store.DEFAULT_ABSENT_MINUTES, 1)
+        self.assertEqual(store.DEFAULT_ABSENT_MINUTES, 4)
+        self.assertEqual(store.DEFAULT_SLACK_LEAVE_GRACE_MINUTES, 4)
+        self.assertEqual(store.DEFAULT_DNS_PRESENCE_MINUTES, 3)
+
+    def test_slack_leave_grace_helpers(self):
+        from py.utilities.attendance_store import (
+            normalize_slack_leave_grace_minutes,
+            slack_join_ready,
+            slack_leave_ready,
+        )
+
+        self.assertEqual(normalize_slack_leave_grace_minutes(None), 4)
+        self.assertEqual(normalize_slack_leave_grace_minutes(""), 4)
+        self.assertEqual(normalize_slack_leave_grace_minutes(10), 10)
+        self.assertEqual(normalize_slack_leave_grace_minutes(999), 120)
+        self.assertEqual(normalize_slack_leave_grace_minutes(-3), 0)
+        self.assertTrue(slack_join_ready(slack_present=False, hidden=False, is_phone=True))
+        self.assertFalse(slack_join_ready(slack_present=True, hidden=False, is_phone=True))
+        self.assertFalse(slack_join_ready(slack_present=False, hidden=True, is_phone=True))
+        now = datetime(2026, 9, 21, 18, 0)
+        still_within = datetime(2026, 9, 21, 17, 57)
+        self.assertFalse(
+            slack_leave_ready(
+                slack_present=True,
+                hidden=False,
+                is_phone=True,
+                last_seen_utc=still_within,
+                now_utc=now,
+                grace_minutes=4,
+            )
+        )
+        past_grace = datetime(2026, 9, 21, 17, 55)
+        self.assertTrue(
+            slack_leave_ready(
+                slack_present=True,
+                hidden=False,
+                is_phone=True,
+                last_seen_utc=past_grace,
+                now_utc=now,
+                grace_minutes=4,
+            )
+        )
+        self.assertTrue(
+            slack_leave_ready(
+                slack_present=True,
+                hidden=False,
+                is_phone=True,
+                last_seen_utc=still_within,
+                now_utc=now,
+                grace_minutes=0,
+            )
+        )
 
     def test_dns_debug_name_and_packet_parse(self):
         from py.utilities.attendance_dns import decode_dns_logged_name, parse_dns_debug_lines
@@ -194,6 +245,46 @@ Interface: 192.168.254.30 --- 0x3
         self.assertIn("github.com", names)
         self.assertTrue(all(r["client_ip"] == "192.168.254.10" for r in rows))
         self.assertEqual(len(rows), 2)
+
+    def test_dns_presence_settings_defaults(self):
+        from py.utilities import attendance_store as store
+
+        with mock.patch.object(
+            store,
+            "_netgear_creds",
+            return_value={"host": "h", "user": "u", "password": "p"},
+        ):
+            with mock.patch.object(store, "ensure_schema"):
+                with mock.patch.object(store, "_conn", return_value=None):
+                    with mock.patch.dict(
+                        "os.environ",
+                        {
+                            "ATTENDANCE_DNS_PRESENCE": "1",
+                            "ATTENDANCE_DNS_PRESENCE_MINUTES": "3",
+                        },
+                        clear=False,
+                    ):
+                        s = store.get_settings()
+                    with mock.patch.dict(
+                        "os.environ",
+                        {"ATTENDANCE_DNS_PRESENCE": "0"},
+                        clear=False,
+                    ):
+                        s_off = store.get_settings()
+        self.assertTrue(s["dns_presence_enabled"])
+        self.assertEqual(s["dns_presence_minutes"], 3)
+        self.assertFalse(s_off["dns_presence_enabled"])
+
+    def test_ingest_dns_log_if_stale_skips_fresh(self):
+        from py.utilities import attendance_dns as dns
+
+        fresh_local = datetime.now(TZ).strftime("%Y-%m-%d %H:%M:%S")
+        with mock.patch.object(dns, "ensure_dns_schema"):
+            with mock.patch.object(dns, "_get_meta", return_value=fresh_local):
+                with mock.patch.object(dns, "ingest_dns_log") as ingest:
+                    result = dns.ingest_dns_log_if_stale(max_age_seconds=40)
+        self.assertTrue(result.get("skipped"))
+        ingest.assert_not_called()
 
     def test_guess_device_type(self):
         self.assertEqual(guess_device_type("Tristen-iPhone"), "phone")

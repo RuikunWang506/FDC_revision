@@ -273,6 +273,26 @@
 .al-chip.personal { background: #ffeef2; color: #b42318; }
 .al-chip.business { background: #e8f4ff; color: #175cd3; }
 .al-chip.unknown { background: #eef3f8; color: #667085; }
+.al-chip.grace { background: #fff6e5; color: #9a5b00; }
+.al-chip.grace.is-default { background: #eef3f8; color: #667085; }
+
+.al-device-cell {
+  white-space: nowrap;
+}
+.al-device-cell .al-chip-edit {
+  display: inline-flex;
+  vertical-align: middle;
+  min-width: 0;
+  margin-right: 6px;
+  border-radius: 999px;
+  padding: 1px;
+}
+.al-device-cell .al-chip-edit:last-child {
+  margin-right: 0;
+}
+.al-grace-edit {
+  min-width: 0;
+}
 
 .al-muted { color: #6b7c8d; font-size: 0.82rem; }
 .al-empty { padding: 28px 16px; text-align: center; color: #6b7c8d; }

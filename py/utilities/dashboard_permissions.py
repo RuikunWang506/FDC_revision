@@ -26,6 +26,7 @@ ENDPOINT_TOOL: Dict[str, str] = {
 # Unauthenticated LAN probe / session handoff for Trade Show Tool (large local uploads).
 PUBLIC_ENDPOINTS = frozenset(
     {
+        "auth.login_lan_beacon",
         "tradeshowtool.lan_ping",
         "tradeshowtool.lan_ping_png",
         "tradeshowtool.lan_claim",

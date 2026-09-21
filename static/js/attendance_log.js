@@ -12,7 +12,8 @@
     skipClickUntil: 0,
     serverNow: "",
     sortKey: "ip",
-    sortDir: "asc"
+    sortDir: "asc",
+    settings: {}
   };
 
   function $(id) { return document.getElementById(id); }
@@ -83,7 +84,6 @@
     if (key === "mac") return String(device.mac || "");
     if (key === "owner") return String(device.owner_category || "");
     if (key === "type") return String(device.device_type || "");
-    if (key === "auto") return String(device.auto_role || "unknown");
     if (key === "today") return String(device.last_today || "") + "|" + String(device.first_today || "");
     if (key === "first_seen") return String(device.first_seen || "");
     if (key === "last_seen") return String(device.last_seen || "");
@@ -180,8 +180,7 @@
       q: (($("alSearch") && $("alSearch").value) || "").trim().toLowerCase(),
       online: (($("alFilterOnline") && $("alFilterOnline").value) || "all"),
       owner: (($("alFilterOwner") && $("alFilterOwner").value) || ""),
-      type: (($("alFilterType") && $("alFilterType").value) || ""),
-      auto: (($("alFilterAuto") && $("alFilterAuto").value) || "")
+      type: (($("alFilterType") && $("alFilterType").value) || "")
     };
   }
 
@@ -204,7 +203,6 @@
     }
     // Phones tab is already phone-only; ignore type filter there.
     if (tab !== "phones" && filters.type && device.device_type !== filters.type) return false;
-    if (filters.auto && (device.auto_role || "unknown") !== filters.auto) return false;
     return matchQuery(device, filters.q);
   }
 
@@ -245,7 +243,6 @@
       online: p.get("online") || "all",
       owner: p.get("owner") || "",
       type: p.get("type") || "",
-      auto: p.get("auto") || "",
       mac: (p.get("mac") || "").trim().toLowerCase()
     };
   }
@@ -258,7 +255,6 @@
     if (filters.online && filters.online !== "all") p.set("online", filters.online);
     if (filters.owner) p.set("owner", filters.owner);
     if (state.tab !== "phones" && filters.type) p.set("type", filters.type);
-    if (filters.auto) p.set("auto", filters.auto);
     var mac = state.modalMac || state.selected || "";
     if (mac) p.set("mac", String(mac).replace(/:/g, "-"));
     var qs = p.toString();
@@ -273,7 +269,6 @@
     if ($("alFilterOnline")) $("alFilterOnline").value = urlState.online || "all";
     if ($("alFilterOwner")) $("alFilterOwner").value = urlState.owner || "";
     if ($("alFilterType")) $("alFilterType").value = urlState.type || "";
-    if ($("alFilterAuto")) $("alFilterAuto").value = urlState.auto || "";
     showTab(urlState.tab || "roll", true);
     if (urlState.mac) {
       var mac = String(urlState.mac).replace(/-/g, ":");
@@ -305,6 +300,53 @@
       esc(S.clickEdit || "Click to edit") + '">' + chip(value) + "</td>";
   }
 
+  function defaultSlackGrace() {
+    var n = parseInt((state.settings || {}).default_slack_leave_grace_minutes, 10);
+    return isNaN(n) ? 4 : n;
+  }
+
+  function resolvedSlackGrace(device) {
+    if (device && device.slack_leave_grace_resolved != null && device.slack_leave_grace_resolved !== "") {
+      var resolved = parseInt(device.slack_leave_grace_resolved, 10);
+      if (!isNaN(resolved)) return resolved;
+    }
+    var raw = device && device.slack_leave_grace_minutes;
+    if (raw === null || raw === undefined || raw === "") return defaultSlackGrace();
+    var n = parseInt(raw, 10);
+    return isNaN(n) ? defaultSlackGrace() : n;
+  }
+
+  function isDefaultSlackGrace(device) {
+    return !device || device.slack_leave_grace_minutes === null
+      || device.slack_leave_grace_minutes === undefined
+      || device.slack_leave_grace_minutes === "";
+  }
+
+  function deviceTypeCell(device) {
+    var grace = resolvedSlackGrace(device);
+    var graceTitle = S.graceHint || "Slack leave grace (minutes after disconnect)";
+    return '<td class="al-device-cell">' +
+      '<span class="al-chip-edit" data-edit="device_type" title="' +
+        esc(S.clickEdit || "Click to edit") + '">' + chip(device.device_type) + "</span>" +
+      '<span class="al-chip-edit al-grace-edit" data-edit="slack_leave_grace_minutes" title="' +
+        esc(graceTitle) + '"><span class="al-chip grace' +
+        (isDefaultSlackGrace(device) ? " is-default" : "") + '">' +
+        esc(String(grace) + "m") + "</span></span></td>";
+  }
+
+  function graceMenuPairs() {
+    var def = defaultSlackGrace();
+    var opts = [0, 1, 2, 4, 6, 8, 10, 15, 20, 30];
+    if (opts.indexOf(def) < 0) opts.push(def);
+    opts.sort(function (a, b) { return a - b; });
+    return opts.map(function (n) {
+      var isDef = n === def;
+      var label = (S.graceMin || "{n} min").replace("{n}", String(n));
+      if (isDef) label += " (" + (S.graceDefault || "default") + ")";
+      return [isDef ? "" : String(n), label];
+    });
+  }
+
   function renderTable(bodyId, emptyId, rows, roll) {
     var body = $(bodyId);
     var empty = $(emptyId);
@@ -322,9 +364,9 @@
           editableAlias(device) +
           "<td>" + esc(device.last_ip || "—") + "</td>" +
           '<td class="al-daybar-td">' + dayBarHtml(device) + "</td>" +
-          chipCell(device, "device_type") +
+          deviceTypeCell(device) +
           chipCell(device, "owner_category") +
-          "<td>" + chip(device.auto_role) + "</td></tr>";
+          "</tr>";
       }
       return "<tr data-mac=\"" + esc(device.mac) + "\" class=\"" + selected + "\">" +
         "<td>" + statusCell(device.currently_online) + "</td>" +
@@ -332,8 +374,7 @@
         "<td class=\"al-mac\">" + esc(device.mac) + "</td>" +
         "<td>" + esc(device.last_ip || "") + "</td>" +
         chipCell(device, "owner_category") +
-        chipCell(device, "device_type") +
-        "<td>" + chip(device.auto_role) + "</td>" +
+        deviceTypeCell(device) +
         "<td>" + esc(device.first_seen || "—") + "</td>" +
         "<td>" + esc(device.last_seen || "") + "</td>" +
         '<td><button type="button" class="al-btn al-btn-danger al-remove" data-remove-mac="' +
@@ -668,9 +709,14 @@
     closeChipMenus();
     var scrollY = window.scrollY || window.pageYOffset || 0;
     var scrollX = window.scrollX || window.pageXOffset || 0;
-    var pairs = field === "owner_category"
-      ? [["", S.unset], ["personal", S.personal], ["business", S.business]]
-      : [["", S.unset], ["phone", S.phone], ["computer", S.computer], ["printer", S.printer], ["other", S.other]];
+    var pairs;
+    if (field === "owner_category") {
+      pairs = [["", S.unset], ["personal", S.personal], ["business", S.business]];
+    } else if (field === "slack_leave_grace_minutes") {
+      pairs = graceMenuPairs();
+    } else {
+      pairs = [["", S.unset], ["phone", S.phone], ["computer", S.computer], ["printer", S.printer], ["other", S.other]];
+    }
 
     var menu = document.createElement("div");
     menu.className = "al-chip-menu";
@@ -692,7 +738,11 @@
         cleanup();
         if (value === current) return;
         var body = {};
-        body[field] = value;
+        if (field === "slack_leave_grace_minutes") {
+          body[field] = value === "" ? null : parseInt(value, 10);
+        } else {
+          body[field] = value;
+        }
         patchDevice(mac, body, { quiet: true }).then(function (payload) {
           if (!payload || !payload.ok) {
             window.alert((payload && payload.error) || S.error || "Error");
@@ -771,8 +821,12 @@
       return;
     }
 
-    if (field !== "owner_category" && field !== "device_type") return;
-    var current = field === "owner_category" ? (device.owner_category || "") : (device.device_type || "");
+    if (field !== "owner_category" && field !== "device_type" && field !== "slack_leave_grace_minutes") return;
+    var current;
+    if (field === "owner_category") current = device.owner_category || "";
+    else if (field === "slack_leave_grace_minutes") {
+      current = isDefaultSlackGrace(device) ? "" : String(device.slack_leave_grace_minutes);
+    } else current = device.device_type || "";
     openChipMenu(cell, mac, field, current);
   }
 
@@ -783,6 +837,7 @@
       state.poll = payload.poll || {};
       state.counts = payload.counts || {};
       state.serverNow = payload.server_now || "";
+      state.settings = payload.settings || {};
       refreshView({ keepScroll: true });
     });
   }
@@ -824,7 +879,7 @@
   function onFilterChange() {
     refreshView({ keepScroll: true });
   }
-  ["alSearch", "alFilterOnline", "alFilterOwner", "alFilterType", "alFilterAuto"].forEach(function (id) {
+  ["alSearch", "alFilterOnline", "alFilterOwner", "alFilterType"].forEach(function (id) {
     var el = $(id);
     if (el) el.addEventListener("input", onFilterChange);
     if (el) el.addEventListener("change", onFilterChange);
@@ -849,7 +904,7 @@
       removeDevice(removeBtn.getAttribute("data-remove-mac"));
       return;
     }
-    var chipCellEl = ev.target.closest("td.al-chip-edit");
+    var chipCellEl = ev.target.closest(".al-chip-edit");
     if (chipCellEl) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -857,7 +912,7 @@
       return;
     }
     if (Date.now() < state.skipClickUntil) return;
-    if (ev.target.closest("td.al-edit, .al-edit input, .al-inline, .al-cell-select")) return;
+    if (ev.target.closest("td.al-edit, .al-edit input, .al-inline, .al-cell-select, .al-chip-edit")) return;
     var row = ev.target.closest("tbody tr[data-mac]");
     if (row && !ev.target.closest(".al-modal")) {
       openModal(row.getAttribute("data-mac"));

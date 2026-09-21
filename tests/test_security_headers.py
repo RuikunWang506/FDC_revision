@@ -42,6 +42,11 @@ class SecurityHeaderTests(unittest.TestCase):
         self.assertIn("'wasm-unsafe-eval'", script_src)
         self.assertIn("https://tessdata.projectnaptha.com", policy)
 
+    def test_csp_allows_office_lan_beacon_images(self):
+        img_src = headers.CSP_POLICY.split("img-src", 1)[1].split(";", 1)[0]
+        self.assertIn("http://192.168.254.30:5555", img_src)
+        self.assertIn("http://127.0.0.1:5555", img_src)
+
 
 if __name__ == "__main__":
     unittest.main()

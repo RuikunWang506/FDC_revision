@@ -26,6 +26,9 @@ DEFAULT_ROUTER_USER = "admin"
 DEFAULT_POLL_SECONDS = 30
 # Deco/mesh roaming often drops clients for 1–3 minutes; keep them "online" until then.
 DEFAULT_ABSENT_MINUTES = 4
+# Slack leave only: wait this long after last seen before posting "left Wi-Fi".
+DEFAULT_SLACK_LEAVE_GRACE_MINUTES = DEFAULT_ABSENT_MINUTES
+DEFAULT_DNS_PRESENCE_MINUTES = 3
 DEFAULT_NIGHT_START = "22:00"
 DEFAULT_NIGHT_END = "06:00"
 DEFAULT_SUBNET = "192.168.254.0/24"
@@ -218,6 +221,86 @@ def is_phone_notify_candidate(
     return False
 
 
+def normalize_slack_leave_grace_minutes(
+    value: Any, default: int = DEFAULT_SLACK_LEAVE_GRACE_MINUTES
+) -> int:
+    if value is None or value == "":
+        minutes = default
+    else:
+        try:
+            minutes = int(value)
+        except (TypeError, ValueError):
+            minutes = default
+    return max(0, min(minutes, 120))
+
+
+def default_slack_leave_grace() -> int:
+    env_slack_grace = (os.getenv("ATTENDANCE_SLACK_LEAVE_GRACE_MINUTES") or "").strip()
+    return normalize_slack_leave_grace_minutes(
+        env_slack_grace or DEFAULT_SLACK_LEAVE_GRACE_MINUTES
+    )
+
+
+def slack_join_ready(*, slack_present: bool, hidden: bool, is_phone: bool) -> bool:
+    return bool(is_phone) and (not hidden) and (not slack_present)
+
+
+def slack_leave_ready(
+    *,
+    slack_present: bool,
+    hidden: bool,
+    is_phone: bool,
+    last_seen_utc: Optional[datetime],
+    now_utc: datetime,
+    grace_minutes: int,
+) -> bool:
+    if hidden or not slack_present or not is_phone:
+        return False
+    if last_seen_utc is None:
+        return True
+    wait = timedelta(minutes=max(0, int(grace_minutes or 0)))
+    return last_seen_utc <= now_utc - wait
+
+
+def _slack_seen_state(
+    *,
+    complete: bool,
+    hidden: bool,
+    is_phone: bool,
+    was_slack_present: bool,
+) -> Tuple[int, bool]:
+    """Return (next_slack_present, should_join) for a device seen this poll."""
+    if not complete:
+        return (1 if was_slack_present else 0, False)
+    if hidden or not is_phone:
+        return (0, False)
+    return (
+        1,
+        slack_join_ready(slack_present=was_slack_present, hidden=False, is_phone=True),
+    )
+
+
+def _phone_wifi_event(
+    action: str,
+    *,
+    mac: str,
+    ip: str,
+    name: str,
+    hostname: str,
+    owner_category: str,
+    when: str,
+) -> Dict[str, Any]:
+    return {
+        "action": action,
+        "mac": mac,
+        "ip": ip or "",
+        "name": name,
+        "hostname": hostname or "",
+        "owner_category": owner_category or "",
+        "time": when,
+    }
+
+
 def classify_auto_role(nights_present: int, nights_absent: int, min_nights: int = 3) -> str:
     sampled = int(nights_present or 0) + int(nights_absent or 0)
     if sampled < min_nights:
@@ -252,6 +335,14 @@ def _close(conn, cur) -> None:
 
 
 _SCHEMA_READY = False
+
+
+def _add_column_if_missing(cur, table: str, column: str, ddl: str) -> bool:
+    cur.execute(f"SHOW COLUMNS FROM `{table}` LIKE %s", (column,))
+    if cur.fetchone():
+        return False
+    cur.execute(f"ALTER TABLE `{table}` ADD COLUMN {ddl}")
+    return True
 
 
 def ensure_schema() -> None:
@@ -294,6 +385,8 @@ def ensure_schema() -> None:
                 currently_online TINYINT NOT NULL DEFAULT 0,
                 hidden TINYINT NOT NULL DEFAULT 0,
                 notes VARCHAR(512) NULL,
+                slack_leave_grace_minutes INT NULL DEFAULT NULL,
+                slack_present TINYINT NOT NULL DEFAULT 0,
                 INDEX idx_att_dev_online (currently_online, last_seen_utc),
                 INDEX idx_att_dev_role (auto_role, device_type)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -346,6 +439,34 @@ def ensure_schema() -> None:
                     """,
                     (key, value),
                 )
+        _add_column_if_missing(
+            cur,
+            "attendance_devices",
+            "slack_leave_grace_minutes",
+            "slack_leave_grace_minutes INT NULL DEFAULT NULL",
+        )
+        _add_column_if_missing(
+            cur,
+            "attendance_devices",
+            "slack_present",
+            "slack_present TINYINT NOT NULL DEFAULT 0",
+        )
+        cur.execute(
+            "SELECT setting_value FROM attendance_settings WHERE setting_key = %s",
+            ("slack_present_v1",),
+        )
+        if not cur.fetchone():
+            cur.execute(
+                "UPDATE attendance_devices SET slack_present = currently_online"
+            )
+            cur.execute(
+                """
+                INSERT INTO attendance_settings (setting_key, setting_value)
+                VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+                """,
+                ("slack_present_v1", "1"),
+            )
         conn.commit()
         _SCHEMA_READY = True
     except MySQLError:
@@ -393,11 +514,23 @@ def get_settings() -> Dict[str, Any]:
         poll_seconds = max(30, min(int(poll_raw), 600))
     except ValueError:
         poll_seconds = DEFAULT_POLL_SECONDS
+    env_dns = (os.getenv("ATTENDANCE_DNS_PRESENCE_MINUTES") or "").strip()
+    dns_raw = env_dns or str(DEFAULT_DNS_PRESENCE_MINUTES)
     try:
-        # 1–2 min target: allow 1; keep a small upper bound for noisy Wi-Fi sites
         absent_minutes = max(1, min(int(absent_raw), 120))
     except ValueError:
         absent_minutes = DEFAULT_ABSENT_MINUTES
+    try:
+        dns_presence_minutes = max(0, min(int(dns_raw), 30))
+    except ValueError:
+        dns_presence_minutes = DEFAULT_DNS_PRESENCE_MINUTES
+    default_slack_leave_grace_minutes = default_slack_leave_grace()
+    dns_presence_enabled = (os.getenv("ATTENDANCE_DNS_PRESENCE") or "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
     return {
         "router_host": creds["host"],
         "router_user": creds["user"],
@@ -406,6 +539,9 @@ def get_settings() -> Dict[str, Any]:
         "env_file": ENV_FILE_NAME,
         "poll_seconds": poll_seconds,
         "absent_minutes": absent_minutes,
+        "dns_presence_minutes": dns_presence_minutes,
+        "dns_presence_enabled": dns_presence_enabled,
+        "default_slack_leave_grace_minutes": default_slack_leave_grace_minutes,
         "night_start": _pick("night_start", "ATTENDANCE_NIGHT_START", DEFAULT_NIGHT_START),
         "night_end": _pick("night_end", "ATTENDANCE_NIGHT_END", DEFAULT_NIGHT_END),
         "subnet": _pick("subnet", "ATTENDANCE_SUBNET", DEFAULT_SUBNET),
@@ -453,13 +589,21 @@ def save_settings(payload: Dict[str, Any]) -> Dict[str, Any]:
     return public_settings()
 
 
-def _row_device(row: Dict[str, Any]) -> Dict[str, Any]:
+def _row_device(
+    row: Dict[str, Any], *, default_slack_grace: Optional[int] = None
+) -> Dict[str, Any]:
     first_seen = row.get("first_seen_utc")
     last_seen = row.get("last_seen_utc")
     hostname = row.get("hostname") or ""
     alias = row.get("alias") or ""
     device_type = row.get("device_type") or ""
     auto_role = row.get("auto_role") or "unknown"
+    default_grace = (
+        DEFAULT_SLACK_LEAVE_GRACE_MINUTES
+        if default_slack_grace is None
+        else int(default_slack_grace)
+    )
+    stored_grace = row.get("slack_leave_grace_minutes")
     return {
         "mac": row.get("mac"),
         "alias": alias,
@@ -479,6 +623,10 @@ def _row_device(row: Dict[str, Any]) -> Dict[str, Any]:
         "currently_online": bool(row.get("currently_online")),
         "hidden": bool(row.get("hidden")),
         "notes": row.get("notes") or "",
+        "slack_leave_grace_minutes": None if stored_grace is None else normalize_slack_leave_grace_minutes(stored_grace),
+        "slack_leave_grace_resolved": normalize_slack_leave_grace_minutes(
+            stored_grace, default_grace
+        ),
         "is_roll": _is_roll_device(device_type, auto_role, row.get("owner_category") or ""),
     }
 
@@ -503,7 +651,11 @@ def list_devices() -> List[Dict[str, Any]]:
             ORDER BY currently_online DESC, alias ASC, hostname ASC, mac ASC
             """
         )
-        return [_row_device(row) for row in (cur.fetchall() or [])]
+        default_grace = default_slack_leave_grace()
+        return [
+            _row_device(row, default_slack_grace=default_grace)
+            for row in (cur.fetchall() or [])
+        ]
     finally:
         _close(conn, cur)
 
@@ -521,7 +673,40 @@ def get_device(mac: str) -> Optional[Dict[str, Any]]:
         cur = conn.cursor(dictionary=True)
         cur.execute("SELECT * FROM attendance_devices WHERE mac = %s", (mac,))
         row = cur.fetchone()
-        return _row_device(row) if row else None
+        if not row:
+            return None
+        default_grace = default_slack_leave_grace()
+        return _row_device(row, default_slack_grace=default_grace)
+    finally:
+        _close(conn, cur)
+
+
+def get_device_by_lan_ip(ip: str) -> Optional[Dict[str, Any]]:
+    """Newest/online attendance device currently (or last) at this LAN IP."""
+    ip = str(ip or "").strip()
+    if not ip:
+        return None
+    ensure_schema()
+    conn = _conn()
+    if not conn:
+        return None
+    cur = None
+    try:
+        cur = conn.cursor(dictionary=True)
+        cur.execute(
+            """
+            SELECT * FROM attendance_devices
+            WHERE last_ip = %s
+            ORDER BY currently_online DESC, last_seen_utc DESC
+            LIMIT 1
+            """,
+            (ip,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        default_grace = default_slack_leave_grace()
+        return _row_device(row, default_slack_grace=default_grace)
     finally:
         _close(conn, cur)
 
@@ -556,6 +741,14 @@ def update_device(mac: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]
     if "notes" in payload:
         fields.append("notes = %s")
         args.append(str(payload.get("notes") or "").strip()[:512])
+    if "slack_leave_grace_minutes" in payload:
+        raw = payload.get("slack_leave_grace_minutes")
+        if raw is None or raw == "":
+            fields.append("slack_leave_grace_minutes = %s")
+            args.append(None)
+        else:
+            fields.append("slack_leave_grace_minutes = %s")
+            args.append(normalize_slack_leave_grace_minutes(raw))
     if not fields:
         return get_device(mac)
     ensure_schema()
@@ -645,11 +838,15 @@ def apply_snapshot(
     absent_after = timedelta(minutes=int(settings.get("absent_minutes") or DEFAULT_ABSENT_MINUTES))
     night_start = settings.get("night_start") or DEFAULT_NIGHT_START
     night_end = settings.get("night_end") or DEFAULT_NIGHT_END
+    default_slack_grace = int(
+        settings.get("default_slack_leave_grace_minutes") or DEFAULT_SLACK_LEAVE_GRACE_MINUTES
+    )
     in_night = is_night(now_local, night_start, night_end)
     bucket = night_bucket_for(now_local, night_start) if in_night else ""
     seen = {normalize_mac(d.get("mac")) for d in devices}
     seen.discard("")
     phone_events: List[Dict[str, Any]] = []
+    dns_kept = 0
 
     conn = _conn(unpooled=unpooled)
     if not conn:
@@ -662,7 +859,8 @@ def apply_snapshot(
             cur.execute(
                 """
                 SELECT mac, alias, hostname, last_ip, device_type, auto_role,
-                       owner_category, currently_online, hidden, last_seen_utc
+                       owner_category, currently_online, hidden, last_seen_utc,
+                       slack_present, slack_leave_grace_minutes
                 FROM attendance_devices
                 """
             )
@@ -698,6 +896,7 @@ def apply_snapshot(
             ip = str(item.get("ip") or "").strip()[:45]
             connection = str(item.get("connection") or "").strip()[:64]
             guessed = guess_device_type(hostname, connection)
+            was_slack = bool(int((prev or row or {}).get("slack_present") or 0))
             if row:
                 row = _finalize_night_row(row, now_local, night_start, night_end)
                 if in_night:
@@ -711,6 +910,19 @@ def apply_snapshot(
                 if device_type_source != "user" and guessed:
                     device_type = guessed
                     device_type_source = "auto"
+                notify_type = device_type
+                notify_role = row.get("auto_role") or "unknown"
+                notify_alias = row.get("alias") or ""
+                notify_owner = row.get("owner_category") or ""
+                is_phone = is_phone_notify_candidate(
+                    notify_type, notify_role, hostname, notify_alias
+                )
+                next_slack, do_join = _slack_seen_state(
+                    complete=complete,
+                    hidden=hidden,
+                    is_phone=is_phone,
+                    was_slack_present=was_slack,
+                )
                 cur.execute(
                     """
                     UPDATE attendance_devices
@@ -725,7 +937,8 @@ def apply_snapshot(
                         night_bucket = %s,
                         seen_this_night = %s,
                         last_seen_utc = %s,
-                        currently_online = 1
+                        currently_online = 1,
+                        slack_present = %s
                     WHERE mac = %s
                     """,
                     (
@@ -743,24 +956,34 @@ def apply_snapshot(
                         row.get("night_bucket"),
                         int(row.get("seen_this_night") or 0),
                         now_utc,
+                        next_slack,
                         mac,
                     ),
                 )
-                notify_type = device_type
-                notify_role = row.get("auto_role") or "unknown"
-                notify_alias = row.get("alias") or ""
-                notify_owner = row.get("owner_category") or ""
             else:
+                notify_type = guessed
+                notify_role = "unknown"
+                notify_alias = ""
+                notify_owner = ""
+                is_phone = is_phone_notify_candidate(
+                    notify_type, notify_role, hostname, notify_alias
+                )
+                next_slack, do_join = _slack_seen_state(
+                    complete=complete,
+                    hidden=hidden,
+                    is_phone=is_phone,
+                    was_slack_present=was_slack,
+                )
                 cur.execute(
                     """
                     INSERT INTO attendance_devices (
                         mac, alias, hostname, last_ip, connection, owner_category, device_type,
                         device_type_source, owner_source, auto_role, nights_present, nights_absent,
                         night_bucket, seen_this_night, first_seen_utc, last_seen_utc,
-                        currently_online, hidden, notes
+                        currently_online, hidden, notes, slack_leave_grace_minutes, slack_present
                     ) VALUES (
                         %s, '', %s, %s, %s, '', %s, %s, 'auto', 'unknown', 0, 0,
-                        %s, %s, %s, %s, 1, 0, ''
+                        %s, %s, %s, %s, 1, 0, '', NULL, %s
                     )
                     """,
                     (
@@ -774,12 +997,22 @@ def apply_snapshot(
                         1 if in_night else 0,
                         now_utc,
                         now_utc,
+                        next_slack,
                     ),
                 )
-                notify_type = guessed
-                notify_role = "unknown"
-                notify_alias = ""
-                notify_owner = ""
+
+            if do_join:
+                phone_events.append(
+                    _phone_wifi_event(
+                        "join",
+                        mac=mac,
+                        ip=ip or ((prev or {}).get("last_ip") if prev else "") or "",
+                        name=notify_alias or hostname or mac,
+                        hostname=hostname,
+                        owner_category=notify_owner,
+                        when=iso_local(now_utc),
+                    )
+                )
 
             cur.execute(
                 """
@@ -803,23 +1036,6 @@ def apply_snapshot(
                     """,
                     (mac, now_utc, now_utc),
                 )
-                # Slack join only when a NEW hours-session starts (survived leave grace).
-                if (
-                    complete
-                    and not hidden
-                    and is_phone_notify_candidate(notify_type, notify_role, hostname, notify_alias)
-                ):
-                    phone_events.append(
-                        {
-                            "action": "join",
-                            "mac": mac,
-                            "ip": ip or ((prev or {}).get("last_ip") if prev else "") or "",
-                            "name": notify_alias or hostname or mac,
-                            "hostname": hostname,
-                            "owner_category": notify_owner,
-                            "time": iso_local(now_utc),
-                        }
-                    )
 
         cur.execute(
             "SELECT mac, last_seen_utc, night_bucket, seen_this_night, nights_present, nights_absent, first_seen_utc, auto_role FROM attendance_devices"
@@ -847,11 +1063,97 @@ def apply_snapshot(
                         int(updated.get("seen_this_night") or 0),
                         row["mac"],
                     ),
+                    )
+
+        # DNS presence (office DNS .204): keep known devices online when they still
+        # query DNS but briefly fall off the Nighthawk/Deco client list.
+        if complete and settings.get("dns_presence_enabled") and int(settings.get("dns_presence_minutes") or 0) > 0:
+            try:
+                from py.utilities.attendance_dns import recent_dns_activity_by_ip
+
+                dns_by_ip = recent_dns_activity_by_ip(
+                    within_minutes=int(settings.get("dns_presence_minutes") or DEFAULT_DNS_PRESENCE_MINUTES)
                 )
+            except Exception:
+                dns_by_ip = {}
+            if dns_by_ip:
+                for mac, prev in list(prev_by_mac.items()):
+                    if mac in seen or prev.get("hidden"):
+                        continue
+                    ip = str(prev.get("last_ip") or "").strip()
+                    if not ip or ip not in dns_by_ip:
+                        continue
+                    q_utc = dns_by_ip[ip]
+                    if q_utc is None:
+                        continue
+                    # Use DNS timestamp when fresh; never invent future last_seen.
+                    seen_ts = q_utc if q_utc <= now_utc else now_utc
+                    seen.add(mac)
+                    dns_kept += 1
+                    was_slack = bool(int(prev.get("slack_present") or 0))
+                    is_phone = is_phone_notify_candidate(
+                        prev.get("device_type") or "",
+                        prev.get("auto_role") or "",
+                        prev.get("hostname") or "",
+                        prev.get("alias") or "",
+                    )
+                    next_slack, do_join = _slack_seen_state(
+                        complete=True,
+                        hidden=bool(prev.get("hidden")),
+                        is_phone=is_phone,
+                        was_slack_present=was_slack,
+                    )
+                    cur.execute(
+                        """
+                        UPDATE attendance_devices
+                        SET last_seen_utc = %s, currently_online = 1, slack_present = %s
+                        WHERE mac = %s
+                        """,
+                        (seen_ts, next_slack, mac),
+                    )
+                    cur.execute(
+                        """
+                        SELECT id FROM attendance_sessions
+                        WHERE mac = %s AND ended_utc IS NULL
+                        ORDER BY started_utc DESC LIMIT 1
+                        """,
+                        (mac,),
+                    )
+                    open_row = cur.fetchone()
+                    if open_row:
+                        cur.execute(
+                            "UPDATE attendance_sessions SET last_seen_utc = %s WHERE id = %s",
+                            (seen_ts, open_row["id"]),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            INSERT INTO attendance_sessions
+                                (mac, started_utc, last_seen_utc, ended_utc, close_reason)
+                            VALUES (%s, %s, %s, NULL, NULL)
+                            """,
+                            (mac, seen_ts, seen_ts),
+                        )
+                    if do_join:
+                        phone_events.append(
+                            _phone_wifi_event(
+                                "join",
+                                mac=mac,
+                                ip=ip,
+                                name=(prev.get("alias") or prev.get("hostname") or mac),
+                                hostname=prev.get("hostname") or "",
+                                owner_category=prev.get("owner_category") or "",
+                                when=iso_local(seen_ts),
+                            )
+                        )
+                    # Refresh prev snapshot so later leave checks see DNS-backed presence.
+                    prev["currently_online"] = 1
+                    prev["last_seen_utc"] = seen_ts
+                    prev["slack_present"] = next_slack
 
         if complete:
             # UI Online follows the router list immediately (no "stuck Online" during roam).
-            # Slack leave waits for session grace (absent_minutes) so Deco flaps do not spam.
+            # Hours-session close still uses absent_minutes. Slack leave uses per-device grace.
             cutoff = now_utc if immediate_absent else (now_utc - absent_after)
             if seen:
                 format_ids = ",".join(["%s"] * len(seen))
@@ -896,26 +1198,52 @@ def apply_snapshot(
                     """,
                     (row["id"],),
                 )
-                prev = prev_by_mac.get(mac) or {}
-                if prev.get("hidden"):
+
+            for mac, prev in prev_by_mac.items():
+                if mac in seen:
                     continue
-                if not is_phone_notify_candidate(
+                is_phone = is_phone_notify_candidate(
                     prev.get("device_type") or "",
                     prev.get("auto_role") or "",
                     prev.get("hostname") or "",
                     prev.get("alias") or "",
+                )
+                was_slack = bool(int(prev.get("slack_present") or 0))
+                hidden = bool(prev.get("hidden"))
+                if not was_slack:
+                    continue
+                if hidden or not is_phone:
+                    cur.execute(
+                        "UPDATE attendance_devices SET slack_present = 0 WHERE mac = %s",
+                        (mac,),
+                    )
+                    continue
+                grace = normalize_slack_leave_grace_minutes(
+                    prev.get("slack_leave_grace_minutes"), default_slack_grace
+                )
+                if not slack_leave_ready(
+                    slack_present=True,
+                    hidden=False,
+                    is_phone=True,
+                    last_seen_utc=prev.get("last_seen_utc"),
+                    now_utc=now_utc,
+                    grace_minutes=grace,
                 ):
                     continue
+                cur.execute(
+                    "UPDATE attendance_devices SET slack_present = 0 WHERE mac = %s",
+                    (mac,),
+                )
                 phone_events.append(
-                    {
-                        "action": "leave",
-                        "mac": mac,
-                        "ip": prev.get("last_ip") or "",
-                        "name": (prev.get("alias") or prev.get("hostname") or mac),
-                        "hostname": prev.get("hostname") or "",
-                        "owner_category": prev.get("owner_category") or "",
-                        "time": iso_local(last_seen) or iso_local(now_utc),
-                    }
+                    _phone_wifi_event(
+                        "leave",
+                        mac=mac,
+                        ip=prev.get("last_ip") or "",
+                        name=(prev.get("alias") or prev.get("hostname") or mac),
+                        hostname=prev.get("hostname") or "",
+                        owner_category=prev.get("owner_category") or "",
+                        when=iso_local(prev.get("last_seen_utc")) or iso_local(now_utc),
+                    )
                 )
         else:
             # Degraded poll: never check people out. Keep currently_online from last complete view
@@ -941,6 +1269,7 @@ def apply_snapshot(
             "complete": complete,
             "source": source,
             "device_count": len(seen),
+            "dns_kept": dns_kept,
             "error": error,
             "polled_at": iso_local(now_utc),
             "phone_events": len(phone_events),
@@ -1330,6 +1659,14 @@ def run_poll(
     enrich_lan_names: bool = True,
 ) -> Dict[str, Any]:
     settings = get_settings()
+    # Refresh DNS activity before presence so .204 queries can keep roam-flapping phones online.
+    if settings.get("dns_presence_enabled"):
+        try:
+            from py.utilities import attendance_dns as dns_mod
+
+            dns_mod.ingest_dns_log_if_stale(max_age_seconds=40)
+        except Exception:
+            pass
     extra_ips = known_ips()
     if sweep:
         skip = {settings["router_host"], lan_ip_of_this_host()}

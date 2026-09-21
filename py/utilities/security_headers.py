@@ -8,7 +8,7 @@ from flask import Flask, request
 # Cloudflare Insights is injected at the edge.
 CSP_POLICY = (
     "default-src 'self'; "
-    "img-src 'self' data: blob: https:; "
+    "img-src 'self' data: blob: https: http://127.0.0.1:5555 http://localhost:5555 http://192.168.254.30:5555; "
     "font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdn.jsdelivr.net; "
     "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com "
     "https://cdn.datatables.net https://cdn.jsdelivr.net https://stackpath.bootstrapcdn.com; "

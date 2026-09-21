@@ -25,6 +25,9 @@ DEFAULT_DNS_USER = r"fdc\administrator"
 DEFAULT_DNS_LOG_PATH = r"C:\Windows\System32\dns\dns.log"
 DEFAULT_DNS_POLL_SECONDS = 60
 DEFAULT_DNS_RETENTION_DAYS = 14
+# If a known device IP queried DNS within this window, treat it as still present
+# even when the Nighthawk attached-client list briefly drops it (Deco roam).
+DEFAULT_DNS_PRESENCE_MINUTES = 3
 DNS_ENV_KEYS = ("DNS_SSH_HOST", "DNS_SSH_USER", "DNS_SSH_PASSWORD", "DNS_LOG_PATH")
 
 _PACKET_RE = re.compile(
@@ -351,6 +354,53 @@ def ingest_dns_log(*, max_bytes: int = 2_000_000) -> Dict[str, Any]:
         return {"ok": False, "error": msg, "inserted": 0, "parsed": len(rows)}
     finally:
         _close(conn, cur)
+
+
+def recent_dns_activity_by_ip(*, within_minutes: int = DEFAULT_DNS_PRESENCE_MINUTES) -> Dict[str, datetime]:
+    """Return {client_ip: last_query_utc_naive} for IPs that queried DNS recently."""
+    ensure_dns_schema()
+    minutes = max(1, min(int(within_minutes or DEFAULT_DNS_PRESENCE_MINUTES), 60))
+    start = utc_now() - timedelta(minutes=minutes)
+    conn = _conn()
+    if not conn:
+        return {}
+    cur = None
+    out: Dict[str, datetime] = {}
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT client_ip, MAX(queried_utc) AS last_q
+            FROM attendance_dns_queries
+            WHERE queried_utc >= %s
+            GROUP BY client_ip
+            """,
+            (start,),
+        )
+        for ip, last_q in cur.fetchall() or []:
+            key = str(ip or "").strip()
+            if key and last_q is not None:
+                out[key] = last_q
+        return out
+    finally:
+        _close(conn, cur)
+
+
+def ingest_dns_log_if_stale(*, max_age_seconds: int = 45, max_bytes: int = 2_000_000) -> Dict[str, Any]:
+    """Pull DNS log when the last successful ingest is older than max_age_seconds."""
+    ensure_dns_schema()
+    last_text = (_get_meta("last_poll_local") or "").strip()
+    if last_text:
+        try:
+            last_local = datetime.strptime(last_text, "%Y-%m-%d %H:%M:%S").replace(tzinfo=TZ)
+            age = (datetime.now(TZ) - last_local).total_seconds()
+            if age < max(15, int(max_age_seconds)):
+                return {"ok": True, "skipped": True, "age_seconds": round(age, 1)}
+        except ValueError:
+            pass
+    result = ingest_dns_log(max_bytes=max_bytes)
+    result["skipped"] = False
+    return result
 
 
 def list_dns_client_ips() -> List[Dict[str, Any]]:

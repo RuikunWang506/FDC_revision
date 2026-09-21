@@ -11,9 +11,13 @@ from flask import (
     make_response,
     g,
     has_request_context,
+    send_file,
 )
 import os
+import io
+import base64
 import ipaddress
+from urllib.parse import urlparse
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -33,6 +37,10 @@ from py.utilities.rate_limit import auth_limiter, client_limit_key, request_clie
 from py.utilities.reset_tokens import hash_reset_token
 
 auth_bp = Blueprint('auth', __name__, template_folder='templates')
+
+_LAN_BEACON_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+)
 
 @auth_bp.before_request
 def log_request():
@@ -140,11 +148,22 @@ def login():
     location_data = get_location(client_ip)
 
     def login_page(**extra):
+        lan_origin = (getattr(Config, "LAN_ORIGIN_HINT", "") or "http://192.168.254.30:5555").rstrip("/")
+        parsed = urlparse(lan_origin)
+        port = parsed.port or 5555
+        lan_probe_origins = []
+        if lan_origin:
+            lan_probe_origins.append(lan_origin)
+        localhost_origin = f"http://127.0.0.1:{port}"
+        if localhost_origin not in lan_probe_origins:
+            lan_probe_origins.append(localhost_origin)
         ctx = {
             "client_ip": client_ip,
             "location": location_data,
             "turnstile_site_key": Config.TURNSTILE_SITE_KEY or None,
             "login_popup": popup,
+            "lan_probe_id": secrets.token_urlsafe(16),
+            "lan_probe_origins": lan_probe_origins,
         }
         ctx.update(extra)
         return render_template("login.html", **ctx)
@@ -260,6 +279,23 @@ def login():
                 pass
     
     return login_page()
+
+
+@auth_bp.route("/login/lan-beacon.png", methods=["GET", "OPTIONS"])
+def login_lan_beacon():
+    """Direct LAN ping from the login page so we can log 192.168.254.x on www.fdcef.com."""
+    from py.utilities.lan_detection import record_lan_beacon_from_request
+
+    if request.method == "OPTIONS":
+        resp = current_app.response_class(status=204)
+    else:
+        record_lan_beacon_from_request(request, (request.args.get("id") or "").strip())
+        resp = send_file(io.BytesIO(_LAN_BEACON_PNG), mimetype="image/png")
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    resp.headers["Access-Control-Allow-Private-Network"] = "true"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 @auth_bp.route("/logout")
 def logout():
@@ -1372,6 +1408,18 @@ def log_user_activity(username):
     user_agent  = parse(request.headers.get('User-Agent'))
     referrer    = request.referrer
 
+    lan_fragment = ""
+    try:
+        from py.utilities.lan_detection import (
+            office_lan_log_fragment,
+            resolve_office_lan_identity,
+        )
+
+        lan_ip, lan_mac = resolve_office_lan_identity(request)
+        lan_fragment = office_lan_log_fragment(client_ip, lan_ip, lan_mac)
+    except Exception:
+        lan_fragment = ""
+
     # fetch location info
     location = get_location(client_ip) or {}
     city      = location.get('city', 'Unknown')
@@ -1386,6 +1434,7 @@ def log_user_activity(username):
     current_app.logger.info(
         f"***{username}*** has logged in. "
         f"IP: ***{client_ip}***; "
+        f"{lan_fragment}"
         f"Location: @@@{city}, {region}, {country}@@@ "
         f"(lat: {lat}, lon: {lon}); "
         f"Timezone: @@@{timezone}@@@; ISP: {isp}; Org: {org}; "
@@ -1400,6 +1449,7 @@ def log_user_activity(username):
         log_user_action(
             f"***{username}*** has logged in. "
             f"IP: ***{client_ip}***; "
+            f"{lan_fragment}"
             f"Location: @@@{city}, {region}, {country}@@@ "
             f"(lat: {lat}, lon: {lon}); "
             f"Timezone: @@@{timezone}@@@; ISP: {isp}; Org: {org}; "

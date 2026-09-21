@@ -78,10 +78,11 @@ def main() -> int:
             )
             failures = 0
             _log(
-                "poll ok complete={complete} source={source} devices={n} phone_events={pe}".format(
+                "poll ok complete={complete} source={source} devices={n} dns_kept={dk} phone_events={pe}".format(
                     complete=bool(result.get("complete")),
                     source=result.get("source") or "?",
                     n=result.get("device_count"),
+                    dk=result.get("dns_kept"),
                     pe=result.get("phone_events"),
                 )
             )

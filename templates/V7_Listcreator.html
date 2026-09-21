@@ -56,44 +56,21 @@
         }
         .lc-jobs-list .lc-job-row {
             list-style: none;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #f59e0b;
             border-radius: 12px;
             padding: 0.85rem 1rem;
             margin-bottom: 0.65rem;
-            background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
-        }
-        .lc-jobs-list .lc-job-row:last-child { margin-bottom: 0; }
-        .lc-jobs-list .lc-job-row.lc-job-gm {
             background: linear-gradient(180deg, #fffbeb 0%, #fefce8 100%);
-            border-color: #f59e0b;
             box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
         }
-        .lc-jobs-list .lc-job-row.lc-job-gm .lc-job-title-line strong {
+        .lc-jobs-list .lc-job-row:last-child { margin-bottom: 0; }
+        .lc-jobs-list .lc-job-row .lc-job-title-line strong {
             background: #facc15;
             color: #1c1917;
             padding: 0.12rem 0.45rem;
             border-radius: 6px;
             box-decoration-break: clone;
             -webkit-box-decoration-break: clone;
-        }
-        .lc-standard-panel {
-            margin-bottom: 1rem;
-            padding: 0.85rem 1rem;
-            background: linear-gradient(180deg, #fffbeb 0%, #fff 70%);
-            border: 1px solid rgba(245, 158, 11, 0.4);
-            border-radius: 12px;
-        }
-        .lc-standard-panel .lc-jobs-head h6 { color: #92400e; }
-        .lc-job-standard-badge {
-            background: #f59e0b !important;
-            color: #1c1917 !important;
-            border: 1px solid #d97706 !important;
-            font-weight: 800 !important;
-        }
-        .lc-jobs-list .lc-job-row.lc-job-standard {
-            background: linear-gradient(180deg, #fffbeb 0%, #fefce8 100%);
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
         }
         .lc-job-headline-wrap {
             display: flex;
@@ -1166,16 +1143,6 @@
         </form>
         </div>
         <div class="lc-panel lc-jobs-panel" id="listcreatorHtmlJobsPanel">
-            <div class="lc-standard-panel" id="listcreatorStandardJobsPanel">
-                <div class="lc-jobs-head">
-                    <div>
-                        <h6 class="font-weight-bold mb-1">{{ te('Standard styles') }} <span class="font-weight-normal">标准款式</span></h6>
-                        <p class="small text-muted mb-0">GM Ting catalogs · pinned (not 7-day expiry) · Use list fills the style box above</p>
-                    </div>
-                </div>
-                <ul id="listcreatorStandardJobsHistory" class="lc-jobs-list list-unstyled small mb-0 mt-3"></ul>
-                <p id="listcreatorStandardJobsEmptyHint" class="small text-muted mb-0 mt-2">Loading standard styles…</p>
-            </div>
             <div class="lc-jobs-head">
                 <div>
                     <h6 class="font-weight-bold text-dark">{{ te('HTML snapshot jobs') }}</h6>
@@ -2760,28 +2727,10 @@ function wireListcreatorSnapshotJobsActions() {
     });
 }
 
-function renderListcreatorStandardJobs(jobs) {
-    var el = document.getElementById('listcreatorStandardJobsHistory');
-    var emptyHint = document.getElementById('listcreatorStandardJobsEmptyHint');
-    if (!el) return;
-    if (!jobs || !jobs.length) {
-        el.innerHTML = '';
-        if (emptyHint) {
-            emptyHint.classList.remove('d-none');
-            emptyHint.textContent = 'Standard snapshots were not found on this server.';
-        }
-        return;
-    }
-    if (emptyHint) emptyHint.classList.add('d-none');
-    el.innerHTML = jobs.map(function(j) { return renderListcreatorJobRowHtml(j); }).join('');
-}
-
 function renderListcreatorJobRowHtml(j) {
         var status = (j.status || '');
         var badge = status === 'ready' ? 'success' : (status === 'running' ? 'warning' : (status === 'failed' ? 'danger' : 'secondary'));
         var rawName = (j.snapshot_name || '').trim();
-        var isStandard = !!j.is_standard;
-        var isGmJob = isStandard || /^gm(\b|_|-|\s|$)/i.test(rawName);
         var title = escapeListcreatorJobsHtml(rawName);
         var subId = j.id ? (j.id.length > 14 ? (j.id.substring(0, 10) + '…') : j.id) : '';
         var headline = '<span class="lc-job-title-line">' + (title ? ('<strong>' + title + '</strong>') : ('<strong>' + escapeListcreatorJobsHtml(subId || 'Snapshot') + '</strong>'));
@@ -2823,9 +2772,8 @@ function renderListcreatorJobRowHtml(j) {
         var ownTipAttr = ownTip ? (' title="' + lcAttrEscapePreviewId(ownTip) + '"') : '';
         var whoBadge = ' <span class="badge lc-job-owner-badge lc-job-pill"' + ownTipAttr + '>'
             + escapeListcreatorJobsHtml(ownDisp) + '</span>';
-        var stdBadge = isStandard ? ' <span class="badge lc-job-standard-badge lc-job-pill">Standard</span>' : '';
         var metaLine = '<div class="lc-job-headline-wrap">' + line + ' <span class="badge badge-' + badge + ' lc-job-status-badge">'
-            + escapeListcreatorJobsHtml(status) + '</span>' + stdBadge + whoBadge + '</div>';
+            + escapeListcreatorJobsHtml(status) + '</span>' + whoBadge + '</div>';
         var delSnapBtn = '<button type="button" class="btn btn-outline-danger lc-job-action-btn mr-2 mb-1" data-action="delete-snapshot-job" data-rid="'
             + escapeListcreatorJobsHtml(j.id || '') + '" data-status="' + escapeListcreatorJobsHtml(status) + '"' + slugAttr + '>{{ te('Delete') }}</button>';
         var actions = '';
@@ -2839,13 +2787,13 @@ function renderListcreatorJobRowHtml(j) {
             if (canM) {
                 actions += '<button type="button" class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" data-action="redo-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Redo snapshot</button>';
                 actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
-                if (!isStandard) actions += delSnapBtn;
+                actions += delSnapBtn;
             }
         } else if (status === 'running' || status === 'failed') {
             if (j.wait_url) actions += '<a class="btn btn-outline-secondary lc-job-action-btn mr-2 mb-1" href="' + j.wait_url + '">' + (status === 'running' ? 'Watch progress' : 'Details') + '</a>';
             if (canM) {
                 actions += '<button type="button" class="btn btn-outline-primary lc-job-action-btn mr-2 mb-1" data-action="rename-snapshot-job" data-rid="' + escapeListcreatorJobsHtml(j.id || '') + '"' + slugAttr + '>Rename</button>';
-                if (!isStandard) actions += delSnapBtn;
+                actions += delSnapBtn;
             }
         }
         var err = (status === 'failed' && j.error) ? (' <span class="text-danger d-block mt-1 small">' + escapeListcreatorJobsHtml(j.error) + '</span>') : '';
@@ -2862,23 +2810,19 @@ function renderListcreatorJobRowHtml(j) {
                 previewHtml +
                 '</div>';
         }
-        var rowClass = 'lc-job-row';
-        if (isStandard) rowClass += ' lc-job-standard';
-        if (isGmJob) rowClass += ' lc-job-gm';
-        return '<li class="' + rowClass + '">' +
+        return '<li class="lc-job-row">' +
             '<div class="d-flex flex-column flex-lg-row flex-lg-wrap align-items-lg-center justify-content-lg-between">' +
             '<div class="lc-job-main pr-lg-3 mb-2 mb-lg-0" style="min-width: 0;">' + metaLine + '</div>' +
             '<div class="lc-job-actions d-flex flex-wrap align-items-center flex-shrink-0">' + actions + '</div></div>' +
             timesPreviewRow + err + '</li>';
 }
 
-function renderListcreatorHtmlJobsHistory(jobs, standardJobs) {
+function renderListcreatorHtmlJobsHistory(jobs) {
     var el = document.getElementById('listcreatorHtmlJobsHistory');
     var emptyHint = document.getElementById('listcreatorHtmlJobsEmptyHint');
     if (!el) return;
     wireListcreatorSnapshotJobsActions();
-    window.lastListcreatorHtmlJobs = (standardJobs || []).concat(jobs || []);
-    renderListcreatorStandardJobs(standardJobs || []);
+    window.lastListcreatorHtmlJobs = jobs || [];
     if (!jobs || !jobs.length) {
         el.innerHTML = '';
         if (emptyHint) emptyHint.classList.remove('d-none');
@@ -2901,8 +2845,8 @@ function refreshListcreatorHtmlJobs() {
         })
         .then(function(data) {
             lcPopulateHtmlJobsUserFilter(data.filter_options || [], data.filter_user || '');
-            renderListcreatorHtmlJobsHistory(data.jobs || [], data.standard_jobs || []);
-            var running = (data.jobs || []).concat(data.standard_jobs || []).some(function(j) { return j.status === 'running'; });
+            renderListcreatorHtmlJobsHistory(data.jobs || []);
+            var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
             if (running && !listcreatorHtmlJobsPoll) {
                 listcreatorHtmlJobsPoll = setInterval(refreshListcreatorHtmlJobs, 4000);
             }

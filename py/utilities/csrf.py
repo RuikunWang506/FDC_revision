@@ -16,6 +16,7 @@ CSRF_FORM_FIELD = "csrf_token"
 CSRF_EXEMPT_ENDPOINTS = frozenset(
     {
         "static",
+        "auth.login_lan_beacon",
         "tradeshowtool.lan_ping",
         "tradeshowtool.lan_ping_png",
         "tradeshowtool.lan_claim",

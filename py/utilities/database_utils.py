@@ -218,6 +218,21 @@ def get_mysql_connection(retries=3):
     return None
 
 
+def close_mysql_connection(connection):
+    """Return a pooled/unpooled connection without calling is_connected().
+
+    mysql.connector pooled wrappers set _cnx=None after close(); a later
+    is_connected() lookup then raises AttributeError and can replace a
+    successful response with HTTP 500.
+    """
+    if connection is None:
+        return
+    try:
+        connection.close()
+    except Exception:
+        pass
+
+
 def get_mysql_connection_unpooled():
     """Short-lived connection that does not consume the app pool.
 

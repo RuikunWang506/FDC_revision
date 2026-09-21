@@ -83,6 +83,18 @@ class MysqlPoolRetryTests(unittest.TestCase):
         conn.close.assert_called()
         self.assertEqual(stats["checked_out"], 0)
 
+    def test_close_mysql_connection_does_not_call_is_connected(self):
+        conn = MagicMock()
+        database_utils.close_mysql_connection(conn)
+        conn.close.assert_called_once()
+        conn.is_connected.assert_not_called()
+        database_utils.close_mysql_connection(None)
+
+    def test_close_mysql_connection_swallows_close_errors(self):
+        conn = MagicMock()
+        conn.close.side_effect = AttributeError("already released")
+        database_utils.close_mysql_connection(conn)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -84,32 +84,6 @@ LISTCREATOR_JOB_OWNER_DISPLAY = {
     'yeti': 'Tristen',
 }
 
-# Pinned GM Ting catalogs: skip 7-day prune and show in the Standard styles panel.
-LISTCREATOR_STANDARD_SNAPSHOT_IDS = (
-    'gm_ting_07eb3457f771',
-    'Gm_ting_ced673146c0f',
-)
-_LISTCREATOR_STANDARD_SNAPSHOT_IDS_LOWER = frozenset(
-    x.lower() for x in LISTCREATOR_STANDARD_SNAPSHOT_IDS
-)
-
-
-def _listcreator_job_is_standard(meta=None, job_id=None, snapshot_name=None):
-    """True for the pinned standard-style snapshots (flag on disk, or known job ids)."""
-    meta = meta or {}
-    if meta.get('standard') is True:
-        return True
-    rid = (job_id or meta.get('id') or '').strip().lower()
-    if rid in _LISTCREATOR_STANDARD_SNAPSHOT_IDS_LOWER:
-        return True
-    name_slug = _slug_for_job_id(snapshot_name or meta.get('snapshot_name') or '').lower()
-    if name_slug in ('gm_ting_07', 'gm_ting_ce'):
-        return True
-    if rid.startswith('gm_ting_07_') or rid.startswith('gm_ting_ce_'):
-        return True
-    return False
-
-
 def _listcreator_job_owner_display(job_username: str, storage_slug: str) -> str:
     """Public label for a job row / filter (mapped name, else login, else folder slug)."""
     u = (job_username or '').strip()
@@ -1232,10 +1206,6 @@ def _listcreator_html_prune_old(app, slug):
                 except ValueError:
                     created = datetime.datetime.utcfromtimestamp(os.path.getmtime(path))
                 rid = meta.get('id') or name.replace('.json', '')
-                if _listcreator_job_is_standard(
-                    meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')
-                ):
-                    continue
                 if created >= cutoff.replace(tzinfo=None):
                     continue
                 hn = os.path.join(html_dir, f'{rid}.html')
@@ -1298,9 +1268,6 @@ def _listcreator_html_list_all_jobs(app, slug):
                 'resolved_styles_full': meta.get('resolved_styles_full') or '',
                 'error': meta.get('error'),
                 'job_username': (meta.get('username') or '').strip(),
-                'standard': _listcreator_job_is_standard(
-                    meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')
-                ),
             })
         except (OSError, json.JSONDecodeError):
             continue
@@ -2230,11 +2197,6 @@ def html_job_delete(rid):
         meta = _listcreator_html_load_job(app, slug, rid)
         if not meta or meta.get('username') != current_user:
             return jsonify({'ok': False, 'error': 'Not found'}), 404
-        if _listcreator_job_is_standard(meta=meta, job_id=rid, snapshot_name=meta.get('snapshot_name')):
-            return jsonify({
-                'ok': False,
-                'error': 'This is a standard styles snapshot and cannot be deleted.',
-            }), 400
         if not _listcreator_html_delete_job_disk(app, slug, rid, meta):
             return jsonify({'ok': False, 'error': 'Could not remove snapshot files'}), 500
         _listcreator_html_prune_old(app, slug)
@@ -2426,9 +2388,6 @@ def _listcreator_serialize_html_job(j, current_user, me_slug):
     if not owner_display:
         owner_display = '(no username)'
     owner_tooltip = _listcreator_job_owner_tooltip(job_user, storage_slug)
-    is_standard = _listcreator_job_is_standard(
-        meta=j, job_id=rid, snapshot_name=j.get('snapshot_name')
-    )
     return {
         'id': rid,
         'status': st,
@@ -2450,7 +2409,6 @@ def _listcreator_serialize_html_job(j, current_user, me_slug):
         'owner_display': owner_display,
         'owner_tooltip': owner_tooltip,
         'can_manage': can_manage,
-        'is_standard': is_standard,
     }
 
 
@@ -2499,20 +2457,11 @@ def listcreator_html_jobs_api():
     else:
         rows = [j for j in merged if (j.get('job_username') or '').strip() == filter_user]
 
-    standard_order = {jid.lower(): i for i, jid in enumerate(LISTCREATOR_STANDARD_SNAPSHOT_IDS)}
-    standard_src = [j for j in merged if _listcreator_job_is_standard(meta=j, job_id=j.get('id'), snapshot_name=j.get('snapshot_name'))]
-    standard_src.sort(key=lambda j: standard_order.get((j.get('id') or '').lower(), 99))
-    rows = [
-        j for j in rows
-        if not _listcreator_job_is_standard(meta=j, job_id=j.get('id'), snapshot_name=j.get('snapshot_name'))
-    ]
-
     jobs = [_listcreator_serialize_html_job(j, current_user, me_slug) for j in rows]
-    standard_jobs = [_listcreator_serialize_html_job(j, current_user, me_slug) for j in standard_src]
     return jsonify({
         'ok': True,
         'jobs': jobs,
-        'standard_jobs': standard_jobs,
+        'standard_jobs': [],
         'filter_options': filter_options,
         'filter_user': filter_user,
         'me_slug': me_slug,

@@ -6,7 +6,7 @@
   <title>{{ _('page.attendance_log.title') }}</title>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon-fdc.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fdc-staff-pages.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance_log.css') }}?v=15">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/attendance_log.css') }}?v=16">
 </head>
 <body class="fdc-staff-page has-navbar">
 {% include 'navbar.html' %}
@@ -55,12 +55,6 @@
       <option value="printer">{{ _('page.attendance_log.printer') }}</option>
       <option value="other">{{ _('page.attendance_log.other') }}</option>
     </select>
-    <select class="al-select" id="alFilterAuto">
-      <option value="">{{ _('page.attendance_log.auto_any') }}</option>
-      <option value="unknown">{{ _('page.attendance_log.unknown') }}</option>
-      <option value="phone">{{ _('page.attendance_log.phone') }}</option>
-      <option value="warehouse_service">{{ _('page.attendance_log.warehouse') }}</option>
-    </select>
   </div>
 
   <section data-panel="roll" class="al-panel">
@@ -80,7 +74,6 @@
               </th>
               <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
               <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
-              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
             </tr>
           </thead>
           <tbody id="alRollBody"></tbody>
@@ -102,7 +95,6 @@
               <th data-sort="ip">{{ _('page.attendance_log.ip') }}</th>
               <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
               <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
-              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
               <th data-sort="first_seen">{{ _('page.attendance_log.first_seen') }}</th>
               <th data-sort="last_seen">{{ _('page.attendance_log.last_seen') }}</th>
               <th></th>
@@ -127,7 +119,6 @@
               <th data-sort="ip">{{ _('page.attendance_log.ip') }}</th>
               <th data-sort="owner">{{ _('page.attendance_log.owner') }}</th>
               <th data-sort="type">{{ _('page.attendance_log.type') }}</th>
-              <th data-sort="auto">{{ _('page.attendance_log.auto') }}</th>
               <th data-sort="first_seen">{{ _('page.attendance_log.first_seen') }}</th>
               <th data-sort="last_seen">{{ _('page.attendance_log.last_seen') }}</th>
               <th></th>
@@ -250,6 +241,9 @@
       totalHours: {{ _('page.attendance_log.total_hours')|tojson }},
       dblClick: {{ _('page.attendance_log.dblclick_hint')|tojson }},
       clickEdit: {{ _('page.attendance_log.click_edit')|tojson }},
+      graceHint: {{ _('page.attendance_log.grace_hint')|tojson }},
+      graceMin: {{ _('page.attendance_log.grace_min')|tojson }},
+      graceDefault: {{ _('page.attendance_log.grace_default')|tojson }},
       chartHint: {{ _('page.attendance_log.chart_hint')|tojson }},
       chartX: {{ _('page.attendance_log.chart_x')|tojson }},
       chartY: {{ _('page.attendance_log.chart_y')|tojson }},
@@ -275,6 +269,6 @@
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="{{ url_for('static', filename='js/attendance_log.js') }}?v=26"></script>
+<script src="{{ url_for('static', filename='js/attendance_log.js') }}?v=28"></script>
 </body>
 </html>
