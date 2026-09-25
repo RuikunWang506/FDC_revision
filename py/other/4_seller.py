@@ -18,9 +18,11 @@ from py.utilities.setting import Config, login_required
 from py.search.item_lookup import fetch_locations
 
 try:
-    from py.utilities.fourseller_login import login_from_env
+    from py.utilities.fourseller_login import get_mfa_status, login_from_env, submit_manual_mfa_code
 except ImportError:
     login_from_env = None  # type: ignore[misc, assignment]
+    get_mfa_status = None  # type: ignore[misc, assignment]
+    submit_manual_mfa_code = None  # type: ignore[misc, assignment]
 
 
 four_seller_bp = Blueprint("four_seller", __name__)
@@ -242,7 +244,7 @@ def _login_via_subprocess() -> str:
             [sys.executable, worker],
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=300,
             cwd=os.path.dirname(os.path.dirname(worker)),
             check=False,
         )
@@ -899,6 +901,28 @@ def four_seller_warm_session():
     except Exception as exc:
         current_app.logger.error(f"4Seller warm-session error: {exc}")
         return jsonify({"success": False, "message": str(exc)}), 500
+
+
+@four_seller_bp.route("/4seller/mfa-status", methods=["GET"])
+@login_required
+def four_seller_mfa_status():
+    """Whether an auto-login is currently waiting for a 4Seller email 2FA code."""
+    if get_mfa_status is None:
+        return jsonify({"success": True, "pending": False})
+    return jsonify({"success": True, **get_mfa_status()})
+
+
+@four_seller_bp.route("/4seller/mfa-code", methods=["POST"])
+@login_required
+def four_seller_mfa_code():
+    """Hand a manually entered 2FA code to the waiting auto-login."""
+    payload = request.get_json(silent=True) or {}
+    code = str(payload.get("code") or "").strip()
+    if not re.fullmatch(r"[0-9A-Za-z]{4,10}", code):
+        return jsonify({"success": False, "message": "Enter the 4-10 character code from the email."}), 400
+    if submit_manual_mfa_code is None or not submit_manual_mfa_code(code):
+        return jsonify({"success": False, "message": "No 4Seller login is waiting for a code right now."}), 409
+    return jsonify({"success": True, "message": "Code submitted. Verifying with 4Seller…"})
 
 
 @four_seller_bp.route("/4seller/sync", methods=["POST"])

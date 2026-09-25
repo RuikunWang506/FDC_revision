@@ -10,12 +10,18 @@
   }
 
   function addHidden(form) {
-    if (!form || form.method.toLowerCase() === "get") return;
-    if (form.querySelector('input[name="csrf_token"]')) return;
+    if (!form || !form.method || String(form.method).toLowerCase() === "get") return;
+    var t = token();
+    var existing = form.querySelector('input[name="csrf_token"]');
+    if (existing) {
+      if (!existing.value && t) existing.value = t;
+      return;
+    }
+    if (!t) return;
     var input = document.createElement("input");
     input.type = "hidden";
     input.name = "csrf_token";
-    input.value = token();
+    input.value = t;
     form.appendChild(input);
   }
 
@@ -26,6 +32,18 @@
   document.addEventListener("DOMContentLoaded", function () {
     Array.prototype.forEach.call(document.querySelectorAll("form"), addHidden);
   });
+
+  // HTMLFormElement.submit() does not fire the submit event — patch so
+  // programmatic posts (dynamically created forms) still carry the token.
+  if (typeof HTMLFormElement !== "undefined" && !HTMLFormElement.prototype.submit.__fdcCsrf) {
+    var nativeSubmit = HTMLFormElement.prototype.submit;
+    function patchedSubmit() {
+      addHidden(this);
+      return nativeSubmit.apply(this, arguments);
+    }
+    patchedSubmit.__fdcCsrf = true;
+    HTMLFormElement.prototype.submit = patchedSubmit;
+  }
 
   function methodOf(input, init) {
     if (init && init.method) return String(init.method).toUpperCase();

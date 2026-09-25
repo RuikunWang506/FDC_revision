@@ -200,7 +200,10 @@ def resize_image(image_file, new_width):
 
     with Image.open(image_file) as img:
         orig_width, orig_height = img.size
-        new_height = int((new_width / orig_width) * orig_height)  # Calculate new height to maintain aspect ratio
+        new_height = max(1, int((new_width / orig_width) * orig_height))  # Calculate new height to maintain aspect ratio
+        if img.format == 'JPEG' and new_width < orig_width:
+            # Decode at a reduced DCT scale (never below the target size); far faster for big photos.
+            img.draft(img.mode, (new_width, new_height))
         resized_img = img.resize((new_width, new_height), Image.LANCZOS)  # Use LANCZOS for high-quality resizing
         if resized_img.mode in ('RGBA', 'LA', 'P'):
             resized_img = resized_img.convert('RGB')

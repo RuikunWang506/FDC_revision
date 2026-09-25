@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ _('page.update_email.title') }}</title>
+    {% include '_csrf.html' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 </head>
 <body>
@@ -24,6 +25,7 @@
                 {% endwith %}
                 
                 <form method="POST" action="{{ url_for('auth.update_email') }}" class="mt-4">
+                    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
                     <div class="form-group">
                         <label for="email">{{ te('Email Address') }}</label>
                         <input type="email" class="form-control" id="email" name="email" required>

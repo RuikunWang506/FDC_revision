@@ -1048,9 +1048,13 @@
                             <button id="process-excel-btn" class="btn btn-success btn-block w-100 mb-2">
                                 <i class="fas fa-file-excel"></i> Fedex Excel *DENNIS*
                             </button>
-                            <button id="upload-tracking-sidebar-btn" class="btn btn-info btn-block w-100 mb-2">
-                                <i class="fas fa-upload"></i> Upload Tracking Info
+                            <button id="auto-fetch-tracking-sidebar-btn" class="btn btn-info btn-block w-100 mb-2">
+                                <i class="fas fa-magic"></i> Auto Fetch Tracking
                             </button>
+                            <button id="import-tracking-report-sidebar-btn" class="btn btn-outline-info btn-block w-100 mb-2" title="{{ te('Fast bulk: FedEx Shipment Report Excel (reference + masterTrackingNumber)') }}">
+                                <i class="fas fa-file-excel"></i> Import FedEx Report
+                            </button>
+                            <input type="file" id="tracking-file-input" accept=".xlsx" style="display: none;">
                         </div>
                     </div>
 
@@ -1099,9 +1103,14 @@
             <h1 class="page-title">
                 <i class="fas fa-shipping-fast text-primary"></i> Loris Shipping
             </h1>
-            <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('lori_automation.loris_tracking') }}" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-map-marker-alt"></i> Tracking
+                </a>
+                <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
         </div>
 
         <!-- Orders Management Section - Pending -->
@@ -1196,10 +1205,14 @@
                     </div>
                     <div class="filter-actions">
                         <button id="clear-shipped-filters-btn" class="btn btn-outline-secondary btn-sm" type="button">{{ te('Clear') }}</button>
-                        <button id="upload-tracking-shipped-btn" class="btn btn-primary btn-sm" type="button">{{ te('Upload Tracking') }}</button>
+                        <button id="auto-fetch-tracking-shipped-btn" class="btn btn-primary btn-sm" type="button">
+                            <i class="fas fa-magic"></i> {{ te('Auto Fetch Tracking') }}
+                        </button>
+                        <button id="import-tracking-report-shipped-btn" class="btn btn-outline-primary btn-sm" type="button" title="{{ te('Import FedEx Shipment Report .xlsx') }}">
+                            <i class="fas fa-file-excel"></i> {{ te('Import Report') }}
+                        </button>
                     </div>
                 </div>
-                <input type="file" id="tracking-file-input" accept=".xlsx" style="display: none;">
                 <div id="shipped-orders-table-section" class="table-section">
                     <div class="table-responsive">
                         <table id="shipped-orders-table" class="table table-bordered table-striped orders-table">
@@ -1706,33 +1719,47 @@
 
         <!-- Include FedEx Popup Modal -->
 
-        <!-- Add Tracking Number Modal -->
-        <div class="modal fade" id="addTrackingModal" tabindex="-1" aria-labelledby="addTrackingModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+        <!-- Auto Fetch Tracking Results Modal -->
+        <div class="modal fade" id="autoFetchTrackingModal" tabindex="-1" aria-labelledby="autoFetchTrackingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title" id="addTrackingModalLabel">
-                            <i class="fas fa-barcode"></i> Add Tracking Number
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="autoFetchTrackingModalLabel">
+                            <i class="fas fa-magic"></i> Auto Fetch Tracking Results
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ te('Close') }}"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="tracking-po-display" class="form-label">{{ te('PO Number') }}</label>
-                            <input type="text" class="form-control" id="tracking-po-display" readonly style="background-color: #e9ecef;">
+                        <p id="auto-fetch-summary" class="mb-3"></p>
+                        <div id="auto-fetch-conflicts-wrap" class="d-none">
+                            <h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> Multiple independent shipments for same PO</h6>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm table-bordered align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>PO</th>
+                                            <th>Tracking</th>
+                                            <th>Status</th>
+                                            <th>Ship / Event</th>
+                                            <th>Pick</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="auto-fetch-conflicts-body"></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="tracking-input" class="form-label">{{ te('Tracking Number *') }}</label>
-                            <input type="text" class="form-control" id="tracking-input" placeholder="{{ te('Paste your tracking number here') }}" autofocus>
-                            <small class="text-muted">{{ te('FedEx, UPS, or any other carrier tracking number') }}</small>
+                        <div id="auto-fetch-notfound-wrap" class="d-none">
+                            <h6 class="text-muted">Not found at FedEx</h6>
+                            <div id="auto-fetch-notfound-list" class="small text-muted"></div>
+                        </div>
+                        <div id="auto-fetch-errors-wrap" class="d-none mt-2">
+                            <h6 class="text-danger">Errors</h6>
+                            <div id="auto-fetch-errors-list" class="small text-danger"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times"></i> Cancel
-                        </button>
-                        <button type="button" class="btn btn-primary" id="submit-tracking-btn">
-                            <i class="fas fa-check"></i> Submit
+                            <i class="fas fa-times"></i> Close
                         </button>
                     </div>
                 </div>
@@ -2283,88 +2310,7 @@
         console.log('Row refreshed for PO:', poNumber);
     }
 
-    // Tracking number functions
-    function openAddTrackingModal(poNumber, currentTracking) {
-        const isEdit = !!currentTracking;
-        const modal = showBootstrapModal('addTrackingModal');
-        if (!modal) return;
-
-        // Toggle modal labels between Add and Edit modes
-        const titleEl = document.getElementById('addTrackingModalLabel');
-        if (titleEl) {
-            titleEl.innerHTML = isEdit
-                ? '<i class="fas fa-pen"></i> Edit Tracking Number'
-                : '<i class="fas fa-barcode"></i> Add Tracking Number';
-        }
-        const submitBtn = document.getElementById('submit-tracking-btn');
-        if (submitBtn) {
-            submitBtn.innerHTML = isEdit
-                ? '<i class="fas fa-check"></i> Update'
-                : '<i class="fas fa-check"></i> Submit';
-        }
-
-        document.getElementById('tracking-po-display').value = poNumber;
-        document.getElementById('tracking-input').value = currentTracking || '';
-
-        // Focus input after modal is shown so it works reliably
-        setTimeout(() => {
-            const input = document.getElementById('tracking-input');
-            if (input) {
-                input.focus();
-                input.select();
-            }
-        }, 250);
-
-        // Store the current PO number for submission
-        window.currentTrackingPO = poNumber;
-    }
-
-    async function submitTrackingNumber() {
-        const trackingNumber = document.getElementById('tracking-input').value.trim();
-        const poNumber = window.currentTrackingPO;
-        
-        if (!trackingNumber) {
-            showToast('Please enter a tracking number', 'error');
-            return;
-        }
-        
-        try {
-            const response = await fetch('/lori_automation/add_tracking_number', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    po_number: poNumber,
-                    tracking_number: trackingNumber
-                })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                showToast(errorData.error || 'Failed to save tracking number', 'error');
-                return;
-            }
-            
-            const data = await response.json();
-            showToast(data.message || 'Tracking number saved successfully!', 'success');
-            
-            // Update the order in allOrders array
-            const order = allOrders.find(o => o.po_number === poNumber);
-            if (order) {
-                order.tracking = trackingNumber;
-            }
-            
-            // Refresh the order row
-            refreshOrderRow(poNumber);
-            
-            hideBootstrapModal('addTrackingModal');
-        } catch (error) {
-            console.error('Error submitting tracking number:', error);
-            showToast('An error occurred while saving the tracking number', 'error');
-        }
-    }
+    // Tracking is managed via Auto Fetch Tracking (FedEx reference lookup by PO).
 
     /** Full-page loading overlay (supports overlapping loadAndRenderOrders calls). */
     let _shippingPageOverlayDepth = 0;
@@ -3627,7 +3573,7 @@
                             <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Shipped</option>
                             <option value="canceled" ${order.status === 'canceled' ? 'selected' : ''}>Canceled</option>
                         </select>
-                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div><button class="btn btn-outline-secondary btn-sm mt-1 w-100 edit-tracking-btn" data-po="${order.po_number}" data-tracking="${order.tracking}"><i class="fas fa-pen"></i> Edit Tracking</button>` : `<button class="btn btn-outline-primary btn-sm mt-2 w-100 add-tracking-btn" data-po="${order.po_number}"><i class="fas fa-plus"></i> Add Tracking</button>`}
+                        ${order.tracking ? `<div class="mt-1 small"><a href="https://www.fedex.com/fedextrack/?trknbr=${order.tracking}" target="_blank" class="text-primary"><i class="fas fa-truck"></i> ${order.tracking}</a></div>` : `<div class="mt-1 small text-muted">No tracking</div>`}
                     </td>
                     <td class="order-cell">
                         ${buildOrderActionsCellHtml(order, isPendingTable, editStoreNumberFromPo)}
@@ -4015,63 +3961,270 @@
             renderCanceledOrders();
         });
 
-        // Upload Tracking button - both sidebar and shipped section
+        // Auto Fetch Tracking — parallel FedEx lookups in small batches (avoids Cloudflare 524)
+        const autoFetchSidebarBtn = document.getElementById('auto-fetch-tracking-sidebar-btn');
+        const autoFetchShippedBtn = document.getElementById('auto-fetch-tracking-shipped-btn');
+        const importReportSidebarBtn = document.getElementById('import-tracking-report-sidebar-btn');
+        const importReportShippedBtn = document.getElementById('import-tracking-report-shipped-btn');
         const trackingFileInput = document.getElementById('tracking-file-input');
-        const uploadTrackingSidebarBtn = document.getElementById('upload-tracking-sidebar-btn');
-        const uploadTrackingShippedBtn = document.getElementById('upload-tracking-shipped-btn');
-        
-        function setupUploadTrackingHandler(button) {
-            if (button && trackingFileInput) {
-                button.addEventListener('click', function() {
-                    trackingFileInput.click();
+
+        function showAutoFetchResults(data) {
+            const summaryEl = document.getElementById('auto-fetch-summary');
+            const conflictsWrap = document.getElementById('auto-fetch-conflicts-wrap');
+            const conflictsBody = document.getElementById('auto-fetch-conflicts-body');
+            const notFoundWrap = document.getElementById('auto-fetch-notfound-wrap');
+            const notFoundList = document.getElementById('auto-fetch-notfound-list');
+            const errorsWrap = document.getElementById('auto-fetch-errors-wrap');
+            const errorsList = document.getElementById('auto-fetch-errors-list');
+
+            if (summaryEl) {
+                summaryEl.textContent = data.message || 'Auto-fetch finished.';
+            }
+
+            const conflicts = data.conflicts || [];
+            if (conflictsWrap && conflictsBody) {
+                if (conflicts.length) {
+                    conflictsWrap.classList.remove('d-none');
+                    conflictsBody.innerHTML = conflicts.map(row => {
+                        const candRows = (row.candidates || []).map(c => {
+                            const badge = c.is_newer
+                                ? '<span class="badge bg-success">Newer (saved)</span>'
+                                : '<span class="badge bg-secondary">Older</span>';
+                            const when = c.ship_date || c.latest_event_at || '—';
+                            return `<tr>
+                                <td>${row.po_number}</td>
+                                <td><a href="https://www.fedex.com/fedextrack/?trknbr=${c.tracking_number}" target="_blank">${c.tracking_number}</a></td>
+                                <td>${c.status || '—'}</td>
+                                <td class="small">${when}</td>
+                                <td>${badge}</td>
+                            </tr>`;
+                        }).join('');
+                        return candRows;
+                    }).join('');
+                } else {
+                    conflictsWrap.classList.add('d-none');
+                    conflictsBody.innerHTML = '';
+                }
+            }
+
+            const notFound = data.not_found || [];
+            if (notFoundWrap && notFoundList) {
+                if (notFound.length) {
+                    notFoundWrap.classList.remove('d-none');
+                    const shown = notFound.slice(0, 40).map(n => n.po_number).join(', ');
+                    notFoundList.textContent = notFound.length > 40
+                        ? `${shown} … (+${notFound.length - 40} more)`
+                        : shown;
+                } else {
+                    notFoundWrap.classList.add('d-none');
+                    notFoundList.textContent = '';
+                }
+            }
+
+            const errors = data.errors || [];
+            if (errorsWrap && errorsList) {
+                if (errors.length) {
+                    errorsWrap.classList.remove('d-none');
+                    errorsList.innerHTML = errors.map(e =>
+                        `<div>${e.po_number}: ${e.error || 'error'}</div>`
+                    ).join('');
+                } else {
+                    errorsWrap.classList.add('d-none');
+                    errorsList.innerHTML = '';
+                }
+            }
+
+            showBootstrapModal('autoFetchTrackingModal');
+        }
+
+        function chunkArray(items, size) {
+            const out = [];
+            for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+            return out;
+        }
+
+        async function postAutoFetchBatch(payload) {
+            const response = await fetch('/lori_automation/auto_fetch_tracking', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error(
+                    response.status === 524
+                        ? 'Timed out (Cloudflare 524). Try fewer selected orders, or Import FedEx Report.'
+                        : `Server returned non-JSON (HTTP ${response.status}). Restart the app if you just deployed.`
+                );
+            }
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || `Auto-fetch failed (HTTP ${response.status})`);
+            }
+            return data;
+        }
+
+        async function runAutoFetchTracking(triggerBtn) {
+            const selected = Array.from(
+                document.querySelectorAll('#shipped-orders-table-body .order-checkbox:checked')
+            ).map(cb => cb.value).filter(Boolean);
+
+            const batchSize = 40;
+            const buttons = [autoFetchSidebarBtn, autoFetchShippedBtn].filter(Boolean);
+            const originalHtml = buttons.map(b => b.innerHTML);
+
+            const merged = {
+                updated: [],
+                conflicts: [],
+                not_found: [],
+                errors: [],
+                skipped_existing: 0,
+                processed: 0,
+            };
+
+            try {
+                buttons.forEach(b => {
+                    b.disabled = true;
+                    b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching…';
+                });
+
+                if (selected.length) {
+                    const chunks = chunkArray(selected, batchSize);
+                    for (let i = 0; i < chunks.length; i++) {
+                        showShippingPageOverlay(
+                            `Auto-fetch selected ${i + 1}/${chunks.length} (batch of ${chunks[i].length})…`
+                        );
+                        const data = await postAutoFetchBatch({
+                            po_numbers: chunks[i],
+                            only_missing: false,
+                            max_orders: batchSize,
+                            workers: 8,
+                        });
+                        merged.updated.push(...(data.updated || []));
+                        merged.conflicts.push(...(data.conflicts || []));
+                        merged.not_found.push(...(data.not_found || []));
+                        merged.errors.push(...(data.errors || []));
+                        merged.skipped_existing += data.skipped_existing || 0;
+                        merged.processed += data.processed || 0;
+                    }
+                } else {
+                    // Keep requesting missing-tracking batches until done or safety cap.
+                    let pass = 0;
+                    const maxPasses = 40; // 40 * 40 = 1600 missing max per click
+                    while (pass < maxPasses) {
+                        pass += 1;
+                        showShippingPageOverlay(
+                            `Auto-fetch pass ${pass}: next ${batchSize} shipped orders missing tracking…`
+                        );
+                        const data = await postAutoFetchBatch({
+                            only_missing: true,
+                            max_orders: batchSize,
+                            workers: 8,
+                        });
+                        merged.updated.push(...(data.updated || []));
+                        merged.conflicts.push(...(data.conflicts || []));
+                        merged.not_found.push(...(data.not_found || []));
+                        merged.errors.push(...(data.errors || []));
+                        merged.skipped_existing += data.skipped_existing || 0;
+                        merged.processed += data.processed || 0;
+                        if (!data.remaining || data.processed === 0) break;
+                    }
+                }
+
+                merged.message = (
+                    `Auto-fetch done: ${merged.updated.length} updated, ` +
+                    `${merged.conflicts.length} multi-shipment conflicts, ` +
+                    `${merged.not_found.length} not found, ` +
+                    `${merged.errors.length} errors ` +
+                    `(${merged.processed} looked up). ` +
+                    `Tip: for hundreds of historical labels, use Import FedEx Report.`
+                );
+
+                const applyRows = [...merged.updated, ...merged.conflicts];
+                applyRows.forEach(row => {
+                    const order = allOrders.find(o => o.po_number === row.po_number);
+                    if (order) order.tracking = row.tracking_number;
+                });
+
+                showToast(merged.message, 'success', 7000);
+                if (merged.conflicts.length || merged.not_found.length || merged.errors.length) {
+                    showAutoFetchResults(merged);
+                }
+                if (typeof window.loadAndRenderOrders === 'function') {
+                    await window.loadAndRenderOrders();
+                } else {
+                    renderShippedOrders();
+                }
+            } catch (error) {
+                console.error('Auto-fetch tracking error:', error);
+                showToast('Auto-fetch failed: ' + error.message, 'error', 8000);
+            } finally {
+                hideShippingPageOverlay();
+                buttons.forEach((b, i) => {
+                    b.disabled = false;
+                    b.innerHTML = originalHtml[i];
                 });
             }
         }
-        
-        // Setup both buttons
-        setupUploadTrackingHandler(uploadTrackingSidebarBtn);
-        setupUploadTrackingHandler(uploadTrackingShippedBtn);
-        
+
+        if (autoFetchSidebarBtn) {
+            autoFetchSidebarBtn.addEventListener('click', () => runAutoFetchTracking(autoFetchSidebarBtn));
+        }
+        if (autoFetchShippedBtn) {
+            autoFetchShippedBtn.addEventListener('click', () => runAutoFetchTracking(autoFetchShippedBtn));
+        }
+
+        // Fast bulk path: FedEx Shipment Report Excel (reference + masterTrackingNumber)
+        function setupImportReportHandler(button) {
+            if (button && trackingFileInput) {
+                button.addEventListener('click', () => trackingFileInput.click());
+            }
+        }
+        setupImportReportHandler(importReportSidebarBtn);
+        setupImportReportHandler(importReportShippedBtn);
+
         if (trackingFileInput) {
             trackingFileInput.addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-                
                 const formData = new FormData();
                 formData.append('file', file);
-                
-                // Determine which button was clicked (default to shipped button)
-                const activeBtn = uploadTrackingShippedBtn || uploadTrackingSidebarBtn;
-                
+                const activeBtn = importReportShippedBtn || importReportSidebarBtn;
                 try {
                     if (activeBtn) {
                         activeBtn.disabled = true;
-                        activeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                        activeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing…';
                     }
-                    
+                    showShippingPageOverlay('Importing FedEx shipment report…');
                     const response = await fetch('/lori_automation/upload_tracking', {
                         method: 'POST',
                         body: formData,
                         credentials: 'same-origin'
                     });
-                    
                     const data = await response.json();
-                    
                     if (data.success) {
-                        alert(data.message);
-                        window.loadAndRenderOrders(); // Reload orders to show updated tracking
+                        showToast(data.message || 'Import complete', 'success', 6000);
+                        if (typeof window.loadAndRenderOrders === 'function') {
+                            await window.loadAndRenderOrders();
+                        }
                     } else {
-                        alert('Error: ' + (data.error || 'Upload failed'));
+                        showToast(data.error || 'Import failed', 'error');
                     }
                 } catch (error) {
-                    console.error('Upload error:', error);
-                    alert('Error uploading tracking file: ' + error.message);
+                    console.error('Import tracking report error:', error);
+                    showToast('Import failed: ' + error.message, 'error');
                 } finally {
+                    hideShippingPageOverlay();
                     if (activeBtn) {
                         activeBtn.disabled = false;
-                        activeBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Tracking';
+                        activeBtn.innerHTML = activeBtn.id.includes('sidebar')
+                            ? '<i class="fas fa-file-excel"></i> Import FedEx Report'
+                            : '<i class="fas fa-file-excel"></i> Import Report';
                     }
-                    trackingFileInput.value = ''; // Reset file input
+                    trackingFileInput.value = '';
                 }
             });
         }
@@ -4121,24 +4274,6 @@
                 } finally {
                     downloadTrackingBtn.disabled = false;
                     downloadTrackingBtn.innerHTML = '<i class="fas fa-download"></i> Download Tracking Info';
-                }
-            });
-        }
-
-        // Submit Tracking Number button
-        const submitTrackingBtn = document.getElementById('submit-tracking-btn');
-        if (submitTrackingBtn) {
-            submitTrackingBtn.addEventListener('click', function() {
-                submitTrackingNumber();
-            });
-        }
-
-        // Allow Enter key to submit tracking
-        const trackingInput = document.getElementById('tracking-input');
-        if (trackingInput) {
-            trackingInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    submitTrackingNumber();
                 }
             });
         }
@@ -4561,20 +4696,6 @@
                 } else {
                     console.log('Delete button is disabled, ignoring click');
                 }
-            }
-
-            // Handle Add Tracking button clicks
-            if (e.target.closest('.add-tracking-btn')) {
-                const poNumber = e.target.closest('.add-tracking-btn').getAttribute('data-po');
-                openAddTrackingModal(poNumber);
-            }
-
-            // Handle Edit Tracking button clicks
-            if (e.target.closest('.edit-tracking-btn')) {
-                const editBtn = e.target.closest('.edit-tracking-btn');
-                const poNumber = editBtn.getAttribute('data-po');
-                const currentTracking = editBtn.getAttribute('data-tracking') || '';
-                openAddTrackingModal(poNumber, currentTracking);
             }
         });
 

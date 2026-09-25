@@ -21,7 +21,7 @@ class RewriteHtmlCsrfMetaTests(unittest.TestCase):
         self.assertIn('content="live-session-token"', out)
         self.assertNotIn("baked-worker-token", out)
         self.assertEqual(out.count("live-session-token"), 1)
-        self.assertIn("/static/js/fdc-csrf.js?v=2", out)
+        self.assertIn("/static/js/fdc-csrf.js?v=3", out)
 
     def test_replaces_content_then_name_meta(self):
         html = '<meta content="old" name="csrf-token">'
@@ -33,7 +33,7 @@ class RewriteHtmlCsrfMetaTests(unittest.TestCase):
         html = "<html><head><title>x</title></head><body></body></html>"
         out = rewrite_html_csrf_meta(html, "fresh")
         self.assertIn('<meta name="csrf-token" content="fresh">', out)
-        self.assertIn("/static/js/fdc-csrf.js?v=2", out)
+        self.assertIn("/static/js/fdc-csrf.js?v=3", out)
         self.assertLess(out.index("csrf-token"), out.lower().index("</head>"))
 
     def test_rewrites_hidden_form_fields(self):
@@ -52,8 +52,34 @@ class RewriteHtmlCsrfMetaTests(unittest.TestCase):
             '<meta name="csrf-token" content="old">' + html,
             "new",
         )
-        self.assertIn('src="/static/js/fdc-csrf.js?v=2"', out)
+        self.assertIn('src="/static/js/fdc-csrf.js?v=3"', out)
         self.assertEqual(out.count("fdc-csrf.js"), 1)
+
+
+class ListCreatorCsrfTests(unittest.TestCase):
+    def test_descriptions_gate_posts_csrf_token(self):
+        html = (ROOT / "templates" / "V7_Listcreator_descriptions_gate.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("{% include '_csrf.html' %}", html)
+        self.assertIn('name="csrf_token"', html)
+        self.assertIn("v7_listcreator.update_descriptions", html)
+
+    def test_snapshot_description_form_posts_csrf_token(self):
+        html = (ROOT / "templates" / "V7_Listcreator.html").read_text(encoding="utf-8")
+        form_at = html.index("v7_listcreator.update_descriptions")
+        snippet = html[form_at:form_at + 400]
+        self.assertIn('name="csrf_token"', snippet)
+
+    def test_update_email_posts_csrf_token(self):
+        html = (ROOT / "templates" / "update_email.html").read_text(encoding="utf-8")
+        self.assertIn("{% include '_csrf.html' %}", html)
+        self.assertIn('name="csrf_token"', html)
+
+    def test_fdc_csrf_js_patches_native_form_submit(self):
+        js = (ROOT / "static" / "js" / "fdc-csrf.js").read_text(encoding="utf-8")
+        self.assertIn("HTMLFormElement.prototype.submit", js)
+        self.assertIn("patchedSubmit", js)
 
 
 class ProductDetailCsrfTests(unittest.TestCase):

@@ -41,6 +41,7 @@ google_oauth_credentials.json
 google_sheets_token.json
 credentials/
 data/4seller_cookie_cache.json
+data/4seller_mfa_state.json
 .vscode/
 
 # Local env mirror for NSSM / Turnstile (may contain secrets; loaded by app.py)

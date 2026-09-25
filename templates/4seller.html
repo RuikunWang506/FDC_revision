@@ -276,6 +276,28 @@
                 min-width: 100%;
             }
         }
+
+        .mfa-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 30, 55, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .mfa-overlay[hidden] {
+            display: none;
+        }
+
+        .mfa-dialog {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 22px;
+            width: min(380px, 92vw);
+            box-shadow: 0 12px 40px rgba(20, 30, 55, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -387,6 +409,26 @@
 
     {% include 'footer.html' %}
 
+    <div id="mfaOverlay" class="mfa-overlay" hidden>
+        <form id="mfaForm" class="mfa-dialog" autocomplete="off">
+            <h5 class="mb-2">4Seller verification code</h5>
+            <p class="mb-1 small">
+                4Seller emailed a login code<span id="mfaEmailHint"></span>. Type it here.
+            </p>
+            <p id="mfaImapStatus" class="mb-2 small text-muted"></p>
+            <input id="mfaCodeInput" class="form-control form-control-lg text-center mb-2" inputmode="numeric"
+                   maxlength="10" placeholder="Enter code" required>
+            <div id="mfaMessage" class="small mb-2"></div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span id="mfaCountdown" class="small text-muted"></span>
+                <div>
+                    <button type="button" id="mfaHideBtn" class="btn btn-outline-secondary btn-sm">Hide</button>
+                    <button type="submit" id="mfaSubmitBtn" class="btn btn-primary btn-sm">Submit code</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <script id="hasCookieCacheData" type="application/json">{{ has_cookie_cache|tojson }}</script>
     <script id="autoLoginConfiguredData" type="application/json">{{ auto_login_configured|tojson }}</script>
     <script>
@@ -399,6 +441,110 @@
         const loginStatusValue = document.getElementById('loginStatusValue');
         const loginStatusDetail = document.getElementById('loginStatusDetail');
         const refreshSessionStatusBtn = document.getElementById('refreshSessionStatusBtn');
+
+        const mfaOverlay = document.getElementById('mfaOverlay');
+        const mfaForm = document.getElementById('mfaForm');
+        const mfaCodeInput = document.getElementById('mfaCodeInput');
+        const mfaMessage = document.getElementById('mfaMessage');
+        const mfaEmailHint = document.getElementById('mfaEmailHint');
+        const mfaCountdown = document.getElementById('mfaCountdown');
+        const mfaImapStatus = document.getElementById('mfaImapStatus');
+        const mfaSubmitBtn = document.getElementById('mfaSubmitBtn');
+        let mfaWatchers = 0;
+        let mfaPollTimer = null;
+        let mfaDismissed = false;
+
+        function setMfaMessage(text, tone) {
+            mfaMessage.textContent = text || '';
+            mfaMessage.className = 'small mb-2' + (tone ? ' text-' + tone : '');
+        }
+
+        function hideMfaPrompt() {
+            mfaOverlay.hidden = true;
+            mfaCodeInput.value = '';
+            mfaSubmitBtn.disabled = false;
+            setMfaMessage('');
+            mfaDismissed = false;
+        }
+
+        async function pollMfaStatus() {
+            let data;
+            try {
+                const response = await fetch('/4seller/mfa-status');
+                data = await response.json();
+            } catch (err) {
+                return;
+            }
+            if (!data || !data.pending) {
+                if (!mfaOverlay.hidden) {
+                    hideMfaPrompt();
+                }
+                return;
+            }
+            mfaEmailHint.textContent = data.email_hint ? ` to ${data.email_hint}` : '';
+            mfaCountdown.textContent = `${Math.max(0, data.seconds_left)}s left`;
+            mfaImapStatus.textContent = data.imap_status || '';
+            mfaImapStatus.className = 'mb-2 small ' + (data.imap_ok ? 'text-success' : 'text-warning');
+            if (data.code_submitted) {
+                setMfaMessage('Verifying code with 4Seller…', 'primary');
+                mfaSubmitBtn.disabled = true;
+            } else {
+                mfaSubmitBtn.disabled = false;
+                if (data.error) {
+                    setMfaMessage(data.error, 'danger');
+                }
+            }
+            if (mfaOverlay.hidden && !mfaDismissed) {
+                mfaOverlay.hidden = false;
+                mfaCodeInput.focus();
+            }
+        }
+
+        async function withMfaWatch(task) {
+            mfaWatchers += 1;
+            if (!mfaPollTimer) {
+                mfaPollTimer = setInterval(pollMfaStatus, 2000);
+            }
+            try {
+                return await task();
+            } finally {
+                mfaWatchers -= 1;
+                if (mfaWatchers === 0) {
+                    clearInterval(mfaPollTimer);
+                    mfaPollTimer = null;
+                    hideMfaPrompt();
+                }
+            }
+        }
+
+        document.getElementById('mfaHideBtn').addEventListener('click', () => {
+            mfaDismissed = true;
+            mfaOverlay.hidden = true;
+        });
+
+        mfaForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const code = mfaCodeInput.value.replace(/\s+/g, '');
+            if (!code) {
+                return;
+            }
+            mfaSubmitBtn.disabled = true;
+            try {
+                const response = await fetch('/4seller/mfa-code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code}),
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Could not submit code');
+                }
+                setMfaMessage(data.message, 'primary');
+            } catch (err) {
+                setMfaMessage(err.message, 'danger');
+                mfaSubmitBtn.disabled = false;
+            }
+        });
 
         function setStatusLine(valueEl, detailEl, {text, detail, tone}) {
             valueEl.textContent = text;
@@ -528,11 +674,11 @@
                     tone: 'checking',
                 });
 
-                const warmResponse = await fetch('/4seller/warm-session', {
+                const warmResponse = await withMfaWatch(() => fetch('/4seller/warm-session', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: '{}',
-                });
+                }));
                 const warmData = await warmResponse.json();
                 if (!warmResponse.ok || !warmData.success) {
                     throw new Error(warmData.message || 'Warm session failed');
@@ -574,16 +720,20 @@
         }
 
         async function tryRefreshCookie() {
-            const response = await fetch('/4seller/refresh-cookie', {
+            const response = await withMfaWatch(() => fetch('/4seller/refresh-cookie', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: '{}',
-            });
+            }));
             const data = await response.json();
             return response.ok && data.success;
         }
 
-        async function postWithCookieRetry(url, payload) {
+        function postWithCookieRetry(url, payload) {
+            return withMfaWatch(() => postWithCookieRetryInner(url, payload));
+        }
+
+        async function postWithCookieRetryInner(url, payload) {
             let body = {...payload};
             if (!hasCookieCacheLive || getCookieInputValue()) {
                 body.cookie = getCookieInputValue();

@@ -224,6 +224,13 @@ except Exception:
     pass
 
 try:
+    from py.Toolkits.V7listcreator import start_weekly_workbook_scheduler
+
+    start_weekly_workbook_scheduler(app)
+except Exception:
+    pass
+
+try:
     log_event(
         'info',
         f'🟣 SYSTEM Flask app process started pid={os.getpid()} cwd={os.getcwd()} argv={sys.argv!r}',

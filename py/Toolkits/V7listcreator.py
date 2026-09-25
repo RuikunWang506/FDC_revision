@@ -30,6 +30,7 @@ from urllib.parse import quote, unquote
 import mysql.connector
 from mysql.connector import Error
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
@@ -2606,44 +2607,30 @@ def get_sql_data(style_list):
     # Debug logging
     
     # Modify the query to handle exact matching for base styles
+    # Resolve matching PROD_CDs into an indexed temp table first, then join once. Temp columns are
+    # VARCHAR (inv columns are CHAR) so comparisons stay index-friendly — NVARCHAR here was ~15x slower.
     query = """
+    SET NOCOUNT ON;
     DECLARE @AltCDList NVARCHAR(MAX) = ?;
     DECLARE @ExactStyles NVARCHAR(MAX) = ?;
-    DECLARE @ProductList NVARCHAR(MAX) = '';
+    IF OBJECT_ID('tempdb..#lc_pat') IS NOT NULL DROP TABLE #lc_pat;
+    IF OBJECT_ID('tempdb..#lc_exact') IS NOT NULL DROP TABLE #lc_exact;
+    IF OBJECT_ID('tempdb..#lc_prod') IS NOT NULL DROP TABLE #lc_prod;
+    CREATE TABLE #lc_pat (v VARCHAR(200) COLLATE DATABASE_DEFAULT);
+    CREATE TABLE #lc_exact (v VARCHAR(200) COLLATE DATABASE_DEFAULT);
+    CREATE TABLE #lc_prod (p VARCHAR(50) COLLATE DATABASE_DEFAULT PRIMARY KEY);
 
-    -- For styles with suffix, use LIKE with wildcards
-    IF LEN(@AltCDList) > 0
-    BEGIN
-        SET @AltCDList = REPLACE(@AltCDList, ',', '%,') + '%';
-        WITH SplitAltCD AS (
-            SELECT value
-            FROM dbo.SplitString(@AltCDList, ',')
-        )
-        SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
-        FROM dbo.inv
-        WHERE EXISTS (SELECT 1 FROM SplitAltCD WHERE alt_CD LIKE value);
-    END
+    -- Styles with suffix: alt_CD LIKE 'STYLE%'
+    INSERT INTO #lc_pat (v) SELECT value + '%' FROM dbo.SplitString(@AltCDList, ',') WHERE value <> '';
+    -- Base styles: exact alt_CD (or PROD_CD) match
+    INSERT INTO #lc_exact (v) SELECT value FROM dbo.SplitString(@ExactStyles, ',') WHERE value <> '';
 
-    -- For exact base styles, use exact matching
-    IF LEN(@ExactStyles) > 0
-    BEGIN
-        WITH SplitExact AS (
-            SELECT value
-            FROM dbo.SplitString(@ExactStyles, ',')
-        )
-        SELECT @ProductList = COALESCE(@ProductList + ',', '') + PROD_CD
-        FROM dbo.inv
-        WHERE EXISTS (SELECT 1 FROM SplitExact WHERE alt_CD = value);
-    END
+    INSERT INTO #lc_prod (p)
+    SELECT DISTINCT i.PROD_CD
+    FROM dbo.inv AS i
+    WHERE EXISTS (SELECT 1 FROM #lc_pat WHERE i.alt_CD LIKE #lc_pat.v)
+       OR EXISTS (SELECT 1 FROM #lc_exact WHERE i.alt_CD = #lc_exact.v OR i.PROD_CD = #lc_exact.v);
 
-    -- If we have products to query
-    IF LEN(@ProductList) > 0 OR LEN(@ExactStyles) > 0
-    BEGIN
-        WITH SplitValues AS (
-            SELECT value
-            FROM dbo.SplitString(COALESCE(@ProductList, '') + CASE WHEN LEN(@ProductList) > 0 AND LEN(@ExactStyles) > 0 THEN ',' ELSE '' END + COALESCE(@ExactStyles, ''), ',')
-            WHERE value <> ''
-        )
         SELECT 
             i.PROD_CD AS SKU,
             i.ALT_CD AS SKU_no_color,
@@ -2677,9 +2664,7 @@ def get_sql_data(style_list):
                 CAST(YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', CREATE_DT) - 81088, '20230101')) AS VARCHAR) AS create_dt
             FROM wm_skufile where wm_skufile.WHS_NUM = '01'
         ) AS fcd ON i.PROD_CD = fcd.prod_cd
-        WHERE i.PROD_CD IN (SELECT value FROM SplitValues)
-        OR i.ALT_CD IN (SELECT value FROM dbo.SplitString(@ExactStyles, ','));
-    END
+        INNER JOIN #lc_prod AS lp ON lp.p = i.PROD_CD;
     """
     
     queries = []
@@ -3174,61 +3159,86 @@ def get_images_from_dropbox(dropbox_path):
     
     return image_paths
 
-def get_images_for_selection(sku_list):
-    image_urls = {}
+def _catalog_assets_by_sku_patterns(patterns, chunk_size=100):
+    """Batched equivalent of search_assets_by_sku_pattern(p, 'catalog_original') for many patterns.
+    Returns {pattern: [assets ordered by sku, version]}."""
+    from sqlalchemy import or_
+    ImageAsset = py.utilities.models.ImageAsset
+    unique = list(dict.fromkeys(p.upper() for p in patterns if p))
+    found = {}
+    db = py.utilities.models.SessionLocal()
+    try:
+        for i in range(0, len(unique), chunk_size):
+            chunk = unique[i:i + chunk_size]
+            rows = db.query(ImageAsset).filter(
+                or_(*[ImageAsset.sku.ilike(f'%{p}%') for p in chunk]),
+                ImageAsset.is_active == True,
+                ImageAsset.source == 'catalog_original',
+            ).all()
+            for a in rows:
+                found[a.id] = a
+    finally:
+        db.close()
+    assets = sorted(found.values(), key=lambda a: ((a.sku or '').upper(), a.version or 0))
+    return {p: [a for a in assets if p in (a.sku or '').upper()] for p in unique}
 
+
+def get_images_for_selection(sku_list):
+    from py.utilities.dam_utils import get_asset_url
+
+    image_urls = {}
+    patterns_by_sku = []
     for sku in sku_list:
         try:
             # Standard (L1343) or extended (TBDBN3602) prefix + 4 digits, optional dash suffix
             base_match = re.match(r'([A-Za-z]{1,2}\d{4})(?:-[A-Za-z0-9]+)?', sku)
             if not base_match:
                 base_match = re.match(r'([A-Za-z]{3,}\d{4})(?:-[A-Za-z0-9]+)?', sku)
-            if base_match:
-                base_sku = base_match.group(1).upper()  # Base SKU without suffix
-                full_sku = sku.upper()  # Full SKU including any suffix
-                
-                image_set = []
-                
-                # Use DAM system to find assets for this SKU
-                from py.utilities.dam_utils import search_assets_by_sku_pattern, get_asset_url
-                import py.utilities.models
-                
-                # Search for assets matching the full SKU - only catalog_original source for V7 list creator
-                matching_assets = search_assets_by_sku_pattern(full_sku, source_filter='catalog_original')
-                
-                # Also search for no-dash version if SKU contains dash
-                if '-' in full_sku:
-                    no_dash_sku = full_sku.replace('-', '')
-                    matching_assets.extend(search_assets_by_sku_pattern(no_dash_sku, source_filter='catalog_original'))
-                
-                # Also search for dash version if SKU doesn't contain dash
-                if '-' not in full_sku and len(full_sku) > len(base_sku):
-                    suffix = full_sku[len(base_sku):]
-                    dash_sku = f"{base_sku}-{suffix}"
-                    matching_assets.extend(search_assets_by_sku_pattern(dash_sku, source_filter='catalog_original'))
-                
-                # Remove duplicates by asset ID
-                unique_assets = {}
-                for asset in matching_assets:
-                    unique_assets[asset.id] = asset
-                matching_assets = list(unique_assets.values())
-                
-                # Sort by canonical first, then by version
-                matching_assets.sort(key=lambda x: (not x.is_canonical, x.version))
-                
-                # Convert assets to image_set format
-                for i, asset in enumerate(matching_assets):
-                    image_set.append({
-                        'filename': asset.filename,
-                        'path': get_asset_url(asset.id, width=150),  # Default thumbnail size
-                        'fullsize_path': get_asset_url(asset.id),  # Full size for enlargement
-                        'asset_id': asset.id,
-                        'default': asset.is_canonical or (i == 0 and not any(a.is_canonical for a in matching_assets))
-                    })
+            if not base_match:
+                continue
+            base_sku = base_match.group(1).upper()  # Base SKU without suffix
+            full_sku = sku.upper()  # Full SKU including any suffix
+            # Full SKU, plus the no-dash / dash variant of a suffixed SKU
+            patterns = [full_sku]
+            if '-' in full_sku:
+                patterns.append(full_sku.replace('-', ''))
+            elif len(full_sku) > len(base_sku):
+                patterns.append(f"{base_sku}-{full_sku[len(base_sku):]}")
+            patterns_by_sku.append((full_sku, patterns))
+        except UnicodeEncodeError:
+            continue
 
-                # Add SKU and its images to the dictionary
-                if image_set:  # Only include SKUs that have images
-                    image_urls[full_sku] = sorted(image_set, key=lambda x: x['filename'])  # Sort by filename for consistency
+    assets_by_pattern = _catalog_assets_by_sku_patterns(
+        [p for _, patterns in patterns_by_sku for p in patterns]
+    )
+
+    for full_sku, patterns in patterns_by_sku:
+        try:
+            image_set = []
+            matching_assets = [a for p in patterns for a in assets_by_pattern.get(p, [])]
+
+            # Remove duplicates by asset ID
+            unique_assets = {}
+            for asset in matching_assets:
+                unique_assets[asset.id] = asset
+            matching_assets = list(unique_assets.values())
+
+            # Sort by canonical first, then by version
+            matching_assets.sort(key=lambda x: (not x.is_canonical, x.version))
+
+            # Convert assets to image_set format
+            for i, asset in enumerate(matching_assets):
+                image_set.append({
+                    'filename': asset.filename,
+                    'path': get_asset_url(asset.id, width=150),  # Default thumbnail size
+                    'fullsize_path': get_asset_url(asset.id),  # Full size for enlargement
+                    'asset_id': asset.id,
+                    'default': asset.is_canonical or (i == 0 and not any(a.is_canonical for a in matching_assets))
+                })
+
+            # Add SKU and its images to the dictionary
+            if image_set:  # Only include SKUs that have images
+                image_urls[full_sku] = sorted(image_set, key=lambda x: x['filename'])  # Sort by filename for consistency
 
         except UnicodeEncodeError:
             continue
@@ -3704,46 +3714,8 @@ def export_images():
     
     memory_file = BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zf:
-        for item in image_paths:
-            style = item['style']
-            image_path = item['path']
-            
-            if '/image/' in image_path:
-                # DAM system URL - extract asset ID
-                asset_id_match = re.search(r'/image/(\d+)/', image_path)
-                if asset_id_match:
-                    asset_id = int(asset_id_match.group(1))
-                    db = py.utilities.models.SessionLocal()
-                    try:
-                        asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
-                        full_path = asset.path if asset else None
-                    finally:
-                        db.close()
-                else:
-                    full_path = None
-            elif '/list_image/' in image_path:
-                # Legacy path format - get filename and find in DAM
-                filename = re.sub(r'/list_image/', '', image_path)
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                        filename=filename, is_active=True
-                    ).first()
-                    full_path = asset.path if asset else None
-                finally:
-                    db.close()
-            else:
-                # Handle dropbox path
-                full_path = image_path
-                
-            if os.path.exists(full_path):
-                if image_size != 'full':
-                    img_buffer = resize_image(full_path, int(image_size))
-                    img_buffer.seek(0)  # Important: Reset buffer position
-                    zf.writestr(f"{style}.jpg", img_buffer.getvalue())
-                else:
-                    with open(full_path, 'rb') as img_file:
-                        zf.writestr(f"{style}.jpg", img_file.read())
+        for style, img_buffer in _load_export_request_images(image_paths, image_size):
+            zf.writestr(f"{style}.jpg", img_buffer.getvalue())
     
     memory_file.seek(0)
     return send_file(
@@ -3797,6 +3769,70 @@ def _resolve_listcreator_image_path(image_filename):
     return image_path
 
 
+EXPORT_IMAGE_WORKERS = max(1, int(os.environ.get('V7_EXPORT_IMAGE_WORKERS', '8')))
+
+
+def _export_parallel_map(fn, items):
+    """Run fn over items on a thread pool inside the app context; results keep input order."""
+    items = list(items)
+    if len(items) <= 1 or EXPORT_IMAGE_WORKERS == 1:
+        return [fn(x) for x in items]
+    app = current_app._get_current_object()
+
+    def run(x):
+        with app.app_context():
+            return fn(x)
+
+    with ThreadPoolExecutor(max_workers=min(EXPORT_IMAGE_WORKERS, len(items))) as pool:
+        return list(pool.map(run, items))
+
+
+def _resolve_export_request_image_path(image_path):
+    """Resolve an imagePaths[].path from the PDF / ZIP export requests to a file on disk."""
+    full_path = None
+    if '/image/' in image_path:
+        asset_id_match = re.search(r'/image/(\d+)/', image_path)
+        if asset_id_match:
+            db = py.utilities.models.SessionLocal()
+            try:
+                asset = db.query(py.utilities.models.ImageAsset).filter_by(id=int(asset_id_match.group(1))).first()
+                full_path = asset.path if asset else None
+            finally:
+                db.close()
+    elif '/list_image/' in image_path:
+        filename = re.sub(r'/list_image/', '', image_path)
+        db = py.utilities.models.SessionLocal()
+        try:
+            asset = db.query(py.utilities.models.ImageAsset).filter_by(
+                filename=filename, is_active=True
+            ).first()
+            full_path = asset.path if asset else None
+        finally:
+            db.close()
+    else:
+        full_path = image_path
+    if full_path and os.path.exists(full_path):
+        return full_path
+    return None
+
+
+def _load_export_request_images(image_paths, image_size):
+    """Return [(style, BytesIO)] for PDF / ZIP exports, resized unless image_size is 'full'."""
+    def load(item):
+        full_path = _resolve_export_request_image_path(item['path'])
+        if not full_path:
+            return None
+        if image_size != 'full':
+            buf = resize_image(full_path, int(image_size))
+        else:
+            with open(full_path, 'rb') as img_file:
+                buf = BytesIO(img_file.read())
+        buf.seek(0)
+        return item['style'], buf
+
+    return [r for r in _export_parallel_map(load, image_paths) if r is not None]
+
+
 def _populate_export_list_sheet(sheet, data, processing_image_size, removed_columns, embed_width=200, embed_height=150):
     """Fill one worksheet with the same layout as the standard Export List."""
     sheet.freeze_panes = 'A2'
@@ -3818,18 +3854,20 @@ def _populate_export_list_sheet(sheet, data, processing_image_size, removed_colu
 
     sheet.append(headers)
 
-    for item in data:
+    def prepare_image(item):
+        image_fs = _resolve_listcreator_image_path(item['image'])
+        if image_fs is None:
+            return None
+        if processing_image_size is not None:
+            return resize_image(image_fs, processing_image_size)
+        return image_fs
+
+    display_images = _export_parallel_map(prepare_image, data)
+
+    for item, display_image_src in zip(data, display_images):
         style = item['style']
         description = item['description']
-        image_filename = item['image']
         price = item['price']
-        image_fs = _resolve_listcreator_image_path(image_filename)
-        display_image_src = None
-        if image_fs is not None:
-            if processing_image_size is not None:
-                display_image_src = resize_image(image_fs, processing_image_size)
-            else:
-                display_image_src = image_fs
 
         rows = item['rows']
         if not rows:
@@ -3995,54 +4033,103 @@ def export_workbook():
         current_user = session.get('username', 'export')
         app = current_app._get_current_object()
         slug = _workbook_user_slug(current_user)
-        _workbook_sweep_stale_running_jobs(app, slug)
-        try:
-            os.makedirs(app.instance_path, exist_ok=True)
-        except OSError:
-            pass
-        os.makedirs(os.path.join(app.instance_path, 'workbook_exports'), exist_ok=True)
-
-        job_id = uuid.uuid4().hex
-        now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
-
-        with _workbook_manifest_lock:
-            manifest = _workbook_load_manifest(app, slug)
-            jobs = manifest.get('jobs') or []
-            while len(jobs) >= WORKBOOK_EXPORT_HISTORY_MAX:
-                dropped = jobs.pop()
-                _workbook_delete_disk_file(app, slug, dropped)
-            edition = int(manifest.get('edition_counter', 0)) + 1
-            manifest['edition_counter'] = edition
-            entry = {
-                'id': job_id,
-                'status': 'running',
-                'edition': edition,
-                'created_at': now,
-                'download_name': None,
-                'error': None,
-                'file': None,
-            }
-            jobs.insert(0, entry)
-            manifest['jobs'] = jobs
-            _workbook_save_manifest(app, slug, manifest)
-
-        payload = dict(request_data)
-        threading.Thread(
-            target=_workbook_export_worker,
-            args=(app, slug, job_id, payload, current_user),
-            daemon=True,
-            name=f'workbook-export-{job_id[:8]}',
-        ).start()
-
+        job_id, edition, jobs = _workbook_queue_job(app, slug, dict(request_data), current_user)
         return jsonify({
             'ok': True,
             'jobId': job_id,
             'edition': edition,
-            'jobs': _workbook_jobs_public(manifest['jobs']),
+            'jobs': _workbook_jobs_public(jobs),
         })
     except Exception as e:
         current_app.logger.exception(f'Error queueing export_workbook: {e}')
         return jsonify({"error": "Could not queue export"}), 500
+
+
+def _workbook_queue_job(app, slug, payload, current_user):
+    """Add a running job to the slug's manifest (keeping the last WORKBOOK_EXPORT_HISTORY_MAX)
+    and start the export thread. Returns (job_id, edition, jobs)."""
+    _workbook_sweep_stale_running_jobs(app, slug)
+    os.makedirs(os.path.join(app.instance_path, 'workbook_exports'), exist_ok=True)
+
+    job_id = uuid.uuid4().hex
+    now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+
+    with _workbook_manifest_lock:
+        manifest = _workbook_load_manifest(app, slug)
+        jobs = manifest.get('jobs') or []
+        while len(jobs) >= WORKBOOK_EXPORT_HISTORY_MAX:
+            dropped = jobs.pop()
+            _workbook_delete_disk_file(app, slug, dropped)
+        edition = int(manifest.get('edition_counter', 0)) + 1
+        manifest['edition_counter'] = edition
+        jobs.insert(0, {
+            'id': job_id,
+            'status': 'running',
+            'edition': edition,
+            'created_at': now,
+            'download_name': None,
+            'error': None,
+            'file': None,
+        })
+        manifest['jobs'] = jobs
+        _workbook_save_manifest(app, slug, manifest)
+
+    threading.Thread(
+        target=_workbook_export_worker,
+        args=(app, slug, job_id, payload, current_user),
+        daemon=True,
+        name=f'workbook-export-{job_id[:8]}',
+    ).start()
+    return job_id, edition, jobs
+
+
+# secure_filename() strips leading underscores, so no username can map to this slug.
+WEEKLY_WORKBOOK_SLUG = '_weekly_auto'
+WEEKLY_WORKBOOK_USER = 'weekly-auto (Sunday 8 AM)'
+WEEKLY_WORKBOOK_TZ = os.environ.get('V7_WEEKLY_WORKBOOK_TZ', 'America/Los_Angeles')
+WEEKLY_WORKBOOK_HOUR = int(os.environ.get('V7_WEEKLY_WORKBOOK_HOUR', '8'))
+_weekly_workbook_started = False
+
+
+def _weekly_workbook_tick(app):
+    now = datetime.datetime.now(ZoneInfo(WEEKLY_WORKBOOK_TZ))
+    if now.weekday() != 6 or now.hour < WEEKLY_WORKBOOK_HOUR:
+        return
+    user_dir = _workbook_user_dir(app, WEEKLY_WORKBOOK_SLUG)
+    claim = os.path.join(user_dir, f'claim-{now.date().isoformat()}')
+    try:
+        # O_EXCL claim: one run per Sunday even across restarts or a dev-reloader parent+child.
+        os.close(os.open(claim, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+    except FileExistsError:
+        return
+    for name in os.listdir(user_dir):
+        if name.startswith('claim-') and name != os.path.basename(claim):
+            try:
+                os.remove(os.path.join(user_dir, name))
+            except OSError:
+                pass
+    payload = {'exportData': [], 'list_input': '', 'includeFullCatalog': True, 'removedColumns': {}}
+    with app.app_context():
+        job_id, edition, _ = _workbook_queue_job(app, WEEKLY_WORKBOOK_SLUG, payload, WEEKLY_WORKBOOK_USER)
+        app.logger.info('weekly workbook export queued job_id=%s edition=%s', job_id, edition)
+
+
+def start_weekly_workbook_scheduler(app):
+    """Queue the "All styles with any stock" workbook every Sunday at WEEKLY_WORKBOOK_HOUR (local TZ)."""
+    global _weekly_workbook_started
+    if _weekly_workbook_started or os.environ.get('V7_WEEKLY_WORKBOOK_DISABLED', '').strip() in ('1', 'true'):
+        return
+    _weekly_workbook_started = True
+
+    def _loop():
+        while True:
+            try:
+                _weekly_workbook_tick(app)
+            except Exception:
+                app.logger.exception('weekly workbook scheduler tick failed')
+            time.sleep(300)
+
+    threading.Thread(target=_loop, daemon=True, name='v7-weekly-workbook').start()
 
 
 @v7_listcreator_bp.route('/export_workbook/jobs', methods=['GET'])
@@ -4052,8 +4139,13 @@ def export_workbook_jobs():
     app = current_app._get_current_object()
     slug = _workbook_user_slug(current_user)
     _workbook_sweep_stale_running_jobs(app, slug)
+    _workbook_sweep_stale_running_jobs(app, WEEKLY_WORKBOOK_SLUG)
     manifest = _workbook_load_manifest(app, slug)
-    return jsonify({'jobs': _workbook_jobs_public(manifest.get('jobs') or [])})
+    weekly = _workbook_load_manifest(app, WEEKLY_WORKBOOK_SLUG)
+    return jsonify({
+        'jobs': _workbook_jobs_public(manifest.get('jobs') or []),
+        'weekly_jobs': _workbook_jobs_public(weekly.get('jobs') or []),
+    })
 
 
 @v7_listcreator_bp.route('/export_workbook/download/<job_id>', methods=['GET'])
@@ -4066,6 +4158,10 @@ def export_workbook_download(job_id):
     slug = _workbook_user_slug(current_user)
     manifest = _workbook_load_manifest(app, slug)
     job = next((j for j in manifest.get('jobs', []) if j.get('id') == job_id), None)
+    if not job:
+        slug = WEEKLY_WORKBOOK_SLUG
+        manifest = _workbook_load_manifest(app, slug)
+        job = next((j for j in manifest.get('jobs', []) if j.get('id') == job_id), None)
     if not job:
         return jsonify({'error': 'Not found'}), 404
     if job.get('status') != 'ready':
@@ -4087,50 +4183,10 @@ def export_pdf():
     image_size = request_data.get('imageSize')
     
     output_buffer = BytesIO()
-    image_data_list = []
-    selected_images = []
-    
-    for item in image_paths:
-        style = item['style']
-        image_path = item['path']
-        
-        if '/image/' in image_path:
-            # DAM system URL - extract asset ID
-            asset_id_match = re.search(r'/image/(\d+)/', image_path)
-            if asset_id_match:
-                asset_id = int(asset_id_match.group(1))
-                db = py.utilities.models.SessionLocal()
-                try:
-                    asset = db.query(py.utilities.models.ImageAsset).filter_by(id=asset_id).first()
-                    full_path = asset.path if asset else None
-                finally:
-                    db.close()
-            else:
-                full_path = None
-        elif '/list_image/' in image_path:
-            # Legacy path format
-            filename = re.sub(r'/list_image/', '', image_path)
-            db = py.utilities.models.SessionLocal()
-            try:
-                asset = db.query(py.utilities.models.ImageAsset).filter_by(
-                    filename=filename, is_active=True
-                ).first()
-                full_path = asset.path if asset else None
-            finally:
-                db.close()
-        else:
-            # Handle dropbox path
-            full_path = image_path
-            
-        if os.path.exists(full_path):
-            if image_size != 'full':
-                img_buffer = resize_image(full_path, int(image_size))
-                image_data_list.append(img_buffer)
-            else:
-                with open(full_path, 'rb') as img_file:
-                    image_data_list.append(BytesIO(img_file.read()))
-            selected_images.append(f"{style}.jpg")
-    
+    loaded = _load_export_request_images(image_paths, image_size)
+    image_data_list = [buf for _, buf in loaded]
+    selected_images = [f"{style}.jpg" for style, _ in loaded]
+
     generate_catalog_pdf(image_data_list, output_buffer, image_size, selected_images)
     
     output_buffer.seek(0)

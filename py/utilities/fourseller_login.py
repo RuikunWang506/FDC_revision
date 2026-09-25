@@ -2,10 +2,16 @@
 from __future__ import annotations
 
 import base64
+import email
+import html as html_lib
+import imaplib
 import io
+import json
 import os
 import re
 import time
+from email.header import decode_header, make_header
+from email.message import Message
 from typing import Any
 
 import requests
@@ -16,6 +22,8 @@ LOGIN_URL = "https://www.4seller.com/api/user/login"
 VALIDATION_URL = "https://www.4seller.com/api/user/validation"
 LOGIN_PAGE = "https://www.4seller.com/en-US/login.html"
 USER_INIT_URL = "https://www.4seller.com/api/user/user-init"
+SEND_2FA_URL = "https://www.4seller.com/api/user/send-2fa-code"
+VERIFY_2FA_URL = "https://www.4seller.com/api/user/verify-2fa"
 
 # From 4Seller frontend (CiME1aIq.js) — AES key wrapper for password encryption.
 _ENCRYPTED_KEY_B64 = "EBgQzQB0hVxI+RhxY3OFDBn460YGh5AarqgEZecwBy4kVyHyRhuieabMBlCz11GU"
@@ -155,6 +163,258 @@ def _verify_logged_in(session: requests.Session) -> bool:
     return True
 
 
+def _mfa_mail_config() -> dict[str, Any]:
+    return {
+        "email": (os.getenv("4seller_MFA_email") or os.getenv("FOURSELLER_MFA_EMAIL") or "").strip(),
+        "password": (os.getenv("4seller_MFA_password") or os.getenv("FOURSELLER_MFA_PASSWORD") or "").strip(),
+        "server": os.getenv("FOURSELLER_MFA_IMAP_SERVER", "imap.gmail.com").strip() or "imap.gmail.com",
+        "port": int(os.getenv("FOURSELLER_MFA_IMAP_PORT", "993") or 993),
+        "timeout": int(os.getenv("FOURSELLER_MFA_TIMEOUT", "180") or 180),
+    }
+
+
+def _imap_connect(cfg: dict[str, Any]) -> imaplib.IMAP4_SSL:
+    mail = imaplib.IMAP4_SSL(cfg["server"], cfg["port"])
+    mail.login(cfg["email"], cfg["password"])
+    mail.select("INBOX")
+    return mail
+
+
+def _imap_next_uid(cfg: dict[str, Any]) -> int:
+    """UIDNEXT of INBOX — any 2FA email that arrives after this call has uid >= the returned value."""
+    mail = _imap_connect(cfg)
+    try:
+        typ, data = mail.status("INBOX", "(UIDNEXT)")
+        if typ == "OK" and data and data[0]:
+            match = re.search(rb"UIDNEXT\s+(\d+)", data[0])
+            if match:
+                return int(match.group(1))
+        return 1
+    finally:
+        try:
+            mail.logout()
+        except Exception:
+            pass
+
+
+def _message_text(msg: Message) -> str:
+    parts: list[str] = []
+    for part in msg.walk() if msg.is_multipart() else [msg]:
+        ctype = part.get_content_type()
+        if ctype not in ("text/plain", "text/html"):
+            continue
+        try:
+            payload = part.get_payload(decode=True) or b""
+            text = payload.decode(part.get_content_charset() or "utf-8", errors="replace")
+        except Exception:
+            continue
+        if ctype == "text/html":
+            text = re.sub(r"(?is)<(script|style).*?</\1>", " ", text)
+            text = html_lib.unescape(re.sub(r"<[^>]+>", " ", text))
+        parts.append(text)
+    return re.sub(r"\s+", " ", " ".join(parts))
+
+
+def _extract_2fa_code(text: str) -> str:
+    near = re.search(r"(?i)(?:code|验证码)[^0-9A-Za-z]{0,40}(\d{4,8})\b", text)
+    if near:
+        return near.group(1)
+    six = re.search(r"\b(\d{6})\b", text)
+    return six.group(1) if six else ""
+
+
+def _scan_inbox_for_code(cfg: dict[str, Any], min_uid: int, seen: set[int]) -> str:
+    """One pass over new INBOX messages (uid >= min_uid); return a 4Seller verification code or ''."""
+    mail = _imap_connect(cfg)
+    try:
+        typ, data = mail.uid("search", None, f"UID {min_uid}:*")
+        uids = [int(u) for u in (data[0].split() if typ == "OK" and data and data[0] else [])]
+        for uid in sorted((u for u in uids if u >= min_uid and u not in seen), reverse=True):
+            seen.add(uid)
+            typ, msg_data = mail.uid("fetch", str(uid), "(RFC822)")
+            if typ != "OK" or not msg_data or not isinstance(msg_data[0], tuple):
+                continue
+            msg = email.message_from_bytes(msg_data[0][1])
+            sender = str(make_header(decode_header(msg.get("From", ""))))
+            subject = str(make_header(decode_header(msg.get("Subject", ""))))
+            body = _message_text(msg)
+            if "4seller" not in f"{sender} {subject} {body[:500]}".lower():
+                continue
+            code = _extract_2fa_code(f"{subject} {body}")
+            if code:
+                return code
+        return ""
+    finally:
+        try:
+            mail.logout()
+        except Exception:
+            pass
+
+
+# Shared between the login worker subprocess and the Flask app so the /4seller page can
+# show a code prompt while login waits, and hand a manually typed code back to the worker.
+MFA_STATE_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "4seller_mfa_state.json"
+)
+
+
+def _read_mfa_state() -> dict[str, Any]:
+    try:
+        with open(MFA_STATE_FILE, encoding="utf-8") as handle:
+            state = json.load(handle)
+        return state if isinstance(state, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_mfa_state(state: dict[str, Any] | None) -> None:
+    if state is None:
+        try:
+            os.remove(MFA_STATE_FILE)
+        except OSError:
+            pass
+        return
+    os.makedirs(os.path.dirname(MFA_STATE_FILE), exist_ok=True)
+    tmp = MFA_STATE_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as handle:
+        json.dump(state, handle)
+    os.replace(tmp, MFA_STATE_FILE)
+
+
+def get_mfa_status() -> dict[str, Any]:
+    """For the web UI: is a login currently waiting for a 2FA code?"""
+    state = _read_mfa_state()
+    expires_at = float(state.get("expires_at") or 0)
+    if not state or expires_at < time.time():
+        return {"pending": False}
+    return {
+        "pending": True,
+        "email_hint": state.get("email_hint", ""),
+        "seconds_left": int(expires_at - time.time()),
+        "error": state.get("error", ""),
+        "code_submitted": bool(state.get("manual_code")),
+        "imap_ok": bool(state.get("imap_ok")),
+        "imap_status": state.get("imap_status", ""),
+    }
+
+
+def submit_manual_mfa_code(code: str) -> bool:
+    code = re.sub(r"\s+", "", code or "")
+    state = _read_mfa_state()
+    if not code or not state or float(state.get("expires_at") or 0) < time.time():
+        return False
+    state["manual_code"] = code
+    state["error"] = ""
+    _write_mfa_state(state)
+    return True
+
+
+def _mask_email(value: str) -> str:
+    name, _, domain = (value or "").partition("@")
+    if not domain:
+        return ""
+    return f"{name[:2]}***@{domain}"
+
+
+def _complete_2fa(session: requests.Session, temp_token: str, account_email: str = "") -> dict[str, Any]:
+    """Request an email code, then accept whichever arrives first — the MFA mailbox (IMAP)
+    or a code typed on the /4seller page — and POST /api/user/verify-2fa."""
+    if not temp_token:
+        raise RuntimeError("4Seller asked for 2FA but returned no tempToken.")
+    cfg = _mfa_mail_config()
+    imap_enabled = bool(cfg["email"] and cfg["password"])
+
+    min_uid = 0
+    imap_status = "Automatic email reading is off (4seller_MFA_email / 4seller_MFA_password not set)."
+    if imap_enabled:
+        try:
+            min_uid = _imap_next_uid(cfg)
+            imap_status = f"Checking {_mask_email(cfg['email'])} for the code every 5s."
+        except Exception as exc:
+            imap_enabled = False
+            imap_status = f"Can't read {_mask_email(cfg['email'])}: {exc}"
+            if "AUTHENTICATIONFAILED" in str(exc).upper() or "Invalid credentials" in str(exc):
+                imap_status += " — Gmail needs a 16-character app password in 4seller_MFA_password."
+
+    resp = session.post(SEND_2FA_URL, data={"tempToken": temp_token}, timeout=30)
+    try:
+        sent = resp.json()
+    except ValueError:
+        sent = {}
+    if isinstance(sent, dict) and sent.get("code") not in (0, None) and sent.get("success") is not True:
+        raise RuntimeError(f"4Seller send-2fa-code failed: {sent.get('messages') or sent.get('msg') or sent}")
+
+    deadline = time.time() + cfg["timeout"]
+    _write_mfa_state(
+        {
+            "email_hint": _mask_email(account_email),
+            "expires_at": deadline,
+            "manual_code": "",
+            "error": "",
+            "imap_ok": imap_enabled,
+            "imap_status": imap_status,
+        }
+    )
+    seen: set[int] = set()
+    rejected: set[str] = set()
+    last_error = ""
+    next_imap = time.time() + 5
+    try:
+        while time.time() < deadline:
+            time.sleep(1)
+            code = str(_read_mfa_state().get("manual_code") or "")
+            if code in rejected:
+                code = ""
+            if not code and imap_enabled and time.time() >= next_imap:
+                next_imap = time.time() + 5
+                try:
+                    code = _scan_inbox_for_code(cfg, min_uid, seen)
+                except Exception:
+                    code = ""
+            if not code or code in rejected:
+                continue
+
+            resp = session.post(
+                VERIFY_2FA_URL,
+                json={"deviceId": _device_id(), "tempToken": temp_token, "emailCode": code},
+                timeout=30,
+            )
+            try:
+                data = resp.json()
+            except ValueError:
+                data = {"msg": resp.text[:300]}
+            if isinstance(data, dict) and (data.get("success") is True or data.get("code") == 0) and data.get("data"):
+                return data
+            rejected.add(code)
+            last_error = str(data.get("messages") or data.get("msg") or data) if isinstance(data, dict) else str(data)
+            state = _read_mfa_state()
+            state.update({"manual_code": "", "error": f"Code {code} was rejected: {last_error}"})
+            _write_mfa_state(state)
+    finally:
+        _write_mfa_state(None)
+
+    detail = f" Last error: {last_error}" if last_error else ""
+    raise RuntimeError(f"4Seller 2FA code not received within {cfg['timeout']}s.{detail}")
+
+
+def _login_result(session: requests.Session, data: dict[str, Any]) -> dict[str, Any]:
+    inner = data["data"]
+    token = inner.get("token") if isinstance(inner, dict) else inner
+    # Keep HttpOnly Set-Cookie userToken (32-char hex). JSON body token is for browser localStorage only.
+    cookie_header = _session_cookies_to_header(session)
+    api_token = session.cookies.get("userToken", "")
+    if not _is_api_session_token(str(api_token or "")):
+        raise RuntimeError("4Seller login succeeded but API session cookie was not set. Try again.")
+    return {
+        "success": True,
+        "token": api_token,
+        "plugin_token": token,
+        "cookie_header": cookie_header,
+        "session": session,
+        "raw": data,
+    }
+
+
 def login_4seller(
     email: str,
     password: str,
@@ -202,26 +462,8 @@ def login_4seller(
         ) and data.get("data"):
             inner = data["data"]
             if isinstance(inner, dict) and inner.get("need2FA"):
-                raise RuntimeError(
-                    "4Seller account requires email 2FA. Disable 2FA or paste cookie manually."
-                )
-            token = inner.get("token") if isinstance(inner, dict) else inner
-            # Keep HttpOnly Set-Cookie userToken (32-char hex). JSON body token is for browser localStorage only.
-            cookie_header = _session_cookies_to_header(session)
-            api_token = session.cookies.get("userToken", "")
-            if not _is_api_session_token(str(api_token or "")):
-                raise RuntimeError(
-                    "4Seller login succeeded but API session cookie was not set. Try again."
-                )
-
-            return {
-                "success": True,
-                "token": api_token,
-                "plugin_token": token,
-                "cookie_header": cookie_header,
-                "session": session,
-                "raw": data,
-            }
+                data = _complete_2fa(session, str(inner.get("tempToken") or ""), email)
+            return _login_result(session, data)
 
         last_error = str(data.get("messages") or data.get("msg") or data)
         # Wrong captcha — refresh and retry.

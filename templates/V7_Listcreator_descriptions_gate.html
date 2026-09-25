@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ te('Descriptions required — V7 List Creator') }}</title>
+    {% include '_csrf.html' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <style>
         body { background: #f1f5f9; }
@@ -44,6 +45,7 @@
 
     <div class="lc-card mb-4">
         <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
+            {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
             <div class="form-group mb-4">
                 <label class="lc-label d-block" for="snapshot_name_gate">Snapshot name <span class="text-muted font-weight-normal">{{ te('(required)') }}</span></label>
                 <input type="text"

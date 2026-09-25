@@ -3316,7 +3316,7 @@ def mark_container_landed(container_number):
     normalized = normalize_container_id(container_number)
     current_user = session.get('username', 'unknown')
     try:
-        result = receive_container_po_at_827(normalized)
+        result = receive_container_po_at_827(normalized, opened_by=current_user)
         if not result.get('success'):
             message = result.get('errors', ['Failed to mark landed'])[0]
             return jsonify({'success': False, 'error': message, 'result': result}), 400
@@ -3337,13 +3337,17 @@ def mark_container_landed(container_number):
             except Exception:
                 pass
 
+        ap_note = ""
+        if result.get("ap_invoice_inserted"):
+            ap_note = f" A/P invoice ${float(result.get('ap_invoice_amt') or 0):,.2f}."
         if result.get('already_landed'):
-            message = f"{normalized} is already landed in OMS."
+            message = f"{normalized} is already landed in OMS." + ap_note
         else:
             message = (
                 f"{normalized} marked landed at 827 — "
                 f"{result.get('lines_received', 0)} line(s), "
                 f"{int(result.get('qty_received', 0)):,} unit(s) received."
+                f"{ap_note}"
             )
         current_app.logger.info(
             f"***{current_user}***__@@@marked landed@@@ "

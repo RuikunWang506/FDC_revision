@@ -52,7 +52,7 @@ _CSRF_HIDDEN_INPUT = re.compile(
     r'(<input\b[^>]*\bname=["\']csrf_token["\'][^>]*\bvalue=["\'])([^"\']*)(["\'])',
     re.IGNORECASE,
 )
-FDC_CSRF_JS_URL = "/static/js/fdc-csrf.js?v=2"
+FDC_CSRF_JS_URL = "/static/js/fdc-csrf.js?v=3"
 _CSRF_SCRIPT_TAG = f'<script src="{FDC_CSRF_JS_URL}"></script>'
 _CSRF_SCRIPT_RE = re.compile(
     r'<script\b[^>]*\bsrc=["\'][^"\']*fdc-csrf\.js(?:\?[^"\']*)?["\'][^>]*>\s*</script>',

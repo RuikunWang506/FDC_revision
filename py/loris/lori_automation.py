@@ -7,7 +7,7 @@ import io
 import json
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from pypdf import PdfReader, PdfWriter
 
 PdfMerger = PdfWriter
@@ -34,6 +34,10 @@ from email.mime.text import MIMEText
 import shutil
 # --- Store Info Management Endpoints ---
 import tempfile
+import html as html_module
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed, wait, FIRST_COMPLETED
 # Removed problematic imports - will import inside functions as needed
 
 
@@ -1928,6 +1932,1399 @@ def loris_shipping():
     current_user = session['username']
     return render_template("loris_shipping.html", current_user=current_user)
 
+
+@lori_automation_bp.route("/loris_tracking", methods=["GET"])
+def loris_tracking():
+    """Shipment tracking board — shipped orders grouped by batch date."""
+    if 'username' not in session:
+        return redirect(url_for("auth.login"))
+    return render_template("loris_tracking.html", current_user=session['username'])
+
+
+def _parse_ship_to_state_zip(ship_to_address):
+    """Extract destination state + ZIP from a multi-line ship-to address."""
+    text = (ship_to_address or '').strip()
+    if not text:
+        return {'state': '', 'zip': ''}
+    lines = [ln.strip() for ln in text.replace('\r', '\n').split('\n') if ln.strip()]
+    for line in reversed(lines):
+        m = re.search(
+            r',\s*([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$',
+            line,
+        )
+        if m:
+            return {'state': m.group(1).upper(), 'zip': m.group(2)}
+        m2 = re.search(r'\b([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)\s*$', line)
+        if m2:
+            return {'state': m2.group(1).upper(), 'zip': m2.group(2)}
+    return {'state': '', 'zip': ''}
+
+
+# FDC ship-from ZIP used for FedEx zone charts (ShipStation sender)
+_FEDEX_ORIGIN_ZIP = (os.getenv('fedex_origin_zip') or '91748').strip()
+_fedex_zone_cache = {}
+_fedex_zone_lock = threading.Lock()
+_fedex_zone_disk_loaded = False
+_FEDEX_ZONE_CACHE_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    'output',
+    'fedex_zone_cache.json',
+)
+
+
+def _normalize_zip5(zip_code):
+    digits = re.sub(r'\D', '', str(zip_code or ''))
+    return digits[:5] if len(digits) >= 5 else ''
+
+
+def _zone_cache_has_value(entry):
+    """True when a cache entry has at least one usable zone number."""
+    if not isinstance(entry, dict):
+        return False
+    return bool(entry.get('express') or entry.get('ground'))
+
+
+def _load_fedex_zone_disk_cache():
+    """Load persisted successful zone lookups into memory (once)."""
+    global _fedex_zone_disk_loaded
+    if _fedex_zone_disk_loaded:
+        return
+    _fedex_zone_disk_loaded = True
+    path = _FEDEX_ZONE_CACHE_FILE
+    try:
+        if not os.path.isfile(path):
+            return
+        with open(path, 'r', encoding='utf-8') as fh:
+            data = json.load(fh)
+        if not isinstance(data, dict):
+            return
+        loaded = 0
+        for key, val in data.items():
+            if not isinstance(key, str) or not _zone_cache_has_value(val):
+                continue
+            _fedex_zone_cache[key] = {
+                'express': str(val.get('express') or ''),
+                'ground': str(val.get('ground') or ''),
+            }
+            loaded += 1
+        if loaded:
+            logging.getLogger(__name__).info(
+                'Loaded %s FedEx zone cache entries from disk', loaded
+            )
+    except Exception:
+        logging.getLogger(__name__).debug(
+            'Failed to load FedEx zone disk cache', exc_info=True
+        )
+
+
+def _persist_fedex_zone_disk_cache():
+    """Write successful in-memory zone lookups to disk (best-effort)."""
+    path = _FEDEX_ZONE_CACHE_FILE
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with _fedex_zone_lock:
+            payload = {
+                k: dict(v)
+                for k, v in _fedex_zone_cache.items()
+                if _zone_cache_has_value(v)
+            }
+        tmp = path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as fh:
+            json.dump(payload, fh, indent=0, sort_keys=True)
+        os.replace(tmp, path)
+    except Exception:
+        logging.getLogger(__name__).debug(
+            'Failed to persist FedEx zone disk cache', exc_info=True
+        )
+
+
+def _lookup_fedex_zones(dest_zip, origin_zip=None):
+    """Look up FedEx Express/Ground zones via Find Zones (cached by dest ZIP5).
+
+    Only successful lookups (express or ground present) are cached — empty /
+    failed responses must not poison the cache or subsequent board loads stay —.
+    """
+    dest5 = _normalize_zip5(dest_zip)
+    origin5 = _normalize_zip5(origin_zip or _FEDEX_ORIGIN_ZIP) or '91748'
+    if not dest5:
+        return {'express': '', 'ground': ''}
+    cache_key = f'{origin5}:{dest5}'
+
+    with _fedex_zone_lock:
+        _load_fedex_zone_disk_cache()
+        cached = _fedex_zone_cache.get(cache_key)
+        if _zone_cache_has_value(cached):
+            return dict(cached)
+
+    result = {'express': '', 'ground': ''}
+    try:
+        response = requests.post(
+            'https://www.fedex.com/ratetools/RateToolsMain.do',
+            data={
+                'method': 'FindZones',
+                'origCountryCd': 'us',
+                'origPostalCd': origin5,
+                'destCountryCd': 'us',
+                'destPostalCd': dest5,
+            },
+            headers={'User-Agent': 'fdcef/1.0'},
+            timeout=20,
+        )
+        if response.status_code == 200 and response.text:
+            plain = html_module.unescape(re.sub(r'<[^>]+>', ' ', response.text))
+            plain = re.sub(r'\s+', ' ', plain)
+            match = re.search(
+                r'Express Zone:\s*([0-9]+|NA|\*)\s*Ground Zone:\s*([0-9]+|NA|\*)',
+                plain,
+                re.I,
+            )
+            if match:
+                express = match.group(1).strip()
+                ground = match.group(2).strip()
+                result = {
+                    'express': '' if express.upper() in ('NA', '*') else express,
+                    'ground': '' if ground.upper() in ('NA', '*') else ground,
+                }
+    except Exception:
+        logging.getLogger(__name__).debug(
+            'FedEx zone lookup failed for %s -> %s', origin5, dest5, exc_info=True
+        )
+
+    # Persist only successful hits so timeouts/empty HTML never stick.
+    if _zone_cache_has_value(result):
+        with _fedex_zone_lock:
+            _fedex_zone_cache[cache_key] = dict(result)
+    return result
+
+
+def _zone_for_service(zones, service_type=None):
+    """Pick Express vs Ground zone based on package service (default Ground)."""
+    zones = zones or {}
+    st = (service_type or 'FEDEX_GROUND').upper()
+    express_hints = (
+        'OVERNIGHT', 'EXPRESS', '2_DAY', 'TWO_DAY', 'FIRST_OVERNIGHT',
+        'PRIORITY_OVERNIGHT', 'STANDARD_OVERNIGHT', 'FEDEX_2_DAY', 'SAME_DAY',
+    )
+    if any(h in st for h in express_hints):
+        return zones.get('express') or zones.get('ground') or ''
+    return zones.get('ground') or zones.get('express') or ''
+
+
+def _lookup_zones_for_zips(
+    dest_zips, origin_zip=None, max_workers=6, overall_timeout=90, cache_only=False
+):
+    """Batch-lookup zones for unique destination ZIPs. Returns {zip5: {express,ground}}.
+
+    Fail-open: uncached ZIPs that do not finish within overall_timeout get empty zones.
+    Cached hits are returned immediately without waiting on the network.
+    When cache_only=True, never hits FedEx — missing ZIPs get empty zones.
+    Empty/failed network results are not cached.
+    """
+    unique = []
+    seen = set()
+    for z in dest_zips or []:
+        z5 = _normalize_zip5(z)
+        if z5 and z5 not in seen:
+            seen.add(z5)
+            unique.append(z5)
+    out = {}
+    if not unique:
+        return out
+
+    origin5 = _normalize_zip5(origin_zip or _FEDEX_ORIGIN_ZIP) or '91748'
+    need_fetch = []
+    with _fedex_zone_lock:
+        _load_fedex_zone_disk_cache()
+        for z5 in unique:
+            cached = _fedex_zone_cache.get(f'{origin5}:{z5}')
+            if _zone_cache_has_value(cached):
+                out[z5] = dict(cached)
+            else:
+                need_fetch.append(z5)
+
+    if not need_fetch or cache_only:
+        for z5 in need_fetch:
+            out.setdefault(z5, {'express': '', 'ground': ''})
+        return out
+
+    workers = max(1, min(max_workers, len(need_fetch)))
+    deadline = time.monotonic() + max(1, float(overall_timeout or 90))
+    # Do not use `with ThreadPoolExecutor`: on timeout its shutdown(wait=True)
+    # would block until every in-flight FindZones request finishes.
+    pool = ThreadPoolExecutor(max_workers=workers)
+    fetched_any = False
+    try:
+        futures = {
+            pool.submit(_lookup_fedex_zones, z5, origin_zip): z5 for z5 in need_fetch
+        }
+        pending = set(futures)
+        while pending:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            done, pending = wait(pending, timeout=remaining, return_when=FIRST_COMPLETED)
+            if not done:
+                break
+            for fut in done:
+                z5 = futures[fut]
+                try:
+                    result = fut.result()
+                except Exception:
+                    result = {'express': '', 'ground': ''}
+                out[z5] = result
+                if _zone_cache_has_value(result):
+                    fetched_any = True
+        for fut in pending:
+            fut.cancel()
+            z5 = futures[fut]
+            out.setdefault(z5, {'express': '', 'ground': ''})
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    if fetched_any:
+        _persist_fedex_zone_disk_cache()
+    return out
+
+
+def _parse_box_dimensions_list(box_dimensions):
+    """Normalize loris_pkg_info.box_dimensions JSON to a list of dicts."""
+    boxes = box_dimensions
+    if isinstance(boxes, str):
+        try:
+            boxes = json.loads(boxes)
+        except (TypeError, json.JSONDecodeError):
+            boxes = None
+    if not isinstance(boxes, list):
+        return []
+    return [b if isinstance(b, dict) else {} for b in boxes]
+
+
+def _box_tracking_from_dict(box):
+    """Extract a tracking number from a box_dimensions entry, if stored."""
+    if not isinstance(box, dict):
+        return ''
+    for key in ('tracking', 'tracking_number', 'trackingNumber', 'childTracking'):
+        val = str(box.get(key) or '').strip()
+        if val:
+            return val
+    return ''
+
+
+def _parse_measure_value(val):
+    """Parse a dimension/weight value to float, or None if blank/zero-like missing.
+
+    Accepts numbers and strings like '0', '0.0', '0 lb', '12 in'. Returns None
+    for blank. Non-numeric non-blank strings return a sentinel > 0 so the box
+    is kept rather than dropped.
+    """
+    if val is None:
+        return None
+    if isinstance(val, bool):
+        return 1.0 if val else 0.0
+    if isinstance(val, (int, float)):
+        try:
+            return float(val)
+        except (TypeError, ValueError):
+            return None
+    text = str(val).strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        pass
+    # Strip unit suffixes: '0 lb', '12 in', '0.00lbs'
+    m = re.match(r'^([+-]?\d+(?:\.\d+)?)\s*[a-zA-Z]*$', text)
+    if m:
+        try:
+            return float(m.group(1))
+        except (TypeError, ValueError):
+            return None
+    # Non-numeric but present — keep the box rather than drop it.
+    return 1.0
+
+
+def _box_measure(box, *keys):
+    """Return float measure from the first present key, or None if missing/blank."""
+    if not isinstance(box, dict):
+        return None
+    for key in keys:
+        if key not in box:
+            continue
+        parsed = _parse_measure_value(box.get(key))
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _is_empty_box(box):
+    """True for padding/phantom slots: no tracking and zero/missing dims+weight.
+
+    Boxes with a real tracking number are always kept, even when dimensions
+    look wrong. Blank dicts and 0x0x0 / 0 lb rows are treated as empty.
+    """
+    if not isinstance(box, dict):
+        return True
+    if _box_tracking_from_dict(box):
+        return False
+    length = _box_measure(box, 'length', 'l', 'Length')
+    width = _box_measure(box, 'width', 'w', 'Width')
+    height = _box_measure(box, 'height', 'h', 'Height')
+    weight = _box_measure(box, 'weight', 'wt', 'Weight')
+    dims_empty = all(v is None or v == 0 for v in (length, width, height))
+    weight_empty = weight is None or weight == 0
+    return dims_empty and weight_empty
+
+
+def _filter_empty_boxes(boxes):
+    """Drop empty/padding box_dimensions entries; keep real packages."""
+    if not isinstance(boxes, list):
+        return []
+    return [b for b in boxes if not _is_empty_box(b)]
+
+
+def _format_box_tooltip_line(index, box):
+    """One tooltip line for a non-empty box (dims · weight · tracking)."""
+    length = _box_measure(box, 'length', 'l', 'Length')
+    width = _box_measure(box, 'width', 'w', 'Width')
+    height = _box_measure(box, 'height', 'h', 'Height')
+    weight = _box_measure(box, 'weight', 'wt', 'Weight')
+    part = f'Box {index}'
+    if not all(v is None or v == 0 for v in (length, width, height)):
+        dims = ' x '.join(
+            str(int(v) if v == int(v) else v)
+            for v in (length or 0, width or 0, height or 0)
+        )
+        part += f': {dims}'
+    if weight is not None and weight != 0:
+        wtxt = str(int(weight) if weight == int(weight) else weight)
+        part += f' · {wtxt} lb'
+    tn = _box_tracking_from_dict(box)
+    if tn:
+        part += f' · {tn}'
+    return part
+
+
+def _box_count_and_tooltip(box_dimensions, total_weight=None):
+    """Return (box_count, hover text) from loris_pkg_info dimensions JSON."""
+    boxes = _filter_empty_boxes(_parse_box_dimensions_list(box_dimensions))
+    if not boxes:
+        return 0, ''
+    lines = [_format_box_tooltip_line(i, box) for i, box in enumerate(boxes, start=1)]
+    if total_weight not in (None, ''):
+        tw = _parse_measure_value(total_weight)
+        if tw is not None and tw != 0:
+            wtxt = str(int(tw) if tw == int(tw) else tw)
+            lines.append(f'Total weight: {wtxt} lb')
+        elif tw is None:
+            lines.append(f'Total weight: {total_weight} lb')
+    return len(boxes), '\n'.join(lines)
+
+
+def _is_delivered_status(info):
+    """True when status_info / box dict represents a delivered package."""
+    if not isinstance(info, dict):
+        return False
+    if info.get('delivered'):
+        return True
+    code = str(info.get('status_code') or '').upper()
+    if code in ('DL', 'DE', 'OK'):
+        return True
+    label = str(info.get('arrival_status') or info.get('status') or '').lower()
+    return bool(re.search(r'\bdelivered\b', label))
+
+
+def _status_fields_from_box(box):
+    """Read persisted FedEx status fields from a box_dimensions entry."""
+    if not isinstance(box, dict):
+        return {
+            'arrival_status': '',
+            'status_code': '',
+            'delivered': False,
+            'delivery_date': None,
+            'fetch_failed': False,
+            'fetched_at': None,
+        }
+    code = str(box.get('status_code') or '').strip()
+    label = str(box.get('arrival_status') or box.get('status') or '').strip()
+    delivered = _is_delivered_status({
+        'delivered': box.get('delivered'),
+        'status_code': code,
+        'arrival_status': label,
+    })
+    fetch_failed = bool(
+        box.get('fetch_failed')
+        or ('ERROR' in code.upper())
+        or bool(re.search(r'not found|fail to|failed|unable to retrieve', label, re.I))
+    )
+    return {
+        'arrival_status': label,
+        'status_code': code,
+        'delivered': delivered,
+        'delivery_date': box.get('delivery_date') or None,
+        'fetch_failed': fetch_failed,
+        'fetched_at': box.get('fetched_at') or None,
+    }
+
+
+def _box_board_entry(index, tracking, master, status_src=None):
+    """One board box payload, optionally hydrated from stored status fields."""
+    status = _status_fields_from_box(status_src if isinstance(status_src, dict) else {})
+    tn = str(tracking or '').strip()
+    return {
+        'index': index,
+        'tracking': tn,
+        'is_master': bool(master and tn == master),
+        'arrival_status': status['arrival_status'],
+        'status_code': status['status_code'],
+        'delivered': status['delivered'],
+        'delivery_date': status['delivery_date'],
+        'fetch_failed': status['fetch_failed'],
+        'fetched_at': status.get('fetched_at'),
+    }
+
+
+def _boxes_payload_for_board(box_dimensions, master_tracking, box_count):
+    """Build per-box tracking list for the tracking board.
+
+    Prefer trackings already stored on loris_pkg_info.box_dimensions.
+    Hydrate arrival_status / delivered from the same JSON when present.
+    When missing and box_count > 1, mark mps_unresolved so the client can
+    resolve children via FedEx associated shipments.
+
+    Empty padding slots (0x0x0 / 0 lb with no tracking) are filtered out so
+    they never appear as phantom sub-rows or inflate box_count.
+    """
+    master = str(master_tracking or '').strip()
+    raw_dims = _parse_box_dimensions_list(box_dimensions)
+    dims = _filter_empty_boxes(raw_dims)
+    try:
+        count = int(box_count or 0)
+    except (TypeError, ValueError):
+        count = 0
+    # Prefer filtered dimensions length when dim data exists (drops phantom pads).
+    if dims:
+        count = len(dims)
+    elif raw_dims:
+        # Only empty pads in JSON — do not trust an inflated stored box_count.
+        count = 1 if master else 0
+    elif not count:
+        count = 1 if master else 0
+
+    stored = [_box_tracking_from_dict(b) for b in dims]
+    stored_any = any(stored)
+    boxes = []
+    if stored_any:
+        # Use stored child trackings; do not pad past filtered dims.
+        n = max(len(dims), 1 if master else 0)
+        for i in range(n):
+            src = dims[i] if i < len(dims) else {}
+            tn = stored[i] if i < len(stored) else ''
+            if not tn and i == 0:
+                tn = master
+            boxes.append(_box_board_entry(i + 1, tn, master, src))
+        if master and master not in {b['tracking'] for b in boxes if b.get('tracking')}:
+            master_src = next(
+                (d for d in dims if _box_tracking_from_dict(d) == master),
+                {},
+            )
+            boxes.insert(0, _box_board_entry(0, master, master, master_src))
+            for i, b in enumerate(boxes, start=1):
+                b['index'] = i
+    elif count > 1 and master:
+        # Multi-box but children not persisted yet — placeholder rows + master on box 1.
+        # Only pad when we have no dim rows (count came from DB without empties in JSON).
+        n = max(count, len(dims), 1)
+        for i in range(n):
+            src = dims[i] if i < len(dims) else {}
+            tn = master if i == 0 else ''
+            boxes.append(_box_board_entry(i + 1, tn, master, src if i == 0 else {}))
+    elif master:
+        boxes = [_box_board_entry(1, master, master, dims[0] if dims else {})]
+    else:
+        boxes = []
+
+    tracking_count = len([b for b in boxes if b.get('tracking')])
+    mps_unresolved = bool(count > 1 and tracking_count < count)
+
+    return boxes, mps_unresolved
+
+
+def _month_range_bounds(from_ym, to_ym):
+    """Return (start_date, end_date) for YYYY-MM inclusive month range."""
+    from calendar import monthrange
+
+    def _parse_ym(value):
+        text = str(value or '').strip()
+        if not text:
+            return None
+        # YYYY-MM
+        m = re.match(r'^(\d{4})-(\d{1,2})$', text)
+        if m:
+            y, mo = int(m.group(1)), int(m.group(2))
+            if 1 <= mo <= 12:
+                return y, mo
+        # MM/YY or MM/YYYY
+        m = re.match(r'^(\d{1,2})/(\d{2,4})$', text)
+        if m:
+            mo, y = int(m.group(1)), int(m.group(2))
+            if y < 100:
+                y += 2000
+            if 1 <= mo <= 12:
+                return y, mo
+        return None
+
+    start_ym = _parse_ym(from_ym)
+    end_ym = _parse_ym(to_ym)
+    if not start_ym or not end_ym:
+        return None, None
+    if (start_ym[0], start_ym[1]) > (end_ym[0], end_ym[1]):
+        start_ym, end_ym = end_ym, start_ym
+    start = datetime(start_ym[0], start_ym[1], 1).date()
+    last_day = monthrange(end_ym[0], end_ym[1])[1]
+    end = datetime(end_ym[0], end_ym[1], last_day).date()
+    return start, end
+
+
+def _default_tracking_month_range(months=3):
+    """Last N calendar months including the current month (e.g. Jul–Sep)."""
+    from calendar import monthrange
+
+    months = max(1, min(int(months or 3), 24))
+    today = datetime.now().date()
+    y, m = today.year, today.month
+    # Go back (months - 1) months for the start of the range.
+    m -= (months - 1)
+    while m <= 0:
+        m += 12
+        y -= 1
+    start = datetime(y, m, 1).date()
+    last_day = monthrange(today.year, today.month)[1]
+    end = datetime(today.year, today.month, last_day).date()
+    return start, end, f'{start.year:04d}-{start.month:02d}', f'{end.year:04d}-{end.month:02d}'
+
+
+def _fedex_status_from_track_result(tr, complete_tracking=''):
+    """Normalize one FedEx trackResults entry to status_info."""
+    tni = tr.get('trackingNumberInfo') or {}
+    tn = (tni.get('trackingNumber') or complete_tracking or '').strip()
+    if not tn:
+        return None, None
+    if tr.get('error'):
+        err = tr.get('error') or {}
+        return tn, {
+            'status': err.get('message') or 'Not found',
+            'status_code': err.get('code') or 'ERROR',
+            'delivered': False,
+            'delivery_date': None,
+        }
+    status = tr.get('latestStatusDetail') or {}
+    dates = {
+        d.get('type'): d.get('dateTime')
+        for d in (tr.get('dateAndTimes') or [])
+        if d.get('type')
+    }
+    code = (status.get('code') or status.get('derivedCode') or '').upper()
+    label = status.get('statusByLocale') or status.get('description') or code or 'Unknown'
+    return tn, {
+        'status': label,
+        'status_code': code,
+        'delivered': code in ('DL', 'DE', 'OK'),
+        'delivery_date': dates.get('ACTUAL_DELIVERY'),
+        'ship_date': dates.get('SHIP'),
+    }
+
+
+def _fedex_parse_track_response(body):
+    """Parse FedEx TrackingResponse JSON into {tracking: status_info}."""
+    out = {}
+    for complete in (body.get('output') or {}).get('completeTrackResults') or []:
+        complete_tn = (complete.get('trackingNumber') or '').strip()
+        for tr in complete.get('trackResults') or []:
+            tn, info = _fedex_status_from_track_result(tr, complete_tn)
+            if tn and info is not None:
+                out[tn] = info
+    return out
+
+
+def _fedex_track_by_numbers(token, credentials, tracking_numbers):
+    """Track up to 30 FedEx tracking numbers; return {tracking: status_info}."""
+    host = _fedex_api_host(credentials)
+    numbers = []
+    seen = set()
+    for tn in tracking_numbers or []:
+        tn = str(tn or '').strip()
+        if not tn or tn in seen:
+            continue
+        seen.add(tn)
+        numbers.append(tn)
+    if not numbers:
+        return {}
+
+    payload = {
+        'includeDetailedScans': False,
+        'trackingInfo': [
+            {'trackingNumberInfo': {'trackingNumber': tn}} for tn in numbers[:30]
+        ],
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}',
+        'X-locale': 'en_US',
+        'User-Agent': 'fdcef/1.0',
+    }
+    response = requests.post(
+        f'{host}/track/v1/trackingnumbers',
+        headers=headers,
+        json=payload,
+        timeout=45,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(
+            f'FedEx track failed ({response.status_code}): {response.text[:300]}'
+        )
+
+    body = response.json() if response.content else {}
+    return _fedex_parse_track_response(body)
+
+
+def _fedex_associated_shipments(token, credentials, master_tracking, associated_type='STANDARD_MPS'):
+    """Resolve MPS child trackings + statuses for a master tracking number."""
+    master = str(master_tracking or '').strip()
+    if not master:
+        return {}
+    host = _fedex_api_host(credentials)
+    payload = {
+        'includeDetailedScans': False,
+        'associatedType': associated_type,
+        'masterTrackingNumberInfo': {
+            'trackingNumberInfo': {'trackingNumber': master},
+        },
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}',
+        'X-locale': 'en_US',
+        'User-Agent': 'fdcef/1.0',
+    }
+    response = requests.post(
+        f'{host}/track/v1/associatedshipments',
+        headers=headers,
+        json=payload,
+        timeout=45,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(
+            f'FedEx associated shipments failed ({response.status_code}): '
+            f'{response.text[:300]}'
+        )
+    body = response.json() if response.content else {}
+    return _fedex_parse_track_response(body)
+
+
+def _order_mps_trackings(master_tracking, status_map):
+    """Stable master-first ordering of MPS tracking numbers."""
+    master = str(master_tracking or '').strip()
+    kids = [str(t).strip() for t in (status_map or {}).keys() if str(t).strip()]
+    ordered = []
+    if master and master in (status_map or {}):
+        ordered.append(master)
+    elif master:
+        ordered.append(master)
+    ordered.extend(sorted(t for t in kids if t != master))
+    # Dedupe preserve order
+    seen = set()
+    out = []
+    for tn in ordered:
+        if tn not in seen:
+            seen.add(tn)
+            out.append(tn)
+    return out
+
+
+def _fedex_expand_mps(token, credentials, master_tracking):
+    """Resolve full MPS group for a master tracking.
+
+    Returns (ordered_trackings, status_map). status_map may be empty on failure;
+    ordered_trackings always includes at least the master when provided.
+    """
+    master = str(master_tracking or '').strip()
+    if not master:
+        return [], {}
+
+    best_map = {}
+    for assoc_type in ('STANDARD_MPS', 'GROUP_MPS'):
+        try:
+            child_statuses = _fedex_associated_shipments(
+                token, credentials, master, associated_type=assoc_type
+            )
+        except Exception as assoc_err:
+            try:
+                current_app.logger.warning(
+                    'associated shipments %s for %s: %s',
+                    assoc_type, master, assoc_err,
+                )
+            except Exception:
+                pass
+            child_statuses = {}
+        if not child_statuses:
+            continue
+        # Ignore lone "not found" stubs from GROUP_MPS on non-group masters.
+        usable = {
+            tn: info for tn, info in child_statuses.items()
+            if not (
+                isinstance(info, dict)
+                and 'NOTFOUND' in str(info.get('status_code') or '').upper()
+            )
+        }
+        if len(usable) > len(best_map):
+            best_map = usable
+        if len(best_map) > 1:
+            break
+
+    if not best_map:
+        return [master], {}
+    return _order_mps_trackings(master, best_map), best_map
+
+
+def _classify_reference_mps_hits(hits, mps_trackings):
+    """Split reference hits into same-MPS-group vs independent shipments.
+
+    FedEx reference search often returns every package tracking for an MPS
+    shipment as separate hits. Those are NOT conflicts — they belong to one
+    master group. True conflicts are trackings outside the MPS set.
+    """
+    mps_set = {str(t).strip() for t in (mps_trackings or []) if str(t).strip()}
+    same_group = []
+    independent = []
+    for hit in hits or []:
+        tn = str((hit or {}).get('trackingNumber') or '').strip()
+        if not tn:
+            continue
+        if not mps_set or tn in mps_set:
+            same_group.append(hit)
+        else:
+            independent.append(hit)
+    return same_group, independent
+
+
+def _persist_box_trackings(cursor, po_number, trackings):
+    """Write discovered per-box trackings onto loris_pkg_info.box_dimensions."""
+    po = str(po_number or '').strip()
+    numbers = []
+    seen = set()
+    for tn in trackings or []:
+        tn = str(tn or '').strip()
+        if not tn or tn in seen:
+            continue
+        seen.add(tn)
+        numbers.append(tn)
+    if not po or not numbers:
+        return False
+
+    cursor.execute(
+        "SELECT box_dimensions, box_count FROM loris_pkg_info WHERE po_number = %s",
+        (po,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        return False
+
+    dims = row.get('box_dimensions') if isinstance(row, dict) else row[0]
+    boxes = _filter_empty_boxes(_parse_box_dimensions_list(dims))
+    target = max(len(numbers), len(boxes))
+    while len(boxes) < target:
+        boxes.append({})
+    for i, tn in enumerate(numbers):
+        if i >= len(boxes):
+            boxes.append({'tracking': tn})
+        else:
+            box = boxes[i] if isinstance(boxes[i], dict) else {}
+            box['tracking'] = tn
+            boxes[i] = box
+
+    # Drop any trailing pads that never received a tracking number.
+    boxes = _filter_empty_boxes(boxes) or [
+        {'tracking': tn} for tn in numbers
+    ]
+
+    cursor.execute(
+        """
+        UPDATE loris_pkg_info
+        SET box_dimensions = %s,
+            box_count = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE po_number = %s
+        """,
+        (json.dumps(boxes), len(boxes), po),
+    )
+    return cursor.rowcount > 0
+
+
+def _apply_status_to_box_dict(box, info, fetched_at=None):
+    """Merge FedEx status_info onto a box_dimensions dict (mutates box)."""
+    if not isinstance(box, dict) or not isinstance(info, dict):
+        return box
+    label = str(info.get('status') or info.get('arrival_status') or '').strip()
+    code = str(info.get('status_code') or '').strip()
+    delivered = bool(info.get('delivered')) or _is_delivered_status({
+        'delivered': info.get('delivered'),
+        'status_code': code,
+        'status': label,
+    })
+    box['arrival_status'] = label
+    box['status_code'] = code
+    box['delivered'] = delivered
+    box['delivery_date'] = info.get('delivery_date') or None
+    if fetched_at:
+        box['fetched_at'] = fetched_at
+    elif delivered and not box.get('fetched_at'):
+        box['fetched_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    if code and 'ERROR' not in code.upper():
+        box['fetch_failed'] = False
+    return box
+
+
+def _persist_tracking_statuses(cursor, status_map, package_refs=None):
+    """Merge FedEx status into loris_pkg_info.box_dimensions by tracking number.
+
+    package_refs: optional [{po_number, tracking, trackings:[...]}] from the
+    client so child MPS trackings map to the right PO.
+    """
+    if not status_map:
+        return 0
+
+    po_trackings = {}
+    for ref in package_refs or []:
+        if not isinstance(ref, dict):
+            continue
+        po = str(ref.get('po_number') or '').strip()
+        if not po:
+            continue
+        tns = set()
+        master = str(ref.get('tracking') or '').strip()
+        if master:
+            tns.add(master)
+        for tn in ref.get('trackings') or []:
+            tn = str(tn or '').strip()
+            if tn:
+                tns.add(tn)
+        if tns:
+            po_trackings.setdefault(po, set()).update(tns)
+
+    unresolved = [
+        tn for tn in status_map.keys()
+        if not any(tn in tset for tset in po_trackings.values())
+    ]
+    if unresolved:
+        placeholders = ','.join(['%s'] * len(unresolved))
+        cursor.execute(
+            f"SELECT po_number, tracking FROM lori_orders "
+            f"WHERE tracking IN ({placeholders})",
+            tuple(unresolved),
+        )
+        for row in cursor.fetchall() or []:
+            po = str((row.get('po_number') if isinstance(row, dict) else row[0]) or '').strip()
+            tn = str((row.get('tracking') if isinstance(row, dict) else row[1]) or '').strip()
+            if po and tn:
+                po_trackings.setdefault(po, set()).add(tn)
+
+    if not po_trackings:
+        return 0
+
+    fetched_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    updated = 0
+    for po, interested in po_trackings.items():
+        relevant = {tn: status_map[tn] for tn in interested if tn in status_map}
+        if not relevant:
+            continue
+
+        cursor.execute(
+            "SELECT box_dimensions, box_count FROM loris_pkg_info WHERE po_number = %s",
+            (po,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            boxes = []
+            for tn, info in relevant.items():
+                box = {'tracking': tn}
+                _apply_status_to_box_dict(box, info, fetched_at=fetched_at)
+                boxes.append(box)
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO loris_pkg_info
+                        (po_number, box_count, box_dimensions, updated_at)
+                    VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                    """,
+                    (po, len(boxes), json.dumps(boxes)),
+                )
+                updated += 1
+            except Exception:
+                current_app.logger.warning(
+                    'Could not insert loris_pkg_info for status persist %s', po
+                )
+            continue
+
+        dims = row.get('box_dimensions') if isinstance(row, dict) else row[0]
+        raw_boxes = _parse_box_dimensions_list(dims)
+        boxes = _filter_empty_boxes(raw_boxes)
+
+        by_tn = {}
+        for i, box in enumerate(boxes):
+            tn = _box_tracking_from_dict(box)
+            if tn:
+                by_tn[tn] = i
+
+        dirty = len(boxes) != len(raw_boxes)
+        for tn, info in relevant.items():
+            if tn in by_tn:
+                box = boxes[by_tn[tn]] if isinstance(boxes[by_tn[tn]], dict) else {}
+                _apply_status_to_box_dict(box, info, fetched_at=fetched_at)
+                box['tracking'] = tn
+                boxes[by_tn[tn]] = box
+                dirty = True
+            else:
+                box = {'tracking': tn}
+                _apply_status_to_box_dict(box, info, fetched_at=fetched_at)
+                boxes.append(box)
+                by_tn[tn] = len(boxes) - 1
+                dirty = True
+
+        if not dirty:
+            continue
+
+        cursor.execute(
+            """
+            UPDATE loris_pkg_info
+            SET box_dimensions = %s,
+                box_count = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE po_number = %s
+            """,
+            (json.dumps(boxes), len(boxes), po),
+        )
+        if cursor.rowcount:
+            updated += 1
+    return updated
+
+
+def _delivered_from_package_refs(cursor, tracking_numbers, package_refs=None):
+    """Return tracking numbers already marked delivered in box_dimensions."""
+    want = {str(t).strip() for t in (tracking_numbers or []) if str(t).strip()}
+    if not want:
+        return set()
+
+    delivered = set()
+    pos = set()
+    for ref in package_refs or []:
+        if isinstance(ref, dict):
+            po = str(ref.get('po_number') or '').strip()
+            if po:
+                pos.add(po)
+
+    if not pos:
+        placeholders = ','.join(['%s'] * len(want))
+        cursor.execute(
+            f"SELECT po_number FROM lori_orders WHERE tracking IN ({placeholders})",
+            tuple(want),
+        )
+        for row in cursor.fetchall() or []:
+            po = str((row.get('po_number') if isinstance(row, dict) else row[0]) or '').strip()
+            if po:
+                pos.add(po)
+
+    if not pos:
+        return set()
+
+    placeholders = ','.join(['%s'] * len(pos))
+    cursor.execute(
+        f"SELECT box_dimensions FROM loris_pkg_info WHERE po_number IN ({placeholders})",
+        tuple(pos),
+    )
+    for row in cursor.fetchall() or []:
+        dims = _parse_box_dimensions_list(
+            row.get('box_dimensions') if isinstance(row, dict) else row[0]
+        )
+        for box in dims:
+            tn = _box_tracking_from_dict(box)
+            if tn in want and _is_delivered_status(_status_fields_from_box(box)):
+                delivered.add(tn)
+    return delivered
+
+
+@lori_automation_bp.route("/get_tracking_board", methods=["GET"])
+def get_tracking_board():
+    """Shipped orders with tracking, grouped by batch_date.
+
+    Date filter (preferred): from_ym / to_ym as YYYY-MM or MM/YY inclusive
+    calendar months. Default: last 3 calendar months including the current month.
+    Legacy: max_age_days still accepted when month params are omitted.
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        from_ym = (request.args.get('from_ym') or request.args.get('from_month') or '').strip()
+        to_ym = (request.args.get('to_ym') or request.args.get('to_month') or '').strip()
+        require_tracking = str(request.args.get('require_tracking', '1')).lower() not in (
+            '0', 'false', 'no',
+        )
+
+        start_date, end_date = _month_range_bounds(from_ym, to_ym)
+        if start_date is None or end_date is None:
+            if request.args.get('max_age_days'):
+                max_age_days = int(request.args.get('max_age_days') or 90)
+                max_age_days = max(1, min(max_age_days, 730))
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=max_age_days)
+                from_ym = f'{start_date.year:04d}-{start_date.month:02d}'
+                to_ym = f'{end_date.year:04d}-{end_date.month:02d}'
+            else:
+                start_date, end_date, from_ym, to_ym = _default_tracking_month_range(3)
+
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        cursor = connection.cursor(dictionary=True)
+        sql = """
+            SELECT o.po_number, o.batch_date, o.ship_to_address, o.tracking, o.status,
+                   o.updated_at,
+                   p.box_dimensions, p.total_weight, p.box_count,
+                   p.fedex_service_type
+            FROM lori_orders o
+            LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
+            WHERE o.status = 'shipped'
+              AND o.batch_date IS NOT NULL
+              AND o.batch_date >= %s
+              AND o.batch_date <= %s
+        """
+        if require_tracking:
+            sql += " AND o.tracking IS NOT NULL AND TRIM(o.tracking) != ''"
+        sql += " ORDER BY o.batch_date DESC, o.po_number"
+        cursor.execute(sql, (start_date, end_date))
+        rows = cursor.fetchall() or []
+        cursor.close()
+        close_mysql_connection(connection)
+
+        # DB-first: never call FedEx FindZones / MPS here — that hung the
+        # tracking page on "Loading…". Zones: in-memory cache only (no HTTP).
+        # MPS children: from persisted box_dimensions only; expand on refresh.
+        # Zones are lazy-filled via /lookup_tracking_zones after render.
+        batches = {}
+        packages = []
+        for row in rows:
+            dest = _parse_ship_to_state_zip(row.get('ship_to_address'))
+            batch = _format_order_date(row.get('batch_date')) or 'Unknown'
+            raw_dims = _parse_box_dimensions_list(row.get('box_dimensions'))
+            box_count, box_tooltip = _box_count_and_tooltip(
+                row.get('box_dimensions'), row.get('total_weight')
+            )
+            # Only fall back to stored box_count when there is no dimensions JSON
+            # at all — never reintroduce phantom empties that were filtered out.
+            if not box_count and not raw_dims and row.get('box_count'):
+                try:
+                    box_count = int(row.get('box_count') or 0)
+                except (TypeError, ValueError):
+                    box_count = 0
+            state = dest.get('state') or ''
+            zip_code = dest.get('zip') or ''
+            state_zip = f'{state} {zip_code}'.strip()
+            service_type = row.get('fedex_service_type') or 'FEDEX_GROUND'
+            master = (row.get('tracking') or '').strip()
+            boxes, mps_unresolved = _boxes_payload_for_board(
+                row.get('box_dimensions'), master, box_count
+            )
+            # Displayed count = valid boxes only (filtered dims, or board payload).
+            if box_count:
+                display_count = box_count
+            else:
+                display_count = len(boxes)
+            # Prefer master box stored status for order-level fields
+            master_box = next(
+                (b for b in boxes if b.get('is_master') and b.get('tracking') == master),
+                boxes[0] if boxes else None,
+            )
+            pkg = {
+                'po_number': row.get('po_number'),
+                'batch_date': batch,
+                'box_count': display_count,
+                'box_tooltip': box_tooltip,
+                'state': state,
+                'zip': zip_code,
+                'state_zip': state_zip,
+                'zone': '',
+                'zone_express': '',
+                'zone_ground': '',
+                'service_type': service_type,
+                'tracking': master,
+                'boxes': boxes,
+                'mps_unresolved': mps_unresolved,
+                'arrival_status': (master_box or {}).get('arrival_status') or '',
+                'status_code': (master_box or {}).get('status_code') or '',
+                'delivered': bool((master_box or {}).get('delivered')),
+                'delivery_date': (master_box or {}).get('delivery_date'),
+                'fetch_failed': bool((master_box or {}).get('fetch_failed')),
+            }
+            packages.append(pkg)
+            batches.setdefault(batch, []).append(pkg)
+
+        # Apply any already-cached zones (instant; no network).
+        zone_map = _lookup_zones_for_zips(
+            [p.get('zip') for p in packages],
+            origin_zip=_FEDEX_ORIGIN_ZIP,
+            cache_only=True,
+        )
+        for pkg in packages:
+            z5 = _normalize_zip5(pkg.get('zip'))
+            zones = zone_map.get(z5) or {}
+            pkg['zone_express'] = zones.get('express') or ''
+            pkg['zone_ground'] = zones.get('ground') or ''
+            pkg['zone'] = _zone_for_service(zones, pkg.get('service_type'))
+
+        batch_list = [
+            {
+                'batch_date': batch_date,
+                'count': len(pkgs),
+                'with_tracking': sum(1 for p in pkgs if p.get('tracking')),
+                'packages': pkgs,
+            }
+            for batch_date, pkgs in batches.items()
+        ]
+
+        return jsonify({
+            'success': True,
+            'from_ym': from_ym,
+            'to_ym': to_ym,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat(),
+            'origin_zip': _FEDEX_ORIGIN_ZIP,
+            'total_packages': len(packages),
+            'batches': batch_list,
+        })
+    except Exception as e:
+        current_app.logger.exception('get_tracking_board failed')
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/lookup_tracking_zones", methods=["POST"])
+def lookup_tracking_zones():
+    """Lazy FedEx zone lookup for destination ZIPs (never blocks board load).
+
+    Body: { zips: ["91748", ...], origin_zip?: "91748" }
+    Returns { success, origin_zip, zones: { zip5: {express, ground} } }.
+    Fail-open with empty zones when FindZones is slow.
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        data = request.get_json(silent=True) or {}
+        zips = data.get('zips') or data.get('dest_zips') or []
+        if isinstance(zips, str):
+            zips = [zips]
+        origin_zip = (data.get('origin_zip') or _FEDEX_ORIGIN_ZIP or '').strip()
+        # Client sends small chunks; allow enough time for slow FindZones (~10–20s each).
+        zone_map = _lookup_zones_for_zips(
+            zips,
+            origin_zip=origin_zip or _FEDEX_ORIGIN_ZIP,
+            max_workers=6,
+            overall_timeout=90,
+        )
+        return jsonify({
+            'success': True,
+            'origin_zip': _normalize_zip5(origin_zip or _FEDEX_ORIGIN_ZIP) or '91748',
+            'zones': zone_map,
+        })
+    except Exception as e:
+        current_app.logger.exception('lookup_tracking_zones failed')
+        return jsonify({'error': str(e)}), 500
+
+
+@lori_automation_bp.route("/refresh_tracking_statuses", methods=["POST"])
+def refresh_tracking_statuses():
+    """Batch-refresh FedEx arrival status for tracking numbers (30 per FedEx call).
+
+    Optional mps_packages: [{po_number, tracking, box_count}] resolves child
+    trackings via /track/v1/associatedshipments when box_count > 1 (or when
+    previously unresolved). Returns associated map and persists children onto
+    loris_pkg_info.box_dimensions when po_number is provided.
+
+    By default skips trackings already marked delivered in box_dimensions
+    (pass force=true or skip_delivered=false to re-fetch). When FedEx returns
+    statuses, they are written back to box_dimensions immediately.
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        data = request.get_json(silent=True) or {}
+        tracking_numbers = data.get('tracking_numbers') or []
+        if isinstance(tracking_numbers, str):
+            tracking_numbers = [tracking_numbers]
+        tracking_numbers = [str(t).strip() for t in tracking_numbers if str(t).strip()]
+
+        mps_packages = data.get('mps_packages') or []
+        if isinstance(mps_packages, dict):
+            mps_packages = [mps_packages]
+
+        package_refs = data.get('package_refs') or []
+        if isinstance(package_refs, dict):
+            package_refs = [package_refs]
+
+        force = bool(data.get('force'))
+        skip_delivered = (not force) and str(
+            data.get('skip_delivered', '1')
+        ).lower() not in ('0', 'false', 'no')
+
+        if not tracking_numbers and not mps_packages:
+            return jsonify({'error': 'tracking_numbers required'}), 400
+
+        skipped_delivered = []
+        if skip_delivered and tracking_numbers:
+            connection = get_db_connection()
+            if connection:
+                try:
+                    cursor = connection.cursor(dictionary=True)
+                    already = _delivered_from_package_refs(
+                        cursor, tracking_numbers, package_refs
+                    )
+                    cursor.close()
+                    if already:
+                        skipped_delivered = sorted(already)
+                        tracking_numbers = [
+                            t for t in tracking_numbers if t not in already
+                        ]
+                except Exception as skip_err:
+                    current_app.logger.warning(
+                        'skip-delivered lookup failed: %s', skip_err
+                    )
+                finally:
+                    close_mysql_connection(connection)
+
+        if not tracking_numbers and not mps_packages:
+            return jsonify({
+                'success': True,
+                'statuses': {},
+                'associated': {},
+                'requested': 0,
+                'resolved': 0,
+                'skipped_delivered': skipped_delivered,
+            })
+
+        credentials = load_fedex_credentials()
+        if not credentials:
+            return jsonify({'error': 'FedEx API credentials are not configured'}), 500
+        token = get_fedex_auth_token(credentials)
+        if not token:
+            return jsonify({'error': 'Failed to authenticate with FedEx'}), 502
+
+        statuses = {}
+        associated = {}
+        persist_updates = []
+
+        for entry in mps_packages:
+            if not isinstance(entry, dict):
+                continue
+            master = str(entry.get('tracking') or entry.get('master') or '').strip()
+            if not master:
+                continue
+            try:
+                box_count = int(entry.get('box_count') or 0)
+            except (TypeError, ValueError):
+                box_count = 0
+            force_mps = bool(entry.get('force') or entry.get('mps_unresolved'))
+            if box_count <= 1 and not force_mps:
+                continue
+            # Always expand MPS for multi-box — even when master is already
+            # delivered — so child trackings get persisted on first resolve.
+            try:
+                ordered, child_statuses = _fedex_expand_mps(
+                    token, credentials, master
+                )
+            except Exception as assoc_err:
+                current_app.logger.warning(
+                    'MPS expand for %s: %s', master, assoc_err
+                )
+                ordered, child_statuses = [master], {}
+
+            if child_statuses:
+                for tn, info in child_statuses.items():
+                    if skip_delivered and tn in skipped_delivered:
+                        continue
+                    statuses[tn] = info
+            if ordered:
+                associated[master] = ordered
+                po_number = str(entry.get('po_number') or '').strip()
+                if po_number and len(ordered) > 1:
+                    persist_updates.append((po_number, ordered))
+            else:
+                associated[master] = [master]
+
+        # Track any remaining numbers (masters without MPS, single boxes, etc.).
+        remaining = [t for t in tracking_numbers if t not in statuses]
+        for master, kids in associated.items():
+            for tn in kids:
+                if (
+                    tn not in statuses
+                    and tn not in remaining
+                    and tn not in skipped_delivered
+                ):
+                    remaining.append(tn)
+            if (
+                master not in statuses
+                and master not in remaining
+                and master not in skipped_delivered
+            ):
+                remaining.append(master)
+
+        for i in range(0, len(remaining), 30):
+            chunk = remaining[i:i + 30]
+            statuses.update(_fedex_track_by_numbers(token, credentials, chunk))
+
+        if persist_updates or statuses:
+            connection = get_db_connection()
+            if connection:
+                try:
+                    cursor = connection.cursor(dictionary=True)
+                    for po_number, trackings in persist_updates:
+                        try:
+                            _persist_box_trackings(cursor, po_number, trackings)
+                        except Exception as persist_err:
+                            current_app.logger.warning(
+                                'persist box trackings %s: %s', po_number, persist_err
+                            )
+                    if statuses:
+                        try:
+                            # Include associated kids in package_refs for PO mapping
+                            refs = list(package_refs or [])
+                            for po_number, trackings in persist_updates:
+                                refs.append({
+                                    'po_number': po_number,
+                                    'tracking': trackings[0] if trackings else '',
+                                    'trackings': trackings,
+                                })
+                            _persist_tracking_statuses(
+                                cursor, statuses, package_refs=refs
+                            )
+                        except Exception as status_err:
+                            current_app.logger.warning(
+                                'persist tracking statuses: %s', status_err
+                            )
+                    connection.commit()
+                    cursor.close()
+                finally:
+                    close_mysql_connection(connection)
+
+        return jsonify({
+            'success': True,
+            'statuses': statuses,
+            'associated': associated,
+            'requested': len(tracking_numbers) + len(mps_packages),
+            'resolved': len(statuses),
+            'skipped_delivered': skipped_delivered,
+        })
+    except Exception as e:
+        current_app.logger.exception('refresh_tracking_statuses failed')
+        return jsonify({'error': str(e)}), 500
+
+
 # New endpoint: process local PDFs only (no email fetch)
 @lori_automation_bp.route("/process_local_pdfs", methods=["POST"])
 def process_local_pdfs():
@@ -3206,6 +4603,504 @@ def add_tracking_number():
     except Exception as e:
         return jsonify({'error': f'Error updating tracking number: {str(e)}'}), 500
 
+
+def _fedex_api_host(credentials):
+    env = (credentials.get('environment') or 'production').lower()
+    if env == 'sandbox' or 'sandbox' in env:
+        return 'https://apis-sandbox.fedex.com'
+    return 'https://apis.fedex.com'
+
+
+def _parse_fedex_datetime(value):
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace('Z', '+00:00'))
+    except Exception:
+        pass
+    for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(text[:19] if 'T' in text else text[:10], fmt)
+        except Exception:
+            continue
+    return None
+
+
+def _fedex_hit_sort_key(hit):
+    """Prefer active/delivered labels, then newer ship/label activity."""
+    status = (hit.get('status') or '').lower()
+    if 'cancel' in status:
+        status_tier = 0
+    elif 'deliver' in status:
+        status_tier = 3
+    elif 'label' in status:
+        status_tier = 1
+    else:
+        status_tier = 2
+
+    dates = hit.get('dates') or {}
+    event_dt = None
+    for key in (
+        'SHIP',
+        'ACTUAL_TENDER',
+        'ACTUAL_PICKUP',
+        'ANTICIPATED_TENDER',
+        'ACTUAL_DELIVERY',
+    ):
+        event_dt = _parse_fedex_datetime(dates.get(key))
+        if event_dt:
+            break
+    if event_dt is None:
+        event_dt = _parse_fedex_datetime(hit.get('latest_event_at'))
+    if event_dt is None:
+        # Numeric tracking as weak tie-breaker (newer labels tend to be larger).
+        try:
+            event_dt = datetime(1970, 1, 1) + timedelta(
+                seconds=int(re.sub(r'\D', '', str(hit.get('trackingNumber') or '')) or '0') % 10_000_000
+            )
+        except Exception:
+            event_dt = datetime(1970, 1, 1)
+    return (status_tier, event_dt)
+
+
+def _fedex_reference_search(token, credentials, po_number, ship_begin, ship_end):
+    """Track-by-reference using PO as CUSTOMER_REFERENCE. Returns list of hit dicts."""
+    host = _fedex_api_host(credentials)
+    account = (credentials.get('account_number') or '').strip()
+    if not account:
+        raise ValueError('FedEx shipper account number is not configured')
+
+    payload = {
+        'includeDetailedScans': False,
+        'referencesInformation': {
+            'shipDateBegin': ship_begin,
+            'shipDateEnd': ship_end,
+            'value': po_number,
+            'type': 'CUSTOMER_REFERENCE',
+            'accountNumber': account,
+            'carrierCode': 'FDXG',
+        },
+    }
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {token}',
+        'X-locale': 'en_US',
+        'User-Agent': 'fdcef/1.0',
+    }
+    response = requests.post(
+        f'{host}/track/v1/referencenumbers',
+        headers=headers,
+        json=payload,
+        timeout=45,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(
+            f'FedEx reference search failed ({response.status_code}): {response.text[:300]}'
+        )
+
+    body = response.json() if response.content else {}
+    hits = []
+    seen = set()
+    for complete in (body.get('output') or {}).get('completeTrackResults') or []:
+        for tr in complete.get('trackResults') or []:
+            if tr.get('error'):
+                continue
+            tni = tr.get('trackingNumberInfo') or {}
+            tracking = (tni.get('trackingNumber') or complete.get('trackingNumber') or '').strip()
+            if not tracking or tracking == po_number or tracking in seen:
+                continue
+            seen.add(tracking)
+            status = tr.get('latestStatusDetail') or {}
+            dates = {
+                d.get('type'): d.get('dateTime')
+                for d in (tr.get('dateAndTimes') or [])
+                if d.get('type')
+            }
+            scans = tr.get('scanEvents') or []
+            latest_event_at = scans[0].get('date') if scans else None
+            hits.append({
+                'trackingNumber': tracking,
+                'uniqueId': tni.get('trackingNumberUniqueId'),
+                'carrierCode': tni.get('carrierCode'),
+                'status': status.get('statusByLocale') or status.get('description'),
+                'dates': dates,
+                'latest_event_at': latest_event_at,
+                'shipper': ((tr.get('shipperInformation') or {}).get('address') or {}),
+                'recipient': ((tr.get('recipientInformation') or {}).get('address') or {}),
+            })
+    return hits
+
+
+def _ship_date_window_for_order(batch_date, updated_at=None):
+    """Build a FedEx-safe (~30 day) ship date window around the order batch date."""
+    base = None
+    for value in (batch_date, updated_at, datetime.now()):
+        if value is None:
+            continue
+        if isinstance(value, datetime):
+            base = value
+            break
+        text = str(value).strip()
+        if not text:
+            continue
+        try:
+            base = datetime.fromisoformat(text[:10])
+            break
+        except Exception:
+            try:
+                base = datetime.strptime(text[:10], '%Y-%m-%d')
+                break
+            except Exception:
+                continue
+    if base is None:
+        base = datetime.now()
+    begin = (base - timedelta(days=7)).strftime('%Y-%m-%d')
+    end = (base + timedelta(days=22)).strftime('%Y-%m-%d')
+    return begin, end
+
+
+@lori_automation_bp.route("/auto_fetch_tracking", methods=["POST"])
+def auto_fetch_tracking():
+    """Fetch FedEx tracking by PO (customer reference) for shipped orders.
+
+    FedEx has no account-wide shipment dump, so each PO is one reference lookup.
+    Lookups run in parallel; keep max_orders small so Cloudflare does not 524.
+
+    When reference search returns multiple tracking numbers for one PO:
+    - Expand the preferred hit via associated shipments (MPS).
+    - If the other hits are children of that MPS group, treat them as one
+      multi-box shipment (not a conflict) and persist every child tracking.
+    - If some hits are outside the MPS group, those are true alternate
+      shipments — keep the preferred master+MPS children, flag conflict.
+    """
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    try:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        data = request.get_json(silent=True) or {}
+        requested_pos = data.get('po_numbers') or []
+        if isinstance(requested_pos, str):
+            requested_pos = [requested_pos]
+        requested_pos = [str(p).strip() for p in requested_pos if str(p).strip()]
+        only_missing = bool(data.get('only_missing', True))
+        # Keep batches short — sequential FedEx calls previously caused Cloudflare 524.
+        max_orders = int(data.get('max_orders') or 40)
+        max_orders = max(1, min(max_orders, 80))
+        workers = int(data.get('workers') or 8)
+        workers = max(1, min(workers, 12))
+
+        credentials = load_fedex_credentials()
+        if not credentials:
+            return jsonify({'error': 'FedEx API credentials are not configured'}), 500
+        if not (credentials.get('account_number') or '').strip():
+            return jsonify({
+                'error': 'fedex_shipper_account_number is missing from environment'
+            }), 500
+
+        token = get_fedex_auth_token(credentials)
+        if not token:
+            return jsonify({'error': 'Failed to authenticate with FedEx'}), 502
+
+        connection = get_db_connection()
+        if not connection:
+            return jsonify({'error': 'Database connection failed'}), 500
+        cursor = connection.cursor(dictionary=True)
+
+        # FedEx reference search is only useful for recent labels; skip older history.
+        max_age_days = int(data.get('max_age_days') or 90)
+        max_age_days = max(1, min(max_age_days, 365))
+
+        if requested_pos:
+            placeholders = ','.join(['%s'] * len(requested_pos))
+            cursor.execute(
+                f"""
+                SELECT o.po_number, o.tracking, o.batch_date, o.updated_at, o.status,
+                       p.box_count
+                FROM lori_orders o
+                LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
+                WHERE o.po_number IN ({placeholders})
+                  AND o.batch_date IS NOT NULL
+                  AND o.batch_date >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
+                ORDER BY o.batch_date DESC, o.po_number
+                """,
+                tuple(requested_pos) + (max_age_days,),
+            )
+        else:
+            sql = """
+                SELECT o.po_number, o.tracking, o.batch_date, o.updated_at, o.status,
+                       p.box_count
+                FROM lori_orders o
+                LEFT JOIN loris_pkg_info p ON o.po_number = p.po_number
+                WHERE o.status = 'shipped'
+                  AND o.batch_date IS NOT NULL
+                  AND o.batch_date >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
+            """
+            params = [max_age_days]
+            if only_missing:
+                sql += " AND (o.tracking IS NULL OR TRIM(o.tracking) = '')"
+            sql += " ORDER BY o.batch_date DESC, o.po_number"
+            cursor.execute(sql, tuple(params))
+
+        orders = cursor.fetchall() or []
+        if not orders:
+            cursor.close()
+            connection.close()
+            return jsonify({
+                'success': True,
+                'message': f'No shipped orders within the last {max_age_days} days need tracking fetch',
+                'updated': [],
+                'conflicts': [],
+                'not_found': [],
+                'errors': [],
+                'skipped_existing': 0,
+                'processed': 0,
+                'remaining': 0,
+                'max_age_days': max_age_days,
+            })
+
+        truncated = len(orders) > max_orders
+        remaining = max(0, len(orders) - max_orders)
+        orders = orders[:max_orders]
+
+        def _lookup(order):
+            po_number = order.get('po_number')
+            existing = (order.get('tracking') or '').strip()
+            begin, end = _ship_date_window_for_order(
+                order.get('batch_date'), order.get('updated_at')
+            )
+            try:
+                box_count = int(order.get('box_count') or 0)
+            except (TypeError, ValueError):
+                box_count = 0
+            try:
+                hits = _fedex_reference_search(
+                    token, credentials, po_number, begin, end
+                )
+                hits = sorted(hits, key=_fedex_hit_sort_key, reverse=True)
+                return {
+                    'po_number': po_number,
+                    'existing': existing,
+                    'box_count': box_count,
+                    'batch_date': str(order.get('batch_date') or ''),
+                    'window': [begin, end],
+                    'hits': hits,
+                    'error': None,
+                }
+            except Exception as exc:
+                return {
+                    'po_number': po_number,
+                    'existing': existing,
+                    'box_count': box_count,
+                    'batch_date': str(order.get('batch_date') or ''),
+                    'window': [begin, end],
+                    'hits': [],
+                    'error': str(exc),
+                }
+
+        lookup_results = []
+        with ThreadPoolExecutor(max_workers=min(workers, len(orders))) as pool:
+            futures = [pool.submit(_lookup, order) for order in orders]
+            for fut in as_completed(futures):
+                lookup_results.append(fut.result())
+
+        # Expand MPS for each chosen master (sequential — shares one token).
+        for item in lookup_results:
+            if item.get('error') or not item.get('hits'):
+                item['mps_trackings'] = []
+                item['mps_statuses'] = {}
+                item['independent_hits'] = []
+                continue
+            hits = item['hits']
+            chosen = hits[0]
+            master = chosen['trackingNumber']
+            try:
+                ordered, status_map = _fedex_expand_mps(token, credentials, master)
+            except Exception as mps_err:
+                current_app.logger.warning(
+                    'MPS expand failed for %s / %s: %s',
+                    item.get('po_number'), master, mps_err,
+                )
+                ordered, status_map = [master], {}
+            if not ordered:
+                ordered = [master]
+            same_group, independent = _classify_reference_mps_hits(hits, ordered)
+            # If reference returned several trackings but associated returned only
+            # the master, fall back to treating all reference hits as the box set
+            # when box_count matches (or we have no better signal).
+            box_count = int(item.get('box_count') or 0)
+            if (
+                len(ordered) <= 1
+                and len(hits) > 1
+                and (box_count <= 1 or box_count == len(hits))
+                and not independent
+            ):
+                # Prefer master first, then remaining sorted
+                fallback = [master] + sorted(
+                    h['trackingNumber'] for h in hits
+                    if h.get('trackingNumber') and h['trackingNumber'] != master
+                )
+                ordered = fallback
+                same_group, independent = _classify_reference_mps_hits(hits, ordered)
+            item['chosen_master'] = master
+            item['mps_trackings'] = ordered
+            item['mps_statuses'] = status_map or {}
+            item['same_group_hits'] = same_group
+            item['independent_hits'] = independent
+
+        updated = []
+        conflicts = []
+        not_found = []
+        errors = []
+        skipped_existing = 0
+
+        for item in lookup_results:
+            po_number = item['po_number']
+            existing = item.get('existing') or ''
+            if item.get('error'):
+                errors.append({'po_number': po_number, 'error': item['error']})
+                continue
+            hits = item.get('hits') or []
+            if not hits:
+                not_found.append({
+                    'po_number': po_number,
+                    'batch_date': item.get('batch_date') or '',
+                    'window': item.get('window') or [],
+                })
+                continue
+
+            master = item.get('chosen_master') or hits[0]['trackingNumber']
+            mps_trackings = item.get('mps_trackings') or [master]
+            mps_statuses = item.get('mps_statuses') or {}
+            independent = item.get('independent_hits') or []
+            chosen = next(
+                (h for h in hits if h.get('trackingNumber') == master),
+                hits[0],
+            )
+
+            already_complete = (
+                existing == master
+                and len(mps_trackings) <= 1
+                and not independent
+            )
+            if already_complete and len(hits) == 1:
+                skipped_existing += 1
+                continue
+
+            cursor.execute(
+                "UPDATE lori_orders SET tracking = %s, updated_at = NOW() WHERE po_number = %s",
+                (master, po_number),
+            )
+
+            # Persist every MPS child tracking (+ statuses when available).
+            if len(mps_trackings) > 1 or mps_statuses:
+                try:
+                    _persist_box_trackings(cursor, po_number, mps_trackings)
+                except Exception as persist_err:
+                    current_app.logger.warning(
+                        'persist MPS trackings %s: %s', po_number, persist_err
+                    )
+                if mps_statuses:
+                    try:
+                        _persist_tracking_statuses(
+                            cursor,
+                            mps_statuses,
+                            package_refs=[{
+                                'po_number': po_number,
+                                'tracking': master,
+                                'trackings': mps_trackings,
+                            }],
+                        )
+                    except Exception as status_err:
+                        current_app.logger.warning(
+                            'persist MPS statuses %s: %s', po_number, status_err
+                        )
+
+            result_row = {
+                'po_number': po_number,
+                'tracking_number': master,
+                'status': chosen.get('status'),
+                'ship_date': (chosen.get('dates') or {}).get('SHIP'),
+                'previous_tracking': existing or None,
+                'match_count': len(hits),
+                'box_trackings': mps_trackings,
+                'box_tracking_count': len(mps_trackings),
+            }
+
+            # True conflict = independent shipments sharing the PO reference.
+            # Multiple trackings that are all MPS siblings are NOT a conflict.
+            if independent:
+                conflict_hits = []
+                for idx, hit in enumerate(hits):
+                    tn = hit.get('trackingNumber')
+                    conflict_hits.append({
+                        'tracking_number': tn,
+                        'status': hit.get('status'),
+                        'ship_date': (hit.get('dates') or {}).get('SHIP'),
+                        'latest_event_at': hit.get('latest_event_at'),
+                        'unique_id': hit.get('uniqueId'),
+                        'in_selected_mps': tn in set(mps_trackings),
+                        'is_independent': any(
+                            (h.get('trackingNumber') == tn) for h in independent
+                        ),
+                        'selected': tn == master,
+                    })
+                conflicts.append({
+                    **result_row,
+                    'candidates': conflict_hits,
+                    'independent_count': len(independent),
+                    'note': (
+                        'Multiple independent FedEx shipments share this PO reference; '
+                        f'saved preferred master {master} with '
+                        f'{len(mps_trackings)} MPS package tracking(s).'
+                    ),
+                })
+            else:
+                if len(mps_trackings) > 1:
+                    result_row['note'] = (
+                        f'MPS group: saved master + {len(mps_trackings) - 1} child '
+                        'tracking(s).'
+                    )
+                updated.append(result_row)
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        updated_count = len(updated)
+        conflict_count = len(conflicts)
+        message = (
+            f'Batch complete: {updated_count} updated'
+            f', {conflict_count} multi-shipment conflicts'
+            f', {len(not_found)} not found'
+            f', {len(errors)} errors'
+            f' (processed {len(orders)})'
+        )
+        if remaining:
+            message += f'. {remaining} still pending.'
+
+        return jsonify({
+            'success': True,
+            'message': message,
+            'updated': updated,
+            'conflicts': conflicts,
+            'not_found': not_found,
+            'errors': errors,
+            'skipped_existing': skipped_existing,
+            'processed': len(orders),
+            'remaining': remaining,
+            'truncated': truncated,
+            'max_age_days': max_age_days,
+        })
+    except Exception as e:
+        current_app.logger.exception('auto_fetch_tracking failed')
+        return jsonify({'error': f'Error auto-fetching tracking: {str(e)}'}), 500
+
+
 @lori_automation_bp.route("/fetch_and_process_emails", methods=["POST"])
 def fetch_and_process_emails():
     """Simplified endpoint: Fetch emails, download PDFs, and process into database automatically"""
@@ -3357,32 +5252,78 @@ def delete_pdf_data():
 
 
 def load_fedex_credentials():
-    """Load FedEx API credentials from credentials.json"""
+    """Load FedEx API credentials from env (nssm-fdcef-environment.env), then credentials.json."""
     try:
-        with open('credentials.json', 'r') as f:
-            credentials = json.load(f)
-            # Accept multiple possible keys for billing/account to be tolerant of different credential formats
-            billing_default = (
-                credentials.get('fedex_billing_account')
-                or credentials.get('fedex_billing_number')
-                or credentials.get('fedex_billing')
-            )
+        api_key = (
+            os.getenv('fedex_api_key')
+            or os.getenv('FEDEX_API_KEY')
+            or ''
+        ).strip()
+        secret_key = (
+            os.getenv('fedex_api_secret')
+            or os.getenv('fedex_secret_key')
+            or os.getenv('FEDEX_API_SECRET')
+            or os.getenv('FEDEX_SECRET_KEY')
+            or ''
+        ).strip()
+        account_number = (
+            os.getenv('fedex_shipper_account_number')
+            or os.getenv('fedex_account_number')
+            or os.getenv('FEDEX_SHIPPER_ACCOUNT_NUMBER')
+            or os.getenv('FEDEX_ACCOUNT_NUMBER')
+            or ''
+        ).strip()
+        billing_default = (
+            os.getenv('fedex_billing_account')
+            or os.getenv('fedex_billing_number')
+            or ''
+        ).strip() or None
+        environment = (
+            os.getenv('fedex_environment')
+            or os.getenv('FEDEX_ENVIRONMENT')
+            or 'production'
+        ).strip()
 
+        file_creds = {}
+        try:
+            with open('credentials.json', 'r') as f:
+                file_creds = json.load(f) or {}
+        except Exception:
+            file_creds = {}
+
+        if not api_key:
+            api_key = (file_creds.get('fedex_api_key') or '').strip()
+        if not secret_key:
+            secret_key = (file_creds.get('fedex_secret_key') or file_creds.get('fedex_api_secret') or '').strip()
+        if not account_number:
             account_number = (
-                credentials.get('fedex_account_number')
-                or credentials.get('fedex_account')
-                or credentials.get('account_number')
+                file_creds.get('fedex_shipper_account_number')
+                or file_creds.get('fedex_account_number')
+                or file_creds.get('fedex_account')
+                or file_creds.get('account_number')
+                or ''
             )
+            account_number = str(account_number).strip()
+        if not billing_default:
+            billing_default = (
+                file_creds.get('fedex_billing_account')
+                or file_creds.get('fedex_billing_number')
+                or file_creds.get('fedex_billing')
+            )
+        if environment == 'production' and file_creds.get('fedex_environment'):
+            environment = str(file_creds.get('fedex_environment')).strip() or environment
 
-            return {
-                'api_key': credentials.get('fedex_api_key'),
-                'secret_key': credentials.get('fedex_secret_key'),
-                'account_number': account_number,
-                # credentials-level billing default (optional)
-                'billing_account_default': billing_default,
-                # Production-only integration: default environment is 'production'
-                'environment': credentials.get('fedex_environment', 'production')
-            }
+        if not api_key or not secret_key:
+            current_app.logger.error('FedEx credentials missing (api key / secret)')
+            return None
+
+        return {
+            'api_key': api_key,
+            'secret_key': secret_key,
+            'account_number': account_number or None,
+            'billing_account_default': billing_default,
+            'environment': environment or 'production',
+        }
     except Exception as e:
         current_app.logger.error(f"Error loading FedEx credentials: {str(e)}")
         return None
@@ -3448,11 +5389,18 @@ def save_package_info():
         if not po_number:
             return jsonify({'error': 'PO number is required'}), 400
         
+        if not isinstance(box_dimensions, list):
+            box_dimensions = []
+        box_dimensions = _filter_empty_boxes(
+            [b if isinstance(b, dict) else {} for b in box_dimensions]
+        )
         if not box_dimensions:
-                       return jsonify({'error': 'At least one box is required'}), 400
-        
+            return jsonify({'error': 'At least one box is required'}), 400
+
         # Calculate total weight
-        total_weight = sum(float(box.get('weight', 0)) for box in box_dimensions)
+        total_weight = sum(
+            float(_parse_measure_value(box.get('weight')) or 0) for box in box_dimensions
+        )
         
         # Create table if it doesn't exist
         

@@ -1,6 +1,8 @@
 """In-transit (ocean) qty from plog — sums open PO lines, not inv_data.on_order_qty."""
 from __future__ import annotations
 
+import pyodbc
+
 
 def _norm_sku(sku) -> str:
     if sku is None:
@@ -112,18 +114,21 @@ def fetch_ocean_qty_by_skus(conn, skus: list[str], *, chunk_size: int = 400) -> 
         for start in range(0, len(normalized), chunk_size):
             chunk = normalized[start : start + chunk_size]
             placeholders = ",".join("?" * len(chunk))
+            # prod_cd is CHAR; nvarchar params (pyodbc default) force a per-row conversion and skip the index.
+            # CHAR '=' already ignores trailing spaces, so RTRIM is not needed on the column.
+            cursor.setinputsizes([(pyodbc.SQL_VARCHAR, 50, 0)] * len(chunk))
             cursor.execute(
                 f"""
                 SELECT RTRIM(pl.prod_cd) AS sku,
                        SUM(CASE WHEN pl.hdl_chg > 0 THEN pl.hdl_chg ELSE pl.log_qty END) AS qty
                 FROM dbo.plog pl
-                WHERE RTRIM(pl.prod_cd) IN ({placeholders})
+                WHERE pl.prod_cd IN ({placeholders})
                 AND pl.hdl_chg = 0
                 AND pl.log_qty > 0
                 AND pl.pur_num NOT IN (
                     SELECT DISTINCT pur_num
                     FROM plog p2
-                    WHERE RTRIM(p2.prod_cd) = RTRIM(pl.prod_cd)
+                    WHERE p2.prod_cd = pl.prod_cd
                       AND p2.hdl_chg > 0
                 )
                 GROUP BY RTRIM(pl.prod_cd)

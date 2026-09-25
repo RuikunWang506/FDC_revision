@@ -803,6 +803,7 @@ def delete_container_po_from_fdc(container_number: str) -> dict[str, Any]:
         "plog_deleted": 0,
         "pur_ord_deleted": 0,
         "on_order_cleared": 0,
+        "ap_invoice_deleted": False,
         "errors": [],
     }
 
@@ -815,6 +816,15 @@ def delete_container_po_from_fdc(container_number: str) -> dict[str, Any]:
             return result
 
         affected_skus = _skus_for_container(cursor, normalized)
+
+        ap = _delete_ap_invoice(cursor, normalized)
+        result["ap_invoice_deleted"] = bool(ap.get("deleted"))
+        if ap.get("error"):
+            result["errors"].append(f"A/P invoice: {ap['error']}")
+            # Paid A/P blocks PO delete so we do not orphan payments.
+            if not ap.get("skipped"):
+                conn.rollback()
+                return result
 
         cursor.execute(
             "DELETE FROM dbo.bin_pur WHERE RTRIM(pur_num) = ?",
@@ -1051,12 +1061,266 @@ def _sync_plog_for_fully_received_container(cursor, container_number: str) -> in
     return _sync_plog_received_for_skus(cursor, normalized, skus)
 
 
-def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
+# A/P GL accounts used by native OMS container invoices (vendor 50005 / 00005).
+_AP_LIABILITY_CHT = 21120
+_AP_INVENTORY_CHT = "51200"
+_AP_INVENTORY_DESC = "INVENTORY-PURCHASE"
+_AP_OPEN_BY_DEFAULT = "DENNIS"
+# L-vendor terms observed on recent L2026* acctpbl rows.
+_AP_L_VENDOR_DUE_DAYS = 45
+
+
+def _ap_open_by(opened_by: str | None) -> str:
+    text = (opened_by or _AP_OPEN_BY_DEFAULT).strip().upper() or _AP_OPEN_BY_DEFAULT
+    return pad_char(text, 8).strip()
+
+
+def _ap_memo_line(container_number: str, invs_dt: int) -> str:
+    when = _erp_datetime_from_serial(invs_dt)
+    # Match OMS memo style: "P/O# F261107  6/18/2026"
+    return f"P/O# {container_number}  {when.month}/{when.day:02d}/{when.year}"
+
+
+def _ap_invoice_exists(cursor, container_number: str) -> bool:
+    cursor.execute(
+        "SELECT 1 FROM dbo.acctpbl WHERE RTRIM(INVS_NUM) = ?",
+        (str(container_number).strip().upper(),),
+    )
+    return cursor.fetchone() is not None
+
+
+def _next_ap_batch_num(cursor) -> int:
+    cursor.execute("SELECT ISNULL(MAX(BAT_NUM), 0) FROM dbo.acctpbl")
+    return int(cursor.fetchone()[0] or 0) + 1
+
+
+def _ap_amount_and_receive_stamp(
+    cursor, container_number: str
+) -> tuple[Decimal, int, int] | None:
+    """Invoice amount + receive date/time from PUR_CD=2 plog (native receive batch)."""
+    normalized = str(container_number).strip().upper()
+    cursor.execute(
+        """
+        SELECT SUM(ISNULL(LOG_QTY, 0) * ISNULL(BASE_COST, 0)),
+               MAX(LOG_DATE),
+               MIN(LOG_TIME),
+               COUNT(*)
+        FROM dbo.plog
+        WHERE RTRIM(PUR_NUM) = ?
+          AND PUR_CD = ?
+        """,
+        (normalized, RECEIVE_ALLOC_PUR_CD),
+    )
+    row = cursor.fetchone()
+    if not row or not row[3]:
+        return None
+    amt = _decimal(row[0]).quantize(Decimal("0.01"))
+    if amt <= 0:
+        return None
+    return amt, int(row[1]), int(row[2] or 0)
+
+
+def _ensure_ap_invoice(
+    cursor,
+    container_number: str,
+    *,
+    opened_by: str | None = None,
+) -> dict[str, Any]:
+    """Insert acctpbl + pbl_ins + pbl_dist for a landed container if missing.
+
+    Amount/date come from the OMS receive plog (PUR_CD=2), matching how DENNIS
+    enters container A/P invoices in OMS.
+    """
+    normalized = str(container_number).strip().upper()
+    out: dict[str, Any] = {
+        "inserted": False,
+        "skipped": False,
+        "invs_amt": 0.0,
+        "bat_num": 0,
+        "error": "",
+    }
+    if _ap_invoice_exists(cursor, normalized):
+        out["skipped"] = True
+        return out
+
+    stamp = _ap_amount_and_receive_stamp(cursor, normalized)
+    if stamp is None:
+        out["error"] = "no receive plog amount"
+        return out
+    amt, invs_dt, invs_tm = stamp
+
+    cursor.execute(
+        "SELECT RTRIM(VEN_ID) FROM dbo.pur_ord WHERE RTRIM(PUR_NUM) = ?",
+        (normalized,),
+    )
+    ven_row = cursor.fetchone()
+    if not ven_row or not ven_row[0]:
+        out["error"] = "no vendor on pur_ord"
+        return out
+    vend_id = str(ven_row[0]).strip()
+    # L/00005 uses ~net-45; F/50005 due date = invoice date.
+    due_dt = (
+        invs_dt + _AP_L_VENDOR_DUE_DAYS
+        if vend_id == VENDOR_FALLBACK["L"]
+        else invs_dt
+    )
+
+    open_by = _ap_open_by(opened_by)
+    bat_num = _next_ap_batch_num(cursor)
+    memo = _ap_memo_line(normalized, invs_dt)
+    pord = pad_char(normalized, 8).strip()
+
+    cursor.execute(
+        """
+        INSERT INTO dbo.acctpbl (
+            VEND_ID, INVS_NUM, INVS_CD, PORD_NUM, BAT_NUM,
+            RCV_DT, INVS_DT, INVS_TM, OPEN_NUM, BUS_CD,
+            SHIP_CD, HANDL_CD, MISC_CD, TAX_CD, DISC_CD, DUE_DT,
+            INVS_AMT, INVS_TAX, MISC_CHG, HANDL_FEE, SHIP_FEE,
+            DISCNT_AMT, DISCNT_RT, REFER_NUM, VEN_INVS_DT, WHS_NUM,
+            CALC_SEL, CONT_NUM, CONT_TYPE, CONT_RT, CONT_WT, CONT_VOL,
+            LAST_UPDT, LAST_OPEN
+        ) VALUES (
+            ?, ?, 1, ?, ?,
+            ?, ?, ?, ?, 1,
+            0, 0, 0, 0, 0, ?,
+            ?, 0, 0, 0, 0,
+            0, 0, '', ?, '',
+            0, '', 0, 0, 0, 0,
+            0, ''
+        )
+        """,
+        (
+            vend_id,
+            normalized,
+            pord,
+            bat_num,
+            invs_dt,
+            invs_dt,
+            invs_tm,
+            open_by,
+            due_dt,
+            amt,
+            invs_dt,
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT INTO dbo.pbl_ins (
+            VEND_ID, INVS_NUM, PO_NUM, INVS_DT, INVS_TM, VEN_INVS_DT,
+            CHT_NUM, GL_ACT, DUE_DT, REFER_NUM, NOTE_NUM,
+            INVS_AMT, DISCNT_AMT, BAL_AMT, OPEN_NUM, AP_PT, INS_VAL,
+            LAST_UPDT, LAST_OPEN, PROJ_NUM
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, '', 0,
+            ?, 0, ?, ?, 0, 0,
+            0, '', ''
+        )
+        """,
+        (
+            vend_id,
+            normalized,
+            normalized,
+            invs_dt,
+            invs_tm,
+            invs_dt,
+            _AP_LIABILITY_CHT,
+            str(_AP_LIABILITY_CHT),
+            due_dt,
+            amt,
+            amt,
+            open_by,
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT INTO dbo.pbl_dist (
+            VEND_ID, INVS_NUM, INVS_DT, CHT_NUM, GL_ACT, CHT_DESC,
+            MEMO_LN, CHT_AMT, INS_VAL, COMM_LN
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, 0, 1
+        )
+        """,
+        (
+            vend_id,
+            normalized,
+            invs_dt,
+            _AP_INVENTORY_CHT,
+            _AP_INVENTORY_CHT,
+            _AP_INVENTORY_DESC,
+            memo[:40],
+            amt,
+        ),
+    )
+    out["inserted"] = True
+    out["invs_amt"] = float(amt)
+    out["bat_num"] = bat_num
+    return out
+
+
+def _delete_ap_invoice(cursor, container_number: str) -> dict[str, Any]:
+    """Remove unpaid A/P invoice rows for a container (acctpbl / pbl_ins / pbl_dist)."""
+    normalized = str(container_number).strip().upper()
+    out: dict[str, Any] = {
+        "deleted": False,
+        "skipped": False,
+        "acctpbl": 0,
+        "pbl_ins": 0,
+        "pbl_dist": 0,
+        "error": "",
+    }
+    if not _ap_invoice_exists(cursor, normalized):
+        out["skipped"] = True
+        return out
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM dbo.pbl_trs
+        WHERE RTRIM(INVS_NUM) = ?
+        """,
+        (normalized,),
+    )
+    if int(cursor.fetchone()[0] or 0) > 0:
+        out["error"] = "has payments in pbl_trs"
+        return out
+
+    cursor.execute(
+        """
+        SELECT COUNT(*)
+        FROM dbo.pbl_ins
+        WHERE RTRIM(INVS_NUM) = ?
+          AND ISNULL(BAL_AMT, 0) < ISNULL(INVS_AMT, 0)
+        """,
+        (normalized,),
+    )
+    if int(cursor.fetchone()[0] or 0) > 0:
+        out["error"] = "balance already reduced"
+        return out
+
+    cursor.execute("DELETE FROM dbo.pbl_dist WHERE RTRIM(INVS_NUM) = ?", (normalized,))
+    out["pbl_dist"] = int(cursor.rowcount or 0)
+    cursor.execute("DELETE FROM dbo.pbl_ins WHERE RTRIM(INVS_NUM) = ?", (normalized,))
+    out["pbl_ins"] = int(cursor.rowcount or 0)
+    cursor.execute("DELETE FROM dbo.acctpbl WHERE RTRIM(INVS_NUM) = ?", (normalized,))
+    out["acctpbl"] = int(cursor.rowcount or 0)
+    out["deleted"] = bool(out["acctpbl"] or out["pbl_ins"] or out["pbl_dist"])
+    return out
+
+
+def receive_container_po_at_827(
+    container_number: str,
+    *,
+    opened_by: str | None = None,
+) -> dict[str, Any]:
     """Receive open PO lines at 827 the way native OMS does.
 
     Sets PUR_CD=1 rcvd_qty and inv_data stock, flips original plog.hdl_chg,
     then inserts PUR_CD=2 allocation rows (rcvd=0) and a second plog batch
     dated now with HDL_CHG=0 so Hist-Received is not doubled.
+    Also creates the matching A/P invoice (acctpbl / pbl_ins / pbl_dist) when missing.
     """
     normalized = str(container_number).strip().upper()
     received_at = datetime.now()
@@ -1069,6 +1333,8 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         "bin_pur_alloc_inserted": 0,
         "plog_receive_inserted": 0,
         "receive_batch_num": 0,
+        "ap_invoice_inserted": False,
+        "ap_invoice_amt": 0.0,
         "received_date": received_at.strftime("%m/%d/%Y"),
         "already_landed": False,
         "errors": [],
@@ -1096,12 +1362,19 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         )
         lines = cursor.fetchall()
         if not lines:
-            # Already landed in bin_pur — repair ocean hdl_chg and missing OMS receive rows.
+            # Already landed in bin_pur — repair ocean hdl_chg, receive rows, and A/P.
             plog_synced = _sync_plog_for_fully_received_container(cursor, normalized)
             pattern = _ensure_oms_receive_pattern(
                 cursor, normalized, received_at=_lookup_container_receive_at(cursor, normalized)
             )
-            if plog_synced or pattern["bin_pur_inserted"] or pattern["plog_inserted"]:
+            ap = _ensure_ap_invoice(cursor, normalized, opened_by=opened_by)
+            changed = (
+                plog_synced
+                or pattern["bin_pur_inserted"]
+                or pattern["plog_inserted"]
+                or ap.get("inserted")
+            )
+            if changed:
                 conn.commit()
             result["success"] = True
             result["already_landed"] = True
@@ -1109,6 +1382,10 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             result["bin_pur_alloc_inserted"] = pattern["bin_pur_inserted"]
             result["plog_receive_inserted"] = pattern["plog_inserted"]
             result["receive_batch_num"] = pattern["batch_num"]
+            result["ap_invoice_inserted"] = bool(ap.get("inserted"))
+            result["ap_invoice_amt"] = float(ap.get("invs_amt") or 0)
+            if ap.get("error"):
+                result["errors"].append(f"A/P invoice: {ap['error']}")
             return result
 
         erp_today = erp_date(cursor, received_at)
@@ -1165,6 +1442,7 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
             cursor, normalized, received_at=received_at, insert_plog=True
         )
         _recalc_on_order_qty_for_skus(cursor, affected_skus)
+        ap = _ensure_ap_invoice(cursor, normalized, opened_by=opened_by)
 
         conn.commit()
         result["success"] = True
@@ -1174,6 +1452,10 @@ def receive_container_po_at_827(container_number: str) -> dict[str, Any]:
         result["bin_pur_alloc_inserted"] = pattern["bin_pur_inserted"]
         result["plog_receive_inserted"] = pattern["plog_inserted"]
         result["receive_batch_num"] = pattern["batch_num"]
+        result["ap_invoice_inserted"] = bool(ap.get("inserted"))
+        result["ap_invoice_amt"] = float(ap.get("invs_amt") or 0)
+        if ap.get("error"):
+            result["errors"].append(f"A/P invoice: {ap['error']}")
         return result
     except Exception as exc:
         conn.rollback()
@@ -1194,6 +1476,7 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         "plog_synced": 0,
         "bin_pur_alloc_deleted": 0,
         "plog_receive_deleted": 0,
+        "ap_invoice_deleted": False,
         "already_ocean": False,
         "errors": [],
     }
@@ -1220,8 +1503,12 @@ def revert_container_to_ocean(container_number: str) -> dict[str, Any]:
         bin_deleted, plog_deleted = _delete_oms_receive_rows(cursor, normalized)
         result["bin_pur_alloc_deleted"] = bin_deleted
         result["plog_receive_deleted"] = plog_deleted
+        ap = _delete_ap_invoice(cursor, normalized)
+        result["ap_invoice_deleted"] = bool(ap.get("deleted"))
+        if ap.get("error"):
+            result["errors"].append(f"A/P invoice: {ap['error']}")
         if not lines:
-            if bin_deleted or plog_deleted:
+            if bin_deleted or plog_deleted or ap.get("deleted"):
                 conn.commit()
             result["success"] = True
             result["already_ocean"] = True

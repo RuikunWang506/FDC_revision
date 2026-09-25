@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Loris Tracking') }}</title>
+    {% include '_csrf.html' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1c2430;
+            --muted: #5c6b7a;
+            --line: #d8e0e8;
+            --panel: #f7f9fb;
+            --accent: #0b6e4f;
+            --delivered: #1b7f4a;
+            --transit: #0b5cab;
+            --label: #8a6d1d;
+            --warn: #a33b2b;
+            --sidebar-w: 118px;
+            --right-sidebar-w: 220px;
+            --nav-h: 50px;
+            /* Must match table.track-table col widths so sticky headers line up with cells */
+            --track-cols: 16% 7% 14% 8% 28% 27%;
+        }
+        body {
+            background: linear-gradient(180deg, #eef3f7 0%, #f8fafb 40%, #fff 100%);
+            color: var(--ink);
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            min-height: 100vh;
+        }
+        .bookmark-sidebar,
+        .controls-sidebar {
+            position: fixed;
+            top: var(--nav-h);
+            height: calc(100vh - var(--nav-h));
+            background: #f4f7fa;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 90;
+            padding: 0.45rem 0.4rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .bookmark-sidebar {
+            left: 0;
+            width: var(--sidebar-w);
+            border-right: 1px solid var(--line);
+        }
+        .controls-sidebar {
+            right: 0;
+            width: var(--right-sidebar-w);
+            border-left: 1px solid var(--line);
+        }
+        .sidebar-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            text-align: center;
+            padding: 0.2rem 0 0.3rem;
+        }
+        .bookmark-btn {
+            display: block;
+            width: 100%;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 6px;
+            padding: 0.35rem 0.2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            color: var(--ink);
+            line-height: 1.1;
+        }
+        .bookmark-btn .bm-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 0.25rem;
+            margin-top: 0.12rem;
+            font-size: 0.62rem;
+            line-height: 1.15;
+            font-weight: 500;
+        }
+        .bookmark-btn .bm-track {
+            color: var(--muted);
+            text-align: left;
+            min-width: 0;
+        }
+        .bookmark-btn .bm-orders {
+            color: #c0392b;
+            font-weight: 700;
+            margin-left: auto;
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .bookmark-btn:hover { background: #e7f3ee; border-color: #b7d8c9; }
+        .bookmark-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .bookmark-btn.active .bm-track { color: rgba(255,255,255,0.85); }
+        .bookmark-btn.active .bm-orders { color: #ffc9c9; }
+        .bookmark-btn.dim { opacity: 0.35; }
+
+        .controls-sidebar .ctrl-block {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        .controls-sidebar .ctrl-label {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+        }
+        .controls-sidebar .search-input-wrap { position: relative; }
+        .controls-sidebar .search-input-wrap i {
+            position: absolute; left: 0.45rem; top: 50%; transform: translateY(-50%);
+            color: var(--muted); pointer-events: none; font-size: 0.75rem;
+        }
+        .controls-sidebar input[type="search"] {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 0.35rem 0.4rem 0.35rem 1.55rem;
+            font-size: 0.78rem;
+        }
+        .controls-sidebar input[type="search"]:focus {
+            outline: none;
+            border-color: #8fc4ad;
+            box-shadow: 0 0 0 2px rgba(11, 110, 79, 0.12);
+        }
+        .controls-sidebar .status-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 0.28rem;
+        }
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            border-radius: 6px;
+            padding: 0.28rem 0.45rem;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1.15;
+            text-align: left;
+        }
+        .filter-chip:hover { background: #f0f5f8; }
+        .filter-chip.active[data-filter="delivered"] {
+            background: #e6f6ec; border-color: #9fd5b3; color: var(--delivered);
+        }
+        .filter-chip.active[data-filter="on_way"] {
+            background: #e8f1fb; border-color: #9dbcea; color: var(--transit);
+        }
+        .filter-chip.active[data-filter="problem"] {
+            background: #f8f1d8; border-color: #e0cf8a; color: var(--label);
+        }
+        .filter-chip.active[data-filter="failed"] {
+            background: #f8e8e5; border-color: #e3b0a6; color: var(--warn);
+        }
+        .filter-chip .fc-count { font-weight: 500; opacity: 0.75; }
+        .controls-sidebar .btn {
+            font-size: 0.74rem;
+            padding: 0.32rem 0.45rem;
+            white-space: normal;
+            line-height: 1.2;
+        }
+        .controls-sidebar .board-summary {
+            font-size: 0.7rem;
+            color: var(--muted);
+            line-height: 1.3;
+        }
+        .controls-sidebar .match-count {
+            font-size: 0.7rem;
+            color: var(--muted);
+            min-height: 1rem;
+        }
+
+        .page-wrap {
+            max-width: none;
+            margin: 0;
+            padding: 0.65rem 0.75rem 1.5rem;
+            margin-left: calc(var(--sidebar-w) + 8px);
+            margin-right: calc(var(--right-sidebar-w) + 8px);
+        }
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.55rem;
+        }
+        .page-title { margin: 0; font-size: 1.25rem; font-weight: 700; }
+        .page-sub { color: var(--muted); margin: 0.1rem 0 0; font-size: 0.78rem; }
+
+        .range-bar {
+            display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;
+            margin-bottom: 0.55rem;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.4rem 0.55rem;
+        }
+        .range-bar label {
+            font-size: 0.68rem; font-weight: 700; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.03em; margin: 0;
+        }
+        .range-bar input[type="month"] {
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 0.22rem 0.4rem;
+            font-size: 0.8rem;
+            color: var(--ink);
+            background: #fff;
+        }
+        .range-bar .range-sep { color: var(--muted); font-size: 0.78rem; }
+        .range-hint { color: var(--muted); font-size: 0.74rem; }
+
+        .batch-card {
+            background: #fff; border: 1px solid var(--line); border-radius: 8px;
+            margin-bottom: 0.55rem; overflow: visible;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+            scroll-margin-top: calc(var(--nav-h) + 8px);
+        }
+        /* One sticky pin: batch title + column headers. Avoids sticky-thead
+           inside long tables (headers "push" to mid/bottom of the viewport). */
+        .batch-pin {
+            position: sticky;
+            top: var(--nav-h);
+            z-index: 20;
+            background: #fff;
+        }
+        .batch-head {
+            width: 100%; border: 0; background: var(--panel);
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.5rem; padding: 0.4rem 0.65rem; cursor: pointer; text-align: left;
+            border-bottom: 1px solid transparent;
+        }
+        .batch-card.open .batch-head {
+            border-bottom-color: var(--line);
+        }
+        .batch-card.open .batch-pin {
+            box-shadow: 0 1px 0 rgba(16, 24, 40, 0.06);
+        }
+        .batch-head:hover { background: #eef4f8; }
+        .batch-head strong { font-size: 0.88rem; }
+        .batch-head .meta { color: var(--muted); font-size: 0.72rem; }
+        .batch-colhead {
+            display: none;
+            grid-template-columns: var(--track-cols);
+            gap: 0;
+            background: #f2f5f8;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 1px solid var(--line);
+            padding: 0;
+        }
+        .batch-card.open .batch-colhead { display: grid; }
+        .batch-colhead span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.28rem 0.45rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+        }
+        .batch-body { display: none; }
+        .batch-card.open .batch-body { display: block; }
+        .batch-card.open .chev { transform: rotate(180deg); }
+        .chev { transition: transform 0.15s ease; color: var(--muted); font-size: 0.75rem; }
+
+        .table-responsive { overflow: visible; }
+        table.track-table {
+            width: 100%;
+            margin: 0;
+            font-size: 0.78rem;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        table.track-table col.col-po { width: 16%; }
+        table.track-table col.col-boxes { width: 7%; }
+        table.track-table col.col-dest { width: 14%; }
+        table.track-table col.col-zone { width: 8%; }
+        table.track-table col.col-tn { width: 28%; }
+        table.track-table col.col-status { width: 27%; }
+        table.track-table th,
+        table.track-table td {
+            border-bottom: 1px solid #eef2f6;
+            padding: 0.22rem 0.45rem;
+            vertical-align: middle;
+            text-align: center !important;
+            line-height: 1.25;
+        }
+        table.track-table th {
+            font-weight: 600;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--muted);
+            background: #f2f5f8;
+        }
+        table.track-table tbody tr:hover { background: #f8fbfc; }
+        table.track-table tbody tr.hidden-by-search,
+        table.track-table tbody tr.hidden-by-filter { display: none !important; }
+        .batch-card.hidden-by-search,
+        .batch-card.hidden-by-filter { display: none !important; }
+        table.track-table tbody tr.search-hit { background: #fff8e1; }
+        table.track-table tbody tr.order-row.has-boxes { cursor: pointer; }
+        table.track-table tbody tr.box-subrow { background: #f9fbfc; }
+        table.track-table tbody tr.box-subrow td {
+            padding-top: 0.16rem; padding-bottom: 0.16rem;
+            font-size: 0.72rem; color: var(--muted);
+            border-bottom-color: #f0f3f6;
+            text-align: center !important;
+        }
+        table.track-table tbody tr.box-subrow .tracking-link { font-size: 0.72rem; }
+        table.track-table td .boxes-pill,
+        table.track-table td .status-badge,
+        table.track-table td .tracking-link,
+        table.track-table td strong {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        table.track-table td.arrival-cell {
+            text-align: center !important;
+        }
+        .box-expand-btn {
+            border: 0; background: transparent; color: var(--muted);
+            padding: 0 0.15rem; cursor: pointer; font-size: 0.65rem;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .order-row.expanded .box-expand-btn { color: var(--accent); }
+        .boxes-pill {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 1.5rem; padding: 0.05rem 0.3rem; border-radius: 999px;
+            background: #e8f2ee; color: var(--accent); font-weight: 600;
+            font-size: 0.72rem; cursor: help; border: 1px solid #cfe3da;
+        }
+        .status-badge {
+            display: inline-block; padding: 0.08rem 0.35rem; border-radius: 4px;
+            font-size: 0.7rem; font-weight: 600; white-space: nowrap;
+            max-width: 14rem; overflow: hidden; text-overflow: ellipsis;
+        }
+        .status-delivered { background: #e6f6ec; color: var(--delivered); }
+        .status-transit { background: #e8f1fb; color: var(--transit); }
+        .status-label { background: #f8f1d8; color: var(--label); }
+        .status-error { background: #f8e8e5; color: var(--warn); }
+        .status-empty { background: #eef1f4; color: var(--muted); }
+        .tracking-link { font-family: ui-monospace, Consolas, monospace; font-size: 0.74rem; }
+        .empty-state {
+            text-align: center; padding: 2rem 1rem; color: var(--muted);
+            background: #fff; border: 1px dashed var(--line); border-radius: 8px;
+            font-size: 0.88rem;
+        }
+        .loading-bar {
+            display: none; align-items: center; gap: 0.5rem; color: var(--muted);
+            margin-bottom: 0.45rem; font-size: 0.78rem;
+        }
+        .loading-bar.show { display: flex; }
+        .visually-hidden {
+            position: absolute !important; width: 1px; height: 1px;
+            padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+            white-space: nowrap; border: 0;
+        }
+        @media (max-width: 1100px) {
+            .controls-sidebar { display: none; }
+            .page-wrap { margin-right: 0; }
+            .mobile-controls { display: flex; }
+        }
+        @media (max-width: 900px) {
+            .bookmark-sidebar { display: none; }
+            .page-wrap { margin-left: 0; }
+        }
+        .mobile-controls {
+            display: none;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 0.4rem 0.5rem;
+        }
+        .mobile-controls .filter-chip {
+            width: auto;
+            border-radius: 999px;
+            padding: 0.22rem 0.55rem;
+        }
+        .mobile-controls input[type="search"] {
+            flex: 1 1 160px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 0.3rem 0.5rem;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <aside class="bookmark-sidebar" id="batch-bookmarks" aria-label="Batch bookmarks">
+        <div class="sidebar-title">Batches</div>
+        <div id="bookmark-list"></div>
+    </aside>
+
+    <aside class="controls-sidebar" id="board-controls" aria-label="Tracking controls">
+        <div class="sidebar-title">Controls</div>
+
+        <div class="ctrl-block">
+            <span class="ctrl-label">Search</span>
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="search" id="tracking-search" placeholder="PO, tracking, ZIP…" autocomplete="off">
+            </div>
+            <button type="button" id="clear-search-btn" class="btn btn-outline-secondary btn-sm w-100 mt-1">Clear</button>
+            <div id="search-result-count" class="match-count mt-1"></div>
+        </div>
+
+        <div class="ctrl-block">
+            <span class="ctrl-label">Show</span>
+            <div class="status-filters" id="status-filters" role="group" aria-label="Status filters">
+                <button type="button" class="filter-chip" data-filter="delivered">Delivered<span class="fc-count" data-count-for="delivered"></span></button>
+                <button type="button" class="filter-chip" data-filter="on_way">On the way<span class="fc-count" data-count-for="on_way"></span></button>
+                <button type="button" class="filter-chip" data-filter="problem">Problem<span class="fc-count" data-count-for="problem"></span></button>
+                <button type="button" class="filter-chip" data-filter="failed">Failed status<span class="fc-count" data-count-for="failed"></span></button>
+            </div>
+        </div>
+
+        <div class="ctrl-block">
+            <span class="ctrl-label">Actions</span>
+            <button id="refresh-board-btn" class="btn btn-success btn-sm w-100 mb-1" type="button">
+                <i class="fas fa-sync-alt"></i> Refresh Board
+            </button>
+            <button id="refresh-status-btn" class="btn btn-outline-success btn-sm w-100" type="button">
+                <i class="fas fa-truck"></i> Refresh Arrival Status
+            </button>
+            <div id="board-summary" class="board-summary mt-2"></div>
+        </div>
+    </aside>
+
+    <div class="page-wrap">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="fas fa-map-marker-alt text-success"></i> Loris Tracking</h1>
+                <p class="page-sub">Shipped packages by batch · month range · per-box FedEx status</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('lori_automation.loris_shipping') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-shipping-fast"></i> Shipping
+                </a>
+                <a href="{{ url_for('lori_automation.loris_fedex') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="range-bar" id="date-range-bar">
+            <label for="from-ym">From</label>
+            <input type="month" id="from-ym" aria-label="From month">
+            <span class="range-sep">to</span>
+            <label for="to-ym" class="visually-hidden">To</label>
+            <input type="month" id="to-ym" aria-label="To month">
+            <button type="button" id="apply-range-btn" class="btn btn-outline-success btn-sm">Apply</button>
+            <button type="button" id="reset-range-btn" class="btn btn-outline-secondary btn-sm" title="Last 3 calendar months">Last 3 mo</button>
+            <span id="range-display" class="range-hint"></span>
+        </div>
+
+        <div class="mobile-controls" aria-label="Tracking controls (narrow)">
+            <input type="search" id="tracking-search-mobile" placeholder="Search…" autocomplete="off">
+            <button type="button" class="filter-chip" data-filter="delivered">Delivered</button>
+            <button type="button" class="filter-chip" data-filter="on_way">On the way</button>
+            <button type="button" class="filter-chip" data-filter="problem">Problem</button>
+            <button type="button" class="filter-chip" data-filter="failed">Failed</button>
+            <button id="refresh-board-btn-mobile" class="btn btn-success btn-sm" type="button">Refresh</button>
+            <button id="refresh-status-btn-mobile" class="btn btn-outline-success btn-sm" type="button">Status</button>
+        </div>
+
+        <div id="loading-bar" class="loading-bar">
+            <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+            <span id="loading-text">Loading…</span>
+        </div>
+        <div id="board-root"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    let boardBatches = [];
+    let activeBatchDate = '';
+    let searchQuery = '';
+    let statusFilter = ''; // '', 'delivered', 'on_way', 'problem', 'failed'
+    let fromYm = '';
+    let toYm = '';
+    let expandedOrders = new Set(); // po_number keys with open box subrows
+
+    const FILTER_RANK = { failed: 0, problem: 1, on_way: 2, pending: 3, delivered: 4 };
+
+    function defaultMonthRange() {
+        const now = new Date();
+        const end = new Date(now.getFullYear(), now.getMonth(), 1);
+        const start = new Date(end.getFullYear(), end.getMonth() - 2, 1);
+        return { from: toYmValue(start), to: toYmValue(end) };
+    }
+
+    function toYmValue(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        return `${y}-${m}`;
+    }
+
+    function formatMmYy(ym) {
+        const m = String(ym || '').match(/^(\d{4})-(\d{2})$/);
+        if (!m) return ym || '';
+        return `${m[2]}/${m[1].slice(2)}`;
+    }
+
+    function initRangeInputs(from, to) {
+        fromYm = from;
+        toYm = to;
+        document.getElementById('from-ym').value = from;
+        document.getElementById('to-ym').value = to;
+        document.getElementById('range-display').textContent =
+            `${formatMmYy(from)} to ${formatMmYy(to)}`;
+    }
+
+    function setLoading(on, text) {
+        const el = document.getElementById('loading-bar');
+        const label = document.getElementById('loading-text');
+        if (label && text) label.textContent = text;
+        el.classList.toggle('show', !!on);
+    }
+
+    function esc(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function isEmptyBoxEntry(box) {
+        if (!box || typeof box !== 'object') return true;
+        const tn = String(box.tracking || box.tracking_number || box.trackingNumber || '').trim();
+        if (tn) return false;
+        // Board placeholders have no dim keys — keep them for MPS expand.
+        // Only drop pads that explicitly carry 0x0x0 / 0 lb (or blank) dims.
+        const dimKeys = ['length', 'width', 'height', 'weight', 'l', 'w', 'h', 'wt'];
+        if (!dimKeys.some(k => Object.prototype.hasOwnProperty.call(box, k))) {
+            return false;
+        }
+        const num = (v) => {
+            if (v == null || v === '') return null;
+            const n = parseFloat(String(v).replace(/[^\d.+-]/g, ''));
+            return Number.isFinite(n) ? n : null;
+        };
+        const l = num(box.length ?? box.l);
+        const w = num(box.width ?? box.w);
+        const h = num(box.height ?? box.h);
+        const wt = num(box.weight ?? box.wt);
+        const dimsEmpty = [l, w, h].every(v => v == null || v === 0);
+        const weightEmpty = wt == null || wt === 0;
+        return dimsEmpty && weightEmpty;
+    }
+
+    function ensureBoxes(pkg) {
+        if (!Array.isArray(pkg.boxes) || !pkg.boxes.length) {
+            pkg.boxes = pkg.tracking ? [{
+                index: 1,
+                tracking: pkg.tracking,
+                is_master: true,
+                arrival_status: pkg.arrival_status || '',
+                status_code: pkg.status_code || '',
+                delivered: !!pkg.delivered,
+                delivery_date: pkg.delivery_date || null,
+                fetch_failed: !!pkg.fetch_failed,
+            }] : [];
+        } else {
+            // Drop phantom 0x0x0 / 0 lb pads that have no tracking.
+            const filtered = pkg.boxes.filter(b => !isEmptyBoxEntry(b));
+            if (filtered.length !== pkg.boxes.length) {
+                pkg.boxes = filtered.map((b, i) => ({ ...b, index: b.index || i + 1 }));
+                pkg.box_count = pkg.boxes.length;
+            }
+        }
+        if (pkg.box_count == null || pkg.box_count < (pkg.boxes || []).length) {
+            pkg.box_count = (pkg.boxes || []).length;
+        }
+        return pkg.boxes;
+    }
+
+    function classifyStatus(item) {
+        const code = (item.status_code || '').toUpperCase();
+        const label = (item.arrival_status || '').toLowerCase();
+        if (
+            item.fetch_failed ||
+            code === 'ERROR' ||
+            code.includes('ERROR') ||
+            label.includes('not found') ||
+            label.includes('fail to') ||
+            label.includes('failed') ||
+            label.includes('unable to retrieve')
+        ) {
+            return 'failed';
+        }
+        if (item.delivered || code === 'DL' || /\bdelivered\b/.test(label)) {
+            return 'delivered';
+        }
+        if (!item.arrival_status) {
+            return 'pending';
+        }
+        // FedEx possession / in-transit — count as On the way (before problem heuristics).
+        // Bare "updated" used to false-positive on "delivery date may be updated".
+        const transitRe = /we have your package|picked up|in transit|on the way|out for delivery|departed fedex|arrived at fedex|at local fedex|left fedex|on fedex vehicle|shipment information sent|label created/;
+        const transitCodes = ['PU', 'IT', 'OD', 'AR', 'DP', 'AF', 'OX', 'OC', 'OF', 'AA', 'IX'];
+        if (
+            (transitRe.test(label) || transitCodes.includes(code))
+            && !/\b(exception|cancel(?:led|ed)?|undeliver|return to sender|refused)\b/.test(label)
+        ) {
+            return 'on_way';
+        }
+        const problemRe = /\b(exception|delay|held|return|cancel(?:led|ed)?|undeliver|refus(?:ed|al)?|attempt(?:ed)?|missed|weather|incorrect|damaged|clearance|customs|problem|unable|not at home|recipient unavailable)\b|delivery update|\bstatus updated\b/;
+        if (
+            problemRe.test(label) ||
+            ['SE', 'CA', 'CD', 'DD', 'DE', 'RS', 'DY', 'HP'].includes(code)
+        ) {
+            return 'problem';
+        }
+        return 'on_way';
+    }
+
+    function classifyPkg(pkg) {
+        const boxes = ensureBoxes(pkg);
+        if (boxes.length > 1) {
+            let worst = null;
+            let worstRank = 99;
+            boxes.forEach(box => {
+                const cat = classifyStatus(box);
+                const rank = FILTER_RANK[cat] ?? 50;
+                if (rank < worstRank) {
+                    worstRank = rank;
+                    worst = cat;
+                }
+            });
+            return worst || classifyStatus(pkg);
+        }
+        return classifyStatus(pkg);
+    }
+
+    function pkgMatchesFilter(pkg) {
+        if (!statusFilter) return true;
+        const boxes = ensureBoxes(pkg);
+        if (boxes.length) {
+            return boxes.some(b => classifyStatus(b) === statusFilter);
+        }
+        return classifyPkg(pkg) === statusFilter;
+    }
+
+    function statusClass(item) {
+        const cat = classifyStatus(item);
+        if (cat === 'delivered') return 'status-delivered';
+        if (cat === 'failed') return 'status-error';
+        if (cat === 'problem') return 'status-label';
+        if (cat === 'pending') return 'status-empty';
+        return 'status-transit';
+    }
+
+    function statusHtml(item) {
+        const text = item.arrival_status || (item.fetch_failed ? 'Failed to fetch' : '—');
+        let extra = '';
+        if (item.delivery_date) {
+            extra = `<div class="small text-muted" style="font-size:0.65rem">${esc(String(item.delivery_date).slice(0, 16).replace('T', ' '))}</div>`;
+        }
+        return `<span class="status-badge ${statusClass(item)}" title="${esc(text)}">${esc(text)}</span>${extra}`;
+    }
+
+    function aggregateStatusHtml(pkg) {
+        const boxes = ensureBoxes(pkg);
+        if (boxes.length <= 1) return statusHtml(pkg);
+        const counts = { delivered: 0, on_way: 0, problem: 0, failed: 0, pending: 0 };
+        boxes.forEach(b => {
+            const c = classifyStatus(b);
+            if (counts[c] != null) counts[c] += 1;
+        });
+        const parts = [];
+        if (counts.delivered) parts.push(`${counts.delivered} dlv`);
+        if (counts.on_way) parts.push(`${counts.on_way} way`);
+        if (counts.problem) parts.push(`${counts.problem} prob`);
+        if (counts.failed) parts.push(`${counts.failed} fail`);
+        if (counts.pending) parts.push(`${counts.pending} —`);
+        const summary = parts.join(' · ') || '—';
+        const worstCat = classifyPkg(pkg);
+        const fake = {
+            arrival_status: summary,
+            status_code: '',
+            delivered: false,
+            fetch_failed: false,
+            delivery_date: null,
+        };
+        if (worstCat === 'failed') {
+            fake.fetch_failed = true;
+            fake.status_code = 'ERROR';
+        } else if (worstCat === 'delivered') {
+            fake.delivered = true;
+            fake.status_code = 'DL';
+        } else if (worstCat === 'problem') {
+            fake.status_code = 'SE';
+            fake.arrival_status = summary;
+        } else if (worstCat === 'pending') {
+            fake.arrival_status = '';
+        } else {
+            fake.status_code = 'IT';
+        }
+        // Keep summary text even for pending/delivered styling
+        if (worstCat !== 'pending') fake.arrival_status = summary;
+        else fake.arrival_status = summary;
+        return statusHtml(fake);
+    }
+
+    function stateZipText(pkg) {
+        if (pkg.state_zip) return pkg.state_zip;
+        return [pkg.state, pkg.zip].filter(Boolean).join(' ');
+    }
+
+    function trackLink(tn) {
+        if (!tn) return '<span class="text-muted">—</span>';
+        return `<a class="tracking-link" href="https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(tn)}" target="_blank" rel="noopener">${esc(tn)}</a>`;
+    }
+
+    function pkgSearchBlob(pkg) {
+        const boxes = ensureBoxes(pkg);
+        return [
+            pkg.po_number,
+            pkg.tracking,
+            ...boxes.map(b => b.tracking),
+            ...boxes.map(b => b.arrival_status),
+            pkg.state,
+            pkg.zip,
+            pkg.state_zip,
+            pkg.zone,
+            pkg.zone_express,
+            pkg.zone_ground,
+            pkg.arrival_status,
+            pkg.status_code,
+            pkg.batch_date,
+            classifyPkg(pkg),
+        ].join(' ').toLowerCase();
+    }
+
+    function packageRowsHtml(pkg) {
+        const boxes = ensureBoxes(pkg);
+        const multi = boxes.length > 1 || (pkg.box_count || 0) > 1;
+        const tip = pkg.box_tooltip || 'No box details';
+        const dest = stateZipText(pkg) || '—';
+        const zone = pkg.zone || '—';
+        const zoneTip = zoneTipFor(pkg);
+        const po = pkg.po_number || '';
+        const expanded = expandedOrders.has(po);
+        const expandBtn = multi
+            ? `<button type="button" class="box-expand-btn" data-expand-po="${esc(po)}" aria-label="Toggle boxes"><i class="fas fa-chevron-${expanded ? 'down' : 'right'}"></i></button>`
+            : '';
+        const trackingCell = multi
+            ? `${expandBtn}${trackLink(pkg.tracking)}<span class="text-muted" style="font-size:0.65rem"> · ${boxes.filter(b => b.tracking).length || pkg.box_count} boxes</span>`
+            : trackLink(pkg.tracking);
+
+        const filterCats = multi
+            ? Array.from(new Set(boxes.map(b => classifyStatus(b)))).join(' ')
+            : classifyPkg(pkg);
+
+        let html = `<tr class="order-row ${multi ? 'has-boxes' : ''} ${expanded ? 'expanded' : ''}"
+            data-po="${esc(po)}"
+            data-tracking="${esc(pkg.tracking || '')}"
+            data-filter-cat="${esc(filterCats)}"
+            data-search="${esc(pkgSearchBlob(pkg))}">
+            <td><strong>${esc(po)}</strong></td>
+            <td><span class="boxes-pill" title="${esc(tip)}">${pkg.box_count || boxes.length || '—'}</span></td>
+            <td>${esc(dest)}</td>
+            <td class="zone-cell" title="${esc(zoneTip)}">${esc(zone)}</td>
+            <td>${trackingCell}</td>
+            <td class="arrival-cell">${aggregateStatusHtml(pkg)}</td>
+        </tr>`;
+
+        if (multi) {
+            boxes.forEach((box, idx) => {
+                const hide = expanded ? '' : 'hidden-by-filter';
+                // Use a dedicated class so applyFilters can manage visibility vs status filter
+                html += `<tr class="box-subrow ${hide}" data-parent-po="${esc(po)}" data-box-index="${idx}"
+                    data-tracking="${esc(box.tracking || '')}"
+                    data-filter-cat="${esc(classifyStatus(box))}"
+                    data-search="${esc(pkgSearchBlob(pkg))}">
+                    <td colspan="2">Box ${esc(box.index || idx + 1)}${box.is_master ? ' · master' : ''}</td>
+                    <td colspan="2"></td>
+                    <td>${trackLink(box.tracking)}</td>
+                    <td class="arrival-cell">${statusHtml(box)}</td>
+                </tr>`;
+            });
+        }
+        return html;
+    }
+
+    function shortBatchLabel(batchDate) {
+        const s = String(batchDate || '');
+        const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) return `${m[2]}/${m[3]}`;
+        return s.slice(0, 8) || '—';
+    }
+
+    function countByFilter() {
+        const counts = { delivered: 0, on_way: 0, problem: 0, failed: 0, pending: 0 };
+        boardBatches.forEach(batch => {
+            (batch.packages || []).forEach(pkg => {
+                const boxes = ensureBoxes(pkg);
+                if (boxes.length > 1) {
+                    boxes.forEach(box => {
+                        const cat = classifyStatus(box);
+                        if (counts[cat] != null) counts[cat] += 1;
+                    });
+                } else {
+                    const cat = classifyPkg(pkg);
+                    if (counts[cat] != null) counts[cat] += 1;
+                }
+            });
+        });
+        return counts;
+    }
+
+    function updateFilterChipCounts() {
+        const counts = countByFilter();
+        document.querySelectorAll('[data-count-for]').forEach(el => {
+            const key = el.getAttribute('data-count-for');
+            const n = counts[key] || 0;
+            el.textContent = n ? ` ${n}` : '';
+        });
+        document.querySelectorAll('.filter-chip[data-filter]').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-filter') === statusFilter);
+        });
+    }
+
+    function batchBookmarkStats(batch) {
+        const pkgs = batch.packages || [];
+        const q = searchQuery.trim().toLowerCase();
+        const filtered = !!(statusFilter || q);
+        const allTn = new Set();
+        const qualTn = new Set();
+
+        pkgs.forEach(pkg => {
+            const boxes = ensureBoxes(pkg);
+            const searchHit = !q || pkgSearchBlob(pkg).includes(q);
+            const tns = [];
+            boxes.forEach(box => {
+                const tn = (box.tracking || '').trim();
+                if (tn) tns.push({ tn, box });
+            });
+            if (!tns.length) {
+                const tn = (pkg.tracking || '').trim();
+                if (tn) tns.push({ tn, box: null });
+            }
+            tns.forEach(({ tn, box }) => {
+                allTn.add(tn);
+                if (!searchHit) return;
+                const cat = box ? classifyStatus(box) : classifyPkg(pkg);
+                if (!statusFilter || cat === statusFilter) qualTn.add(tn);
+            });
+        });
+
+        return {
+            orderCount: pkgs.length,
+            totalTrackings: allTn.size,
+            qualifyingTrackings: qualTn.size,
+            filtered,
+        };
+    }
+
+    function renderBookmarks() {
+        const list = document.getElementById('bookmark-list');
+        if (!boardBatches.length) {
+            list.innerHTML = '<div class="text-muted small text-center px-1" style="font-size:0.65rem">None</div>';
+            return;
+        }
+        list.innerHTML = boardBatches.map(batch => {
+            const stats = batchBookmarkStats(batch);
+            const trackLabel = stats.filtered
+                ? `${stats.qualifyingTrackings}/${stats.totalTrackings}`
+                : String(stats.totalTrackings);
+            const dim = (stats.filtered ? stats.qualifyingTrackings : stats.totalTrackings) === 0 ? 'dim' : '';
+            const active = batch.batch_date === activeBatchDate ? 'active' : '';
+            const tip = [
+                `Batch ${batch.batch_date}`,
+                `${stats.qualifyingTrackings}/${stats.totalTrackings} tracking`,
+                `${stats.orderCount} orders`,
+            ].join(' · ');
+            return `<button type="button" class="bookmark-btn ${active} ${dim}" data-jump-batch="${esc(batch.batch_date)}" title="${esc(tip)}">
+                ${esc(shortBatchLabel(batch.batch_date))}
+                <span class="bm-stats">
+                    <span class="bm-track">${esc(trackLabel)}</span>
+                    <span class="bm-orders">${stats.orderCount}</span>
+                </span>
+            </button>`;
+        }).join('');
+    }
+
+    function applyFilters() {
+        const q = searchQuery.trim().toLowerCase();
+        let shownOrders = 0;
+        let shownBatches = 0;
+
+        document.querySelectorAll('.batch-card').forEach(card => {
+            let batchHits = 0;
+            const orderRows = card.querySelectorAll('tbody tr.order-row');
+            orderRows.forEach(tr => {
+                const po = tr.getAttribute('data-po') || '';
+                const pkg = boardBatches
+                    .flatMap(b => b.packages || [])
+                    .find(p => p.po_number === po);
+                const blob = (tr.getAttribute('data-search') || '').toLowerCase();
+                const searchHit = !q || blob.includes(q);
+                const filterHit = !pkg ? (!statusFilter) : pkgMatchesFilter(pkg);
+                const hit = searchHit && filterHit;
+                tr.classList.toggle('hidden-by-search', !searchHit);
+                tr.classList.toggle('hidden-by-filter', !filterHit);
+                tr.classList.toggle('search-hit', !!(q && hit));
+
+                const subrows = card.querySelectorAll(`tbody tr.box-subrow[data-parent-po="${CSS.escape(po)}"]`);
+                const expanded = expandedOrders.has(po);
+                subrows.forEach(sub => {
+                    const subCat = sub.getAttribute('data-filter-cat') || '';
+                    const subFilterHit = !statusFilter || subCat === statusFilter;
+                    // Show subrow only when parent matches, expanded, and (if filtering) box matches
+                    const showSub = hit && expanded && subFilterHit;
+                    sub.classList.toggle('hidden-by-search', !searchHit);
+                    sub.classList.toggle('hidden-by-filter', !showSub);
+                });
+
+                if (hit) {
+                    batchHits += 1;
+                    shownOrders += 1;
+                }
+            });
+            const hideBatch = (q || statusFilter) && batchHits === 0;
+            card.classList.toggle('hidden-by-search', hideBatch);
+            card.classList.toggle('hidden-by-filter', hideBatch);
+            if (!hideBatch) shownBatches += 1;
+            if ((q || statusFilter) && batchHits > 0) card.classList.add('open');
+        });
+
+        const countEl = document.getElementById('search-result-count');
+        if (!q && !statusFilter) {
+            countEl.textContent = '';
+        } else {
+            const labels = {
+                delivered: 'Delivered',
+                on_way: 'On the way',
+                problem: 'Problem',
+                failed: 'Failed status',
+            };
+            const parts = [];
+            if (statusFilter) parts.push(labels[statusFilter] || statusFilter);
+            if (q) parts.push(`“${q}”`);
+            countEl.textContent =
+                `${shownOrders} order${shownOrders === 1 ? '' : 's'} · ` +
+                `${shownBatches} batch${shownBatches === 1 ? '' : 'es'}` +
+                (parts.length ? `\n${parts.join(' · ')}` : '');
+        }
+        updateFilterChipCounts();
+        renderBookmarks();
+    }
+
+    function renderBoard() {
+        const root = document.getElementById('board-root');
+        const summary = document.getElementById('board-summary');
+        if (!boardBatches.length) {
+            root.innerHTML = `<div class="empty-state">
+                <i class="fas fa-box-open fa-2x mb-2"></i>
+                <div>No shipped packages with tracking in ${formatMmYy(fromYm)} – ${formatMmYy(toYm)}.</div>
+                <div class="small mt-1">Adjust the month range or add tracking on Shipping Management.</div>
+            </div>`;
+            summary.textContent = '';
+            updateFilterChipCounts();
+            renderBookmarks();
+            return;
+        }
+        const total = boardBatches.reduce((n, b) => n + (b.packages || []).length, 0);
+        summary.textContent = `${boardBatches.length} batches · ${total} orders · ${formatMmYy(fromYm)}–${formatMmYy(toYm)}`;
+        if (!activeBatchDate) activeBatchDate = boardBatches[0].batch_date;
+
+        root.innerHTML = boardBatches.map((batch) => {
+            const open = batch.batch_date === activeBatchDate ? 'open' : '';
+            const rows = (batch.packages || []).map(packageRowsHtml).join('');
+            return `<div class="batch-card ${open}" id="batch-${esc(batch.batch_date)}" data-batch="${esc(batch.batch_date)}">
+                <div class="batch-pin">
+                    <button type="button" class="batch-head" data-batch-toggle>
+                        <div>
+                            <strong>Batch ${esc(batch.batch_date)}</strong>
+                            <div class="meta">${batch.count} orders · ${batch.with_tracking} with tracking</div>
+                        </div>
+                        <i class="fas fa-chevron-down chev"></i>
+                    </button>
+                    <div class="batch-colhead" role="row">
+                        <span>Order #</span>
+                        <span>Boxes</span>
+                        <span>State / ZIP</span>
+                        <span>Zone</span>
+                        <span>Tracking</span>
+                        <span>Arrival Status</span>
+                    </div>
+                </div>
+                <div class="batch-body">
+                    <div class="table-responsive">
+                        <table class="track-table">
+                            <colgroup>
+                                <col class="col-po">
+                                <col class="col-boxes">
+                                <col class="col-dest">
+                                <col class="col-zone">
+                                <col class="col-tn">
+                                <col class="col-status">
+                            </colgroup>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+        applyFilters();
+    }
+
+    function applyStatusToItem(item, info) {
+        if (!info) return;
+        item.arrival_status = info.status || '';
+        item.status_code = info.status_code || '';
+        item.delivered = !!info.delivered;
+        item.delivery_date = info.delivery_date || null;
+        item.fetch_failed = (
+            (info.status_code || '').toUpperCase().includes('ERROR') ||
+            /not found|fail(?:ed| to)\b/i.test(info.status || '')
+        );
+    }
+
+    function syncPkgAggregate(pkg) {
+        const boxes = ensureBoxes(pkg);
+        if (!boxes.length) return;
+        // Prefer master box status on the order row fields.
+        const master = boxes.find(b => b.is_master && b.tracking === pkg.tracking) || boxes[0];
+        pkg.arrival_status = master.arrival_status || '';
+        pkg.status_code = master.status_code || '';
+        pkg.delivered = !!master.delivered;
+        pkg.delivery_date = master.delivery_date || null;
+        pkg.fetch_failed = !!master.fetch_failed;
+    }
+
+    function applyAssociated(associated) {
+        if (!associated) return;
+        boardBatches.forEach(batch => {
+            (batch.packages || []).forEach(pkg => {
+                const master = pkg.tracking;
+                const kids = associated[master];
+                if (!kids || !kids.length) return;
+                const prev = ensureBoxes(pkg);
+                const statusByTn = {};
+                prev.forEach(b => { if (b.tracking) statusByTn[b.tracking] = b; });
+                pkg.boxes = kids.map((tn, i) => {
+                    const old = statusByTn[tn] || {};
+                    return {
+                        index: i + 1,
+                        tracking: tn,
+                        is_master: tn === master,
+                        arrival_status: old.arrival_status || '',
+                        status_code: old.status_code || '',
+                        delivered: !!old.delivered,
+                        delivery_date: old.delivery_date || null,
+                        fetch_failed: !!old.fetch_failed,
+                    };
+                });
+                pkg.box_count = Math.max(pkg.box_count || 0, pkg.boxes.length);
+                pkg.mps_unresolved = false;
+                syncPkgAggregate(pkg);
+            });
+        });
+    }
+
+    function applyStatuses(statuses, requested) {
+        if (!statuses) statuses = {};
+        const requestedSet = new Set((requested || []).map(String));
+        boardBatches.forEach(batch => {
+            (batch.packages || []).forEach(pkg => {
+                const boxes = ensureBoxes(pkg);
+                boxes.forEach(box => {
+                    const tn = box.tracking;
+                    if (!tn) return;
+                    const info = statuses[tn];
+                    if (info) {
+                        applyStatusToItem(box, info);
+                    } else if (requestedSet.has(tn) && !box.arrival_status) {
+                        applyStatusToItem(box, {
+                            status: 'Failed to fetch',
+                            status_code: 'ERROR',
+                            delivered: false,
+                            delivery_date: null,
+                        });
+                    }
+                });
+                // Also apply to master pkg fields
+                if (pkg.tracking && statuses[pkg.tracking]) {
+                    applyStatusToItem(pkg, statuses[pkg.tracking]);
+                } else if (requestedSet.has(pkg.tracking) && pkg.tracking && !pkg.arrival_status) {
+                    applyStatusToItem(pkg, {
+                        status: 'Failed to fetch',
+                        status_code: 'ERROR',
+                        delivered: false,
+                        delivery_date: null,
+                    });
+                }
+                syncPkgAggregate(pkg);
+            });
+        });
+        renderBoard();
+    }
+
+    async function readJsonResponse(response) {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            const snippet = (text || '').slice(0, 80).replace(/\s+/g, ' ');
+            throw new Error(
+                `Server returned HTML instead of JSON (HTTP ${response.status}). ` +
+                `Usually CSRF/session — refresh the page and try again. ${snippet}`
+            );
+        }
+    }
+
+    async function fetchJson(url, options = {}, timeoutMs = 45000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+            });
+            const data = await readJsonResponse(response);
+            return { response, data };
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s`);
+            }
+            throw err;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    function zoneTipFor(pkg) {
+        return [
+            pkg.zone_ground ? `Ground ${pkg.zone_ground}` : '',
+            pkg.zone_express ? `Express ${pkg.zone_express}` : '',
+        ].filter(Boolean).join(' · ') || 'Zone from origin 91748';
+    }
+
+    function pickZoneForPkg(pkg, express, ground) {
+        const st = String(pkg.service_type || 'FEDEX_GROUND').toUpperCase();
+        const expressHints = [
+            'OVERNIGHT', 'EXPRESS', '2_DAY', 'TWO_DAY', 'FIRST_OVERNIGHT',
+            'PRIORITY_OVERNIGHT', 'STANDARD_OVERNIGHT', 'FEDEX_2_DAY', 'SAME_DAY',
+        ];
+        return expressHints.some(h => st.includes(h))
+            ? (express || ground || '')
+            : (ground || express || '');
+    }
+
+    function applyZones(zoneMap) {
+        if (!zoneMap || typeof zoneMap !== 'object') return;
+        let changed = false;
+        boardBatches.forEach(b => {
+            (b.packages || []).forEach(pkg => {
+                const z5 = String(pkg.zip || '').replace(/\D/g, '').slice(0, 5);
+                const zones = zoneMap[z5];
+                if (!zones) return;
+                const express = zones.express || '';
+                const ground = zones.ground || '';
+                if (!express && !ground) return;
+                const pick = pickZoneForPkg(pkg, express, ground);
+                if (
+                    pkg.zone_express !== express
+                    || pkg.zone_ground !== ground
+                    || pkg.zone !== pick
+                ) {
+                    pkg.zone_express = express;
+                    pkg.zone_ground = ground;
+                    pkg.zone = pick;
+                    changed = true;
+                }
+            });
+        });
+        if (!changed) return;
+        // Patch zone cells in place — avoid full re-render (keeps expand/filter state).
+        document.querySelectorAll('tr.order-row[data-po]').forEach(tr => {
+            const po = tr.getAttribute('data-po') || '';
+            const pkg = boardBatches.flatMap(b => b.packages || []).find(p => p.po_number === po);
+            if (!pkg || !pkg.zone) return;
+            const cell = tr.querySelector('td.zone-cell');
+            if (cell) {
+                cell.textContent = pkg.zone;
+                cell.title = zoneTipFor(pkg);
+            }
+            // Keep search blob in sync for zone filter/search
+            const blob = pkgSearchBlob(pkg);
+            tr.setAttribute('data-search', blob);
+            document.querySelectorAll(`tr.box-subrow[data-parent-po="${CSS.escape(po)}"]`).forEach(sub => {
+                sub.setAttribute('data-search', blob);
+            });
+        });
+        updateFilterChipCounts();
+        renderBookmarks();
+    }
+
+    async function lazyFillZones() {
+        const zips = [];
+        const seen = new Set();
+        boardBatches.forEach(b => {
+            (b.packages || []).forEach(pkg => {
+                if (pkg.zone) return;
+                const z5 = String(pkg.zip || '').replace(/\D/g, '').slice(0, 5);
+                if (z5.length === 5 && !seen.has(z5)) {
+                    seen.add(z5);
+                    zips.push(z5);
+                }
+            });
+        });
+        if (!zips.length) return;
+        // Chunk so FindZones (often slow) can fill progressively without one big timeout.
+        const chunkSize = 10;
+        for (let i = 0; i < zips.length; i += chunkSize) {
+            const chunk = zips.slice(i, i + chunkSize);
+            try {
+                const { response, data } = await fetchJson(
+                    '/lori_automation/lookup_tracking_zones',
+                    {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ zips: chunk, origin_zip: '91748' }),
+                    },
+                    90000,
+                );
+                if (!response.ok || data.success === false) continue;
+                applyZones(data.zones || {});
+            } catch (err) {
+                console.warn('Zone lookup chunk skipped:', err);
+            }
+        }
+    }
+
+    function isDeliveredItem(item) {
+        if (!item) return false;
+        if (item.delivered) return true;
+        const code = (item.status_code || '').toUpperCase();
+        if (code === 'DL' || code === 'DE' || code === 'OK') return true;
+        return /\bdelivered\b/i.test(item.arrival_status || '');
+    }
+
+    function collectRefreshPayload(packages, { includeDelivered = false, expandMps = true } = {}) {
+        const tracking_numbers = [];
+        const mps_packages = [];
+        const package_refs = [];
+        const seen = new Set();
+        (packages || []).forEach(pkg => {
+            const boxes = ensureBoxes(pkg);
+            const pkgTrackings = [];
+            boxes.forEach(b => {
+                if (!b.tracking) return;
+                pkgTrackings.push(b.tracking);
+                if (seen.has(b.tracking)) return;
+                if (!includeDelivered && isDeliveredItem(b)) return;
+                seen.add(b.tracking);
+                tracking_numbers.push(b.tracking);
+            });
+            if (pkg.tracking && !seen.has(pkg.tracking)) {
+                if (includeDelivered || !isDeliveredItem(pkg)) {
+                    seen.add(pkg.tracking);
+                    tracking_numbers.push(pkg.tracking);
+                }
+                if (!pkgTrackings.includes(pkg.tracking)) pkgTrackings.push(pkg.tracking);
+            }
+            if (pkg.po_number && pkgTrackings.length) {
+                package_refs.push({
+                    po_number: pkg.po_number,
+                    tracking: pkg.tracking || '',
+                    trackings: pkgTrackings,
+                });
+            }
+            if (!expandMps) return;
+            const needMps = (
+                (pkg.box_count || 0) > 1
+                || pkg.mps_unresolved
+                || boxes.length > 1
+                || boxes.filter(b => b.tracking).length < (pkg.box_count || 0)
+            );
+            // Skip MPS resolve when every expected box already has tracking and is delivered
+            const tracked = boxes.filter(b => b.tracking);
+            const allDelivered = tracked.length && tracked.every(b => isDeliveredItem(b));
+            const missingChildren = (pkg.box_count || 0) > 1 && tracked.length < (pkg.box_count || 0);
+            if (needMps && pkg.tracking && (includeDelivered || missingChildren || pkg.mps_unresolved || !allDelivered)) {
+                mps_packages.push({
+                    po_number: pkg.po_number,
+                    tracking: pkg.tracking,
+                    box_count: pkg.box_count || boxes.length,
+                    mps_unresolved: !!pkg.mps_unresolved || missingChildren,
+                });
+            }
+        });
+        return { tracking_numbers, mps_packages, package_refs };
+    }
+
+    async function refreshStatuses(packages, { force = false, expandMps = true } = {}) {
+        const { tracking_numbers, mps_packages, package_refs } = collectRefreshPayload(
+            packages, { includeDelivered: force, expandMps }
+        );
+        if (!tracking_numbers.length && !mps_packages.length) return;
+        const unique = Array.from(new Set(tracking_numbers));
+        setLoading(true, `Refreshing FedEx status for ${unique.length} tracking #s…`);
+        try {
+            // Resolve MPS first in one call (associated shipments), then chunk statuses.
+            if (mps_packages.length) {
+                try {
+                    const { response, data } = await fetchJson(
+                        '/lori_automation/refresh_tracking_statuses',
+                        {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                tracking_numbers: unique,
+                                mps_packages,
+                                package_refs,
+                                skip_delivered: !force,
+                                force,
+                            }),
+                        },
+                        120000,
+                    );
+                    if (!response.ok || data.success === false) {
+                        throw new Error(data.error || data.message || 'Status refresh failed');
+                    }
+                    applyAssociated(data.associated || {});
+                    applyStatuses(data.statuses || {}, unique);
+                    return;
+                } catch (err) {
+                    console.error(err);
+                    setLoading(true, `Status refresh issue: ${err.message || err}. Retrying without MPS…`);
+                    // Fall through to plain chunked refresh without MPS
+                }
+            }
+
+            for (let i = 0; i < unique.length; i += 30) {
+                const chunk = unique.slice(i, i + 30);
+                try {
+                    const { response, data } = await fetchJson(
+                        '/lori_automation/refresh_tracking_statuses',
+                        {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                tracking_numbers: chunk,
+                                package_refs,
+                                skip_delivered: !force,
+                                force,
+                            }),
+                        },
+                        90000,
+                    );
+                    if (!response.ok || data.success === false) {
+                        throw new Error(data.error || data.message || 'Status refresh failed');
+                    }
+                    applyAssociated(data.associated || {});
+                    applyStatuses(data.statuses || {}, chunk);
+                } catch (chunkErr) {
+                    console.error(chunkErr);
+                    const failMap = {};
+                    chunk.forEach(tn => {
+                        failMap[tn] = {
+                            status: 'Failed to fetch',
+                            status_code: 'ERROR',
+                            delivered: false,
+                            delivery_date: null,
+                        };
+                    });
+                    applyStatuses(failMap, chunk);
+                }
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function openBatch(batchDate, { scroll = true, refresh = false } = {}) {
+        activeBatchDate = batchDate;
+        const card = document.querySelector(`.batch-card[data-batch="${CSS.escape(batchDate)}"]`);
+        if (!card) return;
+        card.classList.add('open');
+        renderBookmarks();
+        if (scroll) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (refresh) {
+            const batch = boardBatches.find(b => b.batch_date === batchDate);
+            const need = (batch?.packages || []).filter(p => {
+                const boxes = ensureBoxes(p);
+                return boxes.some(b => b.tracking && !isDeliveredItem(b) && !b.arrival_status)
+                    || (p.tracking && !isDeliveredItem(p) && !p.arrival_status)
+                    || p.mps_unresolved;
+            });
+            if (need.length) await refreshStatuses(need);
+        }
+    }
+
+    async function loadBoard(autoStatus) {
+        setLoading(true, 'Loading tracking board…');
+        try {
+            const params = new URLSearchParams({
+                require_tracking: '1',
+                from_ym: fromYm || '',
+                to_ym: toYm || '',
+            });
+            const { response, data } = await fetchJson(
+                `/lori_automation/get_tracking_board?${params}`,
+                {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' },
+                },
+                45000,
+            );
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || `Failed to load board (HTTP ${response.status})`);
+            }
+            if (data.from_ym && data.to_ym) {
+                initRangeInputs(data.from_ym, data.to_ym);
+            }
+            boardBatches = data.batches || [];
+            boardBatches.forEach(b => (b.packages || []).forEach(ensureBoxes));
+            activeBatchDate = boardBatches[0]?.batch_date || '';
+            renderBoard();
+            // Board is usable now — never keep the spinner on FedEx/MPS work.
+            setLoading(false);
+            lazyFillZones();
+            if (autoStatus && boardBatches.length) {
+                // Status only for known persisted trackings missing arrival_status.
+                // Do NOT expand MPS here — that happens on explicit Status refresh.
+                const need = boardBatches.flatMap(b => b.packages || []).filter(p => {
+                    const boxes = ensureBoxes(p);
+                    return boxes.some(b => b.tracking && !isDeliveredItem(b) && !b.arrival_status)
+                        || (p.tracking && !isDeliveredItem(p) && !p.arrival_status);
+                });
+                if (need.length) {
+                    refreshStatuses(need, { expandMps: false }).catch(err => {
+                        console.error(err);
+                        setLoading(false);
+                        document.getElementById('board-root').insertAdjacentHTML(
+                            'afterbegin',
+                            `<div class="empty-state text-danger mb-2">${esc(err.message || 'Status refresh failed')}</div>`,
+                        );
+                    });
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('board-root').innerHTML =
+                `<div class="empty-state text-danger">${esc(err.message || 'Load failed')}</div>`;
+            renderBookmarks();
+            setLoading(false);
+        } finally {
+            // Safety net if an early return skipped the explicit clear above.
+            const bar = document.getElementById('loading-bar');
+            if (bar && bar.classList.contains('show')
+                && (bar.querySelector('#loading-text')?.textContent || '').includes('Loading tracking board')) {
+                setLoading(false);
+            }
+        }
+    }
+
+    // --- Event listeners ---
+    document.getElementById('board-root').addEventListener('click', async (e) => {
+        const expandBtn = e.target.closest('[data-expand-po]');
+        if (expandBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const po = expandBtn.getAttribute('data-expand-po');
+            if (expandedOrders.has(po)) expandedOrders.delete(po);
+            else expandedOrders.add(po);
+            renderBoard();
+            return;
+        }
+
+        const orderRow = e.target.closest('tr.order-row.has-boxes');
+        if (orderRow && !e.target.closest('a')) {
+            const po = orderRow.getAttribute('data-po');
+            if (expandedOrders.has(po)) expandedOrders.delete(po);
+            else expandedOrders.add(po);
+            renderBoard();
+            return;
+        }
+
+        const toggle = e.target.closest('[data-batch-toggle]');
+        if (!toggle) return;
+        const card = toggle.closest('.batch-card');
+        if (!card) return;
+        const batchDate = card.getAttribute('data-batch');
+        const willOpen = !card.classList.contains('open');
+        card.classList.toggle('open', willOpen);
+        if (willOpen) {
+            await openBatch(batchDate, { scroll: false, refresh: false });
+        } else if (activeBatchDate === batchDate) {
+            renderBookmarks();
+        }
+    });
+
+    document.getElementById('bookmark-list').addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-jump-batch]');
+        if (!btn) return;
+        const batchDate = btn.getAttribute('data-jump-batch');
+        await openBatch(batchDate, { scroll: true, refresh: false });
+    });
+
+    const searchInput = document.getElementById('tracking-search');
+    searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value || '';
+        applyFilters();
+    });
+    document.getElementById('clear-search-btn').addEventListener('click', () => {
+        searchInput.value = '';
+        searchQuery = '';
+        applyFilters();
+        searchInput.focus();
+    });
+
+    document.getElementById('status-filters').addEventListener('click', (e) => {
+        const btn = e.target.closest('.filter-chip');
+        if (!btn) return;
+        const next = btn.getAttribute('data-filter') || '';
+        statusFilter = statusFilter === next ? '' : next;
+        applyFilters();
+    });
+
+    document.querySelector('.mobile-controls')?.addEventListener('click', (e) => {
+        const chip = e.target.closest('.filter-chip');
+        if (chip) {
+            const next = chip.getAttribute('data-filter') || '';
+            statusFilter = statusFilter === next ? '' : next;
+            applyFilters();
+            return;
+        }
+    });
+    document.getElementById('tracking-search-mobile')?.addEventListener('input', (e) => {
+        searchQuery = e.target.value || '';
+        document.getElementById('tracking-search').value = searchQuery;
+        applyFilters();
+    });
+    document.getElementById('refresh-board-btn-mobile')?.addEventListener('click', () => loadBoard(true));
+    document.getElementById('refresh-status-btn-mobile')?.addEventListener('click', () => {
+        refreshStatuses(boardBatches.flatMap(b => b.packages || []));
+    });
+
+    document.getElementById('apply-range-btn').addEventListener('click', () => {
+        const from = document.getElementById('from-ym').value;
+        const to = document.getElementById('to-ym').value;
+        if (!from || !to) return;
+        if (from > to) {
+            initRangeInputs(to, from);
+        } else {
+            initRangeInputs(from, to);
+        }
+        loadBoard(true);
+    });
+    document.getElementById('reset-range-btn').addEventListener('click', () => {
+        const d = defaultMonthRange();
+        initRangeInputs(d.from, d.to);
+        loadBoard(true);
+    });
+
+    document.getElementById('refresh-board-btn').addEventListener('click', () => loadBoard(true));
+    document.getElementById('refresh-status-btn').addEventListener('click', () => {
+        const all = boardBatches.flatMap(b => b.packages || []);
+        refreshStatuses(all);
+    });
+
+    // Boot: default last 3 calendar months
+    const boot = defaultMonthRange();
+    initRangeInputs(boot.from, boot.to);
+    loadBoard(true);
+    </script>
+</body>
+</html>

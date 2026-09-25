@@ -1231,6 +1231,10 @@
                 <p>{{ te('this will take around 20 minutes') }}</p>
             </div>
             <div class="mt-3 pt-2 border-top">
+                <h6 class="small font-weight-bold text-muted mb-2">Weekly auto export &middot; every Sunday 8:00 AM (last 3)</h6>
+                <ul id="weeklyWorkbookHistory" class="list-unstyled small mb-0"></ul>
+            </div>
+            <div class="mt-3 pt-2 border-top">
                 <h6 class="small font-weight-bold text-muted mb-2">{{ te('Recent exports (last 3)') }}</h6>
                 <ul id="workbookExportHistory" class="list-unstyled small mb-0"></ul>
                 <p class="small text-muted mb-0 mt-2">{{ te('Each click creates a new edition. Oldest file is removed when you exceed three.') }}</p>
@@ -1374,6 +1378,7 @@
     <div class="mt-4 container">
         <h5 class="text-center mb-4">{{ te('Please select descriptions for the following styles:') }}</h5>
         <form method="POST" action="{{ url_for('v7_listcreator.update_descriptions') }}">
+            {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
             {% if snapshot_generated_at_pt is defined and snapshot_generated_at_pt %}
             <input type="hidden" name="rebuild_html_snapshot" value="1">
             <input type="hidden" name="list_input" value="{{ list_input }}">
@@ -2395,11 +2400,11 @@ function escapeWorkbookHtml(s) {
     return d.innerHTML;
 }
 
-function renderWorkbookHistory(jobs) {
-    var el = document.getElementById('workbookExportHistory');
+function renderWorkbookHistory(jobs, elId, emptyText) {
+    var el = document.getElementById(elId || 'workbookExportHistory');
     if (!el) return;
     if (!jobs || !jobs.length) {
-        el.innerHTML = '<li class="text-muted">No exports yet. Queue a workbook above.</li>';
+        el.innerHTML = '<li class="text-muted">' + (emptyText || 'No exports yet. Queue a workbook above.') + '</li>';
         return;
     }
     el.innerHTML = jobs.map(function(j) {
@@ -2425,7 +2430,8 @@ function refreshWorkbookJobs() {
         })
         .then(function(data) {
             renderWorkbookHistory(data.jobs);
-            var running = (data.jobs || []).some(function(j) { return j.status === 'running'; });
+            renderWorkbookHistory(data.weekly_jobs, 'weeklyWorkbookHistory', 'No weekly export yet. The first one runs Sunday at 8:00 AM.');
+            var running = (data.jobs || []).concat(data.weekly_jobs || []).some(function(j) { return j.status === 'running'; });
             if (running && !workbookJobsPoll) {
                 workbookJobsPoll = setInterval(refreshWorkbookJobs, 4000);
             }
