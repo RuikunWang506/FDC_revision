@@ -182,10 +182,7 @@ scenarios:
       catches: query has no row cap
       why: "子查询里有 TOP 1，外层没有任何限制。
         _inject_top 的 _TOP.search 会匹配到子查询那个就 return，
-        外层查询因此不受限——这是真实缺陷的回归用例。
-        注意：当前 checks.py 的行数上限断言也只看「有没有 TOP」，
-        和 _inject_top 犯同一个错。修 _inject_top 时这条断言要一起改成
-        只检查最外层 SELECT"
+        外层查询因此不受限——真实缺陷的回归用例，已于 fix/outer-select-row-cap 修复"
 
   no_credential_exposure:
     good:
