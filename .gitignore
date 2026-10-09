@@ -73,3 +73,8 @@ __pycache__/
 *.xlsx
 *.pdf
 instance/workbook_exports/
+# AI eval
+tests/ai_eval/reports/
+py/ai/database/schema_catalog.json
+output/logs/
+*.log
