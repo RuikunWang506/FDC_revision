@@ -15,6 +15,34 @@ appeared that the question never mentioned.
 This catches every failure mode seen in production so far, and it runs today
 without a database connection or a schema dump.
 
+## Why not an existing eval framework
+
+promptfoo, DeepEval, LangSmith and Braintrust all cover this ground, and for a
+larger suite one of them would be the right call. This is hand-rolled for three
+reasons.
+
+**The assertions are domain-specific.** The failures this agent actually makes —
+answering a sales question from the warehouse-quantity table, copying an id out
+of the sample row in the prompt, losing the row cap when a subquery carries its
+own `TOP` — are not expressible as built-in assertions anywhere. They would end
+up as custom code inside whichever framework was adopted, which is most of the
+work either way.
+
+**`checks.py` has a second job.** It imports nothing from the codebase, so the
+same assertions can replay historical runs out of `output/logs/ai_sql.log`
+without touching the agent. A framework-bound assertion layer could not be
+reused that way.
+
+**Scale does not justify the dependency.** 26 cases and 55 tests run in half a
+second with pytest and PyYAML, both already present. Adding a framework to a
+production system means owning its version, its transitive dependencies and its
+security surface.
+
+Worth revisiting when any of these becomes true: the suite passes a few hundred
+cases and needs dataset management; fuzzy cases need LLM-as-judge scoring;
+several models have to be compared side by side; or results need a hosted
+dashboard rather than JSON reports.
+
 ## Layout
 
 ```
