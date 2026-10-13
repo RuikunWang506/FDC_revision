@@ -1,0 +1,53 @@
+# Runs the offline test suite on a clean machine for every pull request and
+# every commit that lands on main.
+#
+# SCOPE: this workflow deliberately runs a subset of tests/ and installs a
+# subset of requirements.txt. Both exclusions are known gaps, not oversights:
+#
+#   1. Only tests/ai_eval and tests/test_sql_validator.py run. The other 18
+#      test modules import the project as `py.utilities...`, `py.other...`
+#      and so on, which cannot resolve: the top-level package is named `py`,
+#      and pytest ships its own top-level `py.py` compatibility shim. A
+#      directory without __init__.py is only a namespace-package candidate,
+#      so the import scan continues past it and site-packages wins. Adding
+#      __init__.py inverts the collision and breaks pytest's own `import py`.
+#      The real fix is renaming the package, which touches every import in
+#      the repository and would make this fork diverge from upstream — a
+#      decision for the repo owner, not for a CI change.
+#
+#   2. Only pytest and pyyaml are installed. requirements.txt pulls in
+#      database drivers (pyodbc and friends) that need system-level ODBC
+#      headers on Ubuntu. Verifying that requirements.txt can rebuild the
+#      environment from scratch is worth doing, but as its own job with its
+#      own apt step — not folded in here where a driver build failure would
+#      mask a real test failure.
+#
+# Both exclusions shrink as those problems get fixed. Nothing here needs a
+# database, a model, or network access, so a run takes a few seconds.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: pip install pytest pyyaml
+
+      - name: Run offline test suite
+        # `python -m pytest`, not `pytest`: the -m form puts the working
+        # directory on sys.path, which tests/ai_eval needs to import
+        # tests.ai_eval.checks.
+        run: python -m pytest tests/ai_eval tests/test_sql_validator.py -q
