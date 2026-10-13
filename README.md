@@ -1,5 +1,7 @@
 # FDC Flask App
 
+[![tests](https://github.com/RuikunWang506/FDC_revision/actions/workflows/tests.yml/badge.svg)](https://github.com/RuikunWang506/FDC_revision/actions/workflows/tests.yml)
+
 Internal operations platform for Fashion Distribution Center: inventory, orders, shipping, DAM, client portal, and warehouse tools.
 
 ## Run locally
