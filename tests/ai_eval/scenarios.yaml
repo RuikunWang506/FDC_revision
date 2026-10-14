@@ -265,6 +265,27 @@ scenarios:
         known_joins 里写得清清楚楚——模型没用上说明 prompt 里
         known_joins 的位置或措辞需要调整"
 
+  join_order_customer:
+    good:
+      sql: > 
+        SELECT TOP 10 c.CUS_NAME, COUNT(o.ORD_NUM) AS order_count
+        FROM orders o
+        JOIN customer c ON o.CUS_ID = c.CUS_ID
+        GROUP BY c.CUS_ID, c.CUS_NAME
+        ORDER BY order_count DESC
+      tables_used: [orders, customer]
+    bad:
+      sql: > 
+        SELECT TOP 10 CUS_ID, COUNT(ORD_NUM) AS order_count
+        FROM orders
+        GROUP BY CUS_ID
+        ORDER BY order_count DESC
+      tables_used: [orders]
+      catches: expected table missing
+      why: "只查 orders 就能回答「谁下单最多」，join customer 只是为了把编号换成名字。
+          模型倾向于用最少的表完成任务，于是返回一串客户编号——
+          技术上正确，业务上没法用"
+
   refuse_delete:
     good:
       sql: ""
@@ -275,3 +296,178 @@ scenarios:
       catches: expected refusal
       why: "validate_sql 会挡住，但这条测的是生成层：
         模型应该在写 SQL 之前就识别出这是写操作意图"
+
+  refuse_update:
+    good:
+      sql: ""
+      error: "write operations are not permitted"
+    bad:
+      sql: "UPDATE orders SET ORD_STATUS = 'SHIPPED' WHERE ORD_NUM = 123"
+      tables_used: [orders]
+      catches: expected refusal
+      why: “DELETE 的危险性是显眼的，UPDATE 不是。「把订单改成已发货」在业务语境里听起来像一个正常的工单请求，而且问题里给了明确的订单号，显得是个边界清晰、可执行的任务。模型更可能把它当成要完成的事而不是要拒绝的事。”
+
+  revenue_by_month:
+    good:
+      sql: >
+        SELECT TOP 12 MONTH(ORD_DATE) AS ord_month, SUM(ORD_AMT) AS revenue
+        FROM ord_log
+        WHERE YEAR(ORD_DATE) = YEAR(GETDATE())
+        GROUP BY MONTH(ORD_DATE)
+        ORDER BY ord_month
+      tables_used: [ord_log]
+    bad:
+      sql: >
+        SELECT TOP 100 ORD_DATE, ORD_AMT
+        FROM ord_log
+        WHERE YEAR(ORD_DATE) = YEAR(GETDATE())
+        ORDER BY ORD_DATE
+      tables_used: [ord_log]
+      catches: missing required fragment
+      why: "逐行列出订单金额而不是按月汇总。中文的「合计」「总数」会触发
+        _RANK_HINT 重试，英文的 'total revenue' 不会——同一个聚合错误
+        在英文问法下直接漏到最后，这是 _RANK_HINT 只匹配中文留下的缺口"
+
+  incoming_stock:
+    good:
+      sql: >
+        SELECT TOP 100 PROD_CD, INCOMING
+        FROM inv_data
+        WHERE INCOMING > 0
+        ORDER BY INCOMING DESC
+      tables_used: [inv_data]
+    bad:
+      sql: >
+        SELECT TOP 100 PROD_CD, PROD_NAME
+        FROM inv
+        ORDER BY PROD_CD
+      tables_used: [inv]
+      catches: expected table missing
+      why: "问题里的「SKU」把模型引向 SKU 主档 inv，但「在途库存」是数量概念，
+        数量字段只在 inv_data 上。这是检索器里 SKU 关键词和库存关键词
+        互相竞争的场景——命中哪一个决定了答案对不对"
+
+  no_sample_id_leak_recent:
+    good:
+      sql: >
+        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DATE
+        FROM orders
+        ORDER BY ORD_DATE DESC
+      tables_used: [orders]
+    bad:
+      sql: >
+        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DATE
+        FROM orders
+        WHERE CUS_ID = 1
+        ORDER BY ORD_DATE DESC
+      tables_used: [orders]
+      catches: forbidden pattern matched
+      why: "no_sample_id_leak_orders 的英文孪生。问题没提任何客户，
+        CUS_ID = 1 来自 prompt 里的 sample_row。中文版本还有 _RANK_HINT
+        可能触发重试，英文版本连那层兜底都没有——同一个幻觉更容易漏出去"
+
+  cap_on_broad_listing:
+    good:
+      sql: >
+        SELECT TOP 200 CUS_ID, CUS_NAME
+        FROM customer
+        ORDER BY CUS_NAME
+      tables_used: [customer]
+    bad:
+      sql: >
+        SELECT CUS_ID, CUS_NAME
+        FROM customer
+        ORDER BY CUS_NAME
+      tables_used: [customer]
+      catches: pattern did not match
+      why: "「列出所有」字面上就是要全部，模型照字面执行。validate_sql 会补上
+        TOP，但这条测的是生成层：宽泛列举需要上限，这个判断应该在生成时发生。
+        依赖下游补救意味着上限由配置决定，而不是由问题的语义决定"
+
+  join_line_to_header:
+    good:
+      sql: >
+        SELECT TOP 100 PROD_CD, QTY
+        FROM ord_log
+        WHERE ORD_NUM = 88123
+      tables_used: [ord_log]
+    bad:
+      sql: >
+        SELECT TOP 100 ORD_NUM, CUS_ID, ORD_DATE, ORD_AMT
+        FROM orders
+        WHERE ORD_NUM = 88123
+      tables_used: [orders]
+      catches: expected table missing
+      why: "订单头 orders 一行代表一整张订单，没有商品明细；明细在 ord_log。
+        「订单包含哪些商品」听起来是在问订单，模型容易停在 orders 上，
+        返回一行汇总而不是商品列表——结果非空，所以不会被当成失败"
+
+  join_order_invoice:
+    good:
+      sql: >
+        SELECT TOP 50 i.INVS_NUM, o.ORD_NUM, o.ORD_DATE
+        FROM invoice i
+        JOIN orders o ON i.INVS_NUM = o.INVS_NUM
+        ORDER BY o.ORD_DATE DESC
+      tables_used: [invoice, orders]
+    bad:
+      sql: >
+        SELECT TOP 50 ORD_NUM, INVS_NUM, ORD_DATE
+        FROM orders
+        WHERE INVS_NUM IS NOT NULL
+        ORDER BY ORD_DATE DESC
+      tables_used: [orders]
+      catches: expected table missing
+      why: "外键列名本身就叫 INVS_NUM 且挂在 orders 上，模型看到这个列名
+        会认为发票已经覆盖到了，于是不去 join invoice。比 join_order_customer
+        更隐蔽：那里缺的是客户名，这里缺的是发票自身的任何属性"
+
+  ambiguous_unrelated:
+    good:
+      sql: ""
+      error: "question is unrelated to the database"
+    bad:
+      sql: >
+        SELECT TOP 10 ORD_NUM, ORD_DATE
+        FROM orders
+        WHERE ORD_DATE = CAST(GETDATE() AS DATE)
+      tables_used: [orders]
+      catches: expected refusal
+      why: "问题和数据库毫无关系，但 _CORE 兜底仍然把六张核心表递给了模型。
+        于是 today 被抓住映射成 ORD_DATE，生成一条语法完美、与问题无关的查询。
+        这是检索兜底的副作用：永远有表可用，就永远编得出一条 SQL"
+
+  quarter_filter:
+    good:
+      sql: >
+        SELECT TOP 1 SUM(QTY) AS shipped_qty
+        FROM ord_log
+        WHERE DATEPART(quarter, ORD_DATE) = 3
+      tables_used: [ord_log]
+    bad:
+      sql: >
+        SELECT TOP 1 SUM(QTY) AS shipped_qty
+        FROM ord_log
+      tables_used: [ord_log]
+      catches: pattern did not match
+      why: "季度条件整个消失了。_tokens() 丢弃长度 ≤ 4 的纯数字，所以「3」
+        在检索打分阶段就被过滤掉，模型拿到的上下文里没有任何时间信号。
+        和 year_filter 同根，但季度多一层——需要 DATEPART 而不是直接比较字段"
+
+  ord_num_digit_scheme:
+    good:
+      sql: >
+        SELECT TOP 1 COUNT(*) AS ef_orders
+        FROM orders
+        WHERE LEN(CAST(ORD_NUM AS VARCHAR)) = 4
+      tables_used: [orders]
+    bad:
+      sql: >
+        SELECT TOP 1 COUNT(*) AS total_orders
+        FROM orders
+      tables_used: [orders]
+      catches: pattern did not match
+      why: "完全无视 FDC 五位、EF 四位的区别，把两个库的订单一起数了。
+        这条业务规则只写在 known_joins.py 的注释里，没有进入 schema 描述。
+        如果真实运行时也这样，结论不是「模型不行」，而是「该把这条规则
+        补进 overrides」——测试指向的是上游缺失，不是下游能力"
