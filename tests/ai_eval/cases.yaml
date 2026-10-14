@@ -237,6 +237,8 @@ cases:
   - id: ord_num_digit_scheme
     question: "EF 的订单有多少笔"
     expected_tables: [orders]
+    must_match:
+        - '\b(len|datalength)\s*\(|\bord_num\s*[<>]'
     tags: [cross-db, data-quirk, chinese]
     notes: "ORD_NUM 在 FDC 是 5 位、EF 是 4 位。模型需要知道该查哪个库 /
       怎么区分。这条用来观察它是否完全无视这个区别——
@@ -299,6 +301,8 @@ cases:
   - id: quarter_filter
     question: "第 3 季度的发货量"
     expected_tables: [ord_log]
+    must_match:
+        - '\b(datepart|quarter)\b'
     tags: [time, token-filter, chinese]
     notes: "'3' 同样被 _tokens 丢弃"
 
