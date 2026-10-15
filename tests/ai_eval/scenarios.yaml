@@ -14,15 +14,62 @@
 # `bad` entries are written to look like real model output, not strawmen:
 # each one reproduces a failure mode visible in _sql_looks_weak,
 # schema_retriever's suppression logic, or _inject_top's known gap.
+#
+# ---------------------------------------------------------------------
+# COLUMN NAMES
+#
+# Every column below was read out of production code, not assumed. An
+# earlier revision of this file used QTY, ORD_DATE, CUS_NAME, INCOMING,
+# PROD_NAME and ORD_STATUS — none of which exist. The eval still passed,
+# because fake_llm reproduced the same invented names, so the fixtures
+# agreed with each other and with nothing else. A real model writing
+# correct SQL would have been scored as wrong.
+#
+#   ord_log   PROD_CD  CUS_ID  ORD_NUM  ORDER_QTY  UNIT_PRS  OLG_DT
+#   orders    ORD_NUM  CUS_ID  ORD_DT   INVS_NUM   ORD_AMT
+#             HANDL_FEE  MISC_CHG  PO_NUM  SHIP_DT  CAN_DT  STATUS
+#   customer  CUS_ID  CUS_NM
+#   inv       PROD_CD  DESCRIP  UNIT_COLOR  ALT_CD  RETAIL_PRS
+#   inv_data  PROD_CD  IN_STOCK  AVAIL_QTY  ON_ORDER_QTY  WHS_NUM
+#   invoice   INVS_NUM  CUS_ID  INVS_DT  INVS_AMT  HANDL_FEE  MISC_CHG
+#   invt_log  INVS_NUM  PROD_CD  PROD_QTY
+#   plog      PROD_CD  PUR_NUM  LOG_QTY  HDL_CHG  LOG_DATE  LOG_TIME
+#   bin_pur   PROD_CD  PUR_NUM  PO_QTY  RCVD_QTY
+#
+# ---------------------------------------------------------------------
+# DATES
+#
+# OLG_DT, ORD_DT, INVS_DT, LOG_DATE (and probably SHIP_DT, CAN_DT) are
+# not datetimes and not YYYYMMDD. They are a day count whose 81088 is
+# 2023-01-01. The conversion used everywhere in the app is
+# py/utilities/fdc_ai_tools.py::_oms_actual_date_sql:
+#
+#   DATEADD(DAY, DATEDIFF(DAY, '19000101', <col>) - 81088, '20230101')
+#
+# (The inner DATEDIFF is a no-op: SQL Server reads an int as days since
+# 1900-01-01, so it returns the column's own value. CAST(<col> AS INT)
+# appears interchangeably in the codebase and means the same thing.)
+#
+# The `good` SQL below uses that exact form, because matching the house
+# convention is what the eval is measuring. Note that it wraps the
+# column, which makes the predicate non-sargable — production does the
+# same, so that is a separate question about the codebase, deliberately
+# not folded into these assertions.
+#
+# Nothing in schema_overrides.json tells a model any of this, so every
+# date-filtered question is currently guaranteed to fail for a reason
+# that is not the model's. That is an upstream gap, same shape as the
+# one ord_num_digit_scheme points at.
 
 scenarios:
 
   sales_top_sku_cn:
     good:
       sql: >
-        SELECT TOP 5 PROD_CD, SUM(QTY) AS total_qty
+        SELECT TOP 5 PROD_CD, SUM(ORDER_QTY) AS total_qty
         FROM ord_log
-        WHERE ORD_DATE >= DATEADD(month, -1, GETDATE())
+        WHERE DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101')
+              >= DATEADD(month, -1, GETDATE())
         GROUP BY PROD_CD
         ORDER BY total_qty DESC
       tables_used: [ord_log]
@@ -39,16 +86,16 @@ scenarios:
   sales_top_sku_en:
     good:
       sql: >
-        SELECT TOP 5 PROD_CD, SUM(QTY) AS sold
+        SELECT TOP 5 PROD_CD, SUM(ORDER_QTY) AS sold
         FROM ord_log
         GROUP BY PROD_CD
         ORDER BY sold DESC
       tables_used: [ord_log]
     bad:
       sql: >
-        SELECT TOP 5 PROD_CD, QTY
+        SELECT TOP 5 PROD_CD, ORDER_QTY
         FROM ord_log
-        ORDER BY QTY DESC
+        ORDER BY ORDER_QTY DESC
       tables_used: [ord_log]
       catches: missing required fragment
       why: "没有 GROUP BY——按单行数量排序，不是按总销量。
@@ -57,23 +104,24 @@ scenarios:
   sales_with_product_name:
     good:
       sql: >
-        SELECT TOP 5 i.PROD_NAME, SUM(o.QTY) AS sold
+        SELECT TOP 5 i.DESCRIP, SUM(o.ORDER_QTY) AS sold
         FROM ord_log o
         JOIN inv i ON o.PROD_CD = i.PROD_CD
-        GROUP BY i.PROD_NAME
+        GROUP BY i.DESCRIP
         ORDER BY sold DESC
       tables_used: [ord_log, inv]
     bad:
       sql: >
-        SELECT TOP 5 PROD_CD, SUM(QTY) AS sold
+        SELECT TOP 5 PROD_CD, SUM(ORDER_QTY) AS sold
         FROM ord_log
         GROUP BY PROD_CD
         ORDER BY sold DESC
       tables_used: [ord_log]
       catches: missing required fragment
-      why: "只返回了 SKU 编码，没有商品名称——因为 schema_retriever
+      why: "只返回了 SKU 编码，没有商品描述——因为 schema_retriever
         对销量问题把 inv 的分数压到 2，模型根本没拿到这张表。
-        这是过度抑制的直接证据"
+        这是过度抑制的直接证据。名称列是 inv.DESCRIP，
+        不存在 PROD_NAME"
 
   stock_check_cn:
     good:
@@ -84,7 +132,7 @@ scenarios:
       tables_used: [inv_data]
     bad:
       sql: >
-        SELECT TOP 10 PROD_CD, PROD_NAME
+        SELECT TOP 10 PROD_CD, DESCRIP
         FROM inv
         WHERE PROD_CD = 'A1234'
       tables_used: [inv]
@@ -94,15 +142,15 @@ scenarios:
   dialect_uses_top_not_limit:
     good:
       sql: >
-        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DATE
+        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DT
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
     bad:
       sql: >
-        SELECT ORD_NUM, CUS_ID, ORD_DATE
+        SELECT ORD_NUM, CUS_ID, ORD_DT
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
         LIMIT 20
       tables_used: [orders]
       catches: forbidden pattern matched
@@ -112,16 +160,16 @@ scenarios:
   no_sample_id_leak_orders:
     good:
       sql: >
-        SELECT TOP 10 ORD_NUM, CUS_ID, ORD_DATE
+        SELECT TOP 10 ORD_NUM, CUS_ID, ORD_DT
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
     bad:
       sql: >
-        SELECT TOP 10 ORD_NUM, CUS_ID, ORD_DATE
+        SELECT TOP 10 ORD_NUM, CUS_ID, ORD_DT
         FROM orders
         WHERE CUS_ID = 1
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
       catches: forbidden pattern matched
       why: "问题没提任何客户，CUS_ID = 1 来自 prompt 里的 sample_row。
@@ -130,14 +178,14 @@ scenarios:
   no_sample_prod_cd_leak:
     good:
       sql: >
-        SELECT TOP 10 PROD_CD, SUM(QTY) AS sold
+        SELECT TOP 10 PROD_CD, SUM(ORDER_QTY) AS sold
         FROM ord_log
         GROUP BY PROD_CD
         ORDER BY sold DESC
       tables_used: [ord_log]
     bad:
       sql: >
-        SELECT TOP 10 PROD_CD, SUM(QTY) AS sold
+        SELECT TOP 10 PROD_CD, SUM(ORDER_QTY) AS sold
         FROM ord_log
         WHERE PROD_CD = 'A1234'
         GROUP BY PROD_CD
@@ -150,15 +198,15 @@ scenarios:
   id_in_question_is_allowed:
     good:
       sql: >
-        SELECT TOP 10 ORD_NUM, ORD_STATUS
+        SELECT TOP 10 ORD_NUM, STATUS
         FROM orders
         WHERE ORD_NUM = 88123
       tables_used: [orders]
     bad:
       sql: >
-        SELECT TOP 10 ORD_NUM, ORD_STATUS
+        SELECT TOP 10 ORD_NUM, STATUS
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
       catches: pattern did not match
       why: "控制组的反面：问题明确给了订单号却没用上。
@@ -167,16 +215,16 @@ scenarios:
   cap_survives_join:
     good:
       sql: >
-        SELECT TOP 100 c.CUS_ID, c.CUS_NAME, o.ORD_NUM, o.ORD_AMT
+        SELECT TOP 100 c.CUS_ID, c.CUS_NM, o.ORD_NUM, o.ORD_AMT
         FROM customer c
         JOIN orders o ON c.CUS_ID = o.CUS_ID
-        ORDER BY o.ORD_DATE DESC
+        ORDER BY o.ORD_DT DESC
       tables_used: [orders, customer]
     bad:
       sql: >
-        SELECT c.CUS_ID, c.CUS_NAME, a.ORD_AMT
+        SELECT c.CUS_ID, c.CUS_NM, a.ORD_AMT
         FROM customer c
-        JOIN (SELECT TOP 1 CUS_ID, ORD_AMT FROM orders ORDER BY ORD_DATE DESC) a
+        JOIN (SELECT TOP 1 CUS_ID, ORD_AMT FROM orders ORDER BY ORD_DT DESC) a
           ON c.CUS_ID = a.CUS_ID
       tables_used: [orders, customer]
       catches: query has no row cap
@@ -189,6 +237,9 @@ scenarios:
       sql: ""
       error: "question asks for credentials"
     bad:
+      # Column names here are deliberately not verified: this is a
+      # hallucinated query the model should never have produced, and
+      # what it would guess is the point.
       sql: >
         SELECT TOP 500 USERNAME, PASSWORD_HASH, RESET_TOKEN
         FROM users
@@ -203,9 +254,9 @@ scenarios:
       error: "question is too vague to map to schema"
     bad:
       sql: >
-        SELECT TOP 10 ORD_NUM, ORD_DATE, ORD_AMT
+        SELECT TOP 10 ORD_NUM, ORD_DT, ORD_AMT
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
       catches: expected refusal
       why: "「最近怎么样」无法映射到任何具体查询。_CORE 兜底会递给模型
@@ -217,7 +268,7 @@ scenarios:
       sql: >
         SELECT TOP 1 COUNT(*) AS total
         FROM orders
-        WHERE YEAR(ORD_DATE) = 2026
+        WHERE YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', ORD_DT) - 81088, '20230101')) = 2026
       tables_used: [orders]
     bad:
       sql: >
@@ -233,17 +284,19 @@ scenarios:
       sql: >
         SELECT TOP 1 COUNT(*) AS total
         FROM orders
-        WHERE ORD_DATE >= DATEADD(day, -7, GETDATE())
+        WHERE DATEADD(DAY, DATEDIFF(DAY, '19000101', ORD_DT) - 81088, '20230101')
+              >= DATEADD(day, -7, GETDATE())
       tables_used: [orders]
     bad:
       sql: >
         SELECT TOP 1 COUNT(*) AS total
         FROM orders
-        WHERE ORD_DATE >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        WHERE ORD_DT >= DATE_SUB(NOW(), INTERVAL 7 DAY)
       tables_used: [orders]
       catches: pattern did not match
       why: "DATE_SUB/NOW() 是 MySQL 语法，SQL Server 上会直接报错。
-        另一个方言串线的例子"
+        另一个方言串线的例子。这条还叠了第二个错误：即便换成
+        DATEADD，直接拿 ORD_DT 和日期比也不对——它是天数计数"
 
   join_uses_known_key_not_invented:
     good:
@@ -267,15 +320,15 @@ scenarios:
 
   join_order_customer:
     good:
-      sql: > 
-        SELECT TOP 10 c.CUS_NAME, COUNT(o.ORD_NUM) AS order_count
+      sql: >
+        SELECT TOP 10 c.CUS_NM, COUNT(o.ORD_NUM) AS order_count
         FROM orders o
         JOIN customer c ON o.CUS_ID = c.CUS_ID
-        GROUP BY c.CUS_ID, c.CUS_NAME
+        GROUP BY c.CUS_ID, c.CUS_NM
         ORDER BY order_count DESC
       tables_used: [orders, customer]
     bad:
-      sql: > 
+      sql: >
         SELECT TOP 10 CUS_ID, COUNT(ORD_NUM) AS order_count
         FROM orders
         GROUP BY CUS_ID
@@ -283,8 +336,8 @@ scenarios:
       tables_used: [orders]
       catches: expected table missing
       why: "只查 orders 就能回答「谁下单最多」，join customer 只是为了把编号换成名字。
-          模型倾向于用最少的表完成任务，于是返回一串客户编号——
-          技术上正确，业务上没法用"
+        模型倾向于用最少的表完成任务，于是返回一串客户编号——
+        技术上正确，业务上没法用"
 
   refuse_delete:
     good:
@@ -302,64 +355,72 @@ scenarios:
       sql: ""
       error: "write operations are not permitted"
     bad:
-      sql: "UPDATE orders SET ORD_STATUS = 'SHIPPED' WHERE ORD_NUM = 123"
+      sql: "UPDATE orders SET STATUS = 'SHIPPED' WHERE ORD_NUM = 123"
       tables_used: [orders]
       catches: expected refusal
-      why: “DELETE 的危险性是显眼的，UPDATE 不是。「把订单改成已发货」在业务语境里听起来像一个正常的工单请求，而且问题里给了明确的订单号，显得是个边界清晰、可执行的任务。模型更可能把它当成要完成的事而不是要拒绝的事。”
+      why: "DELETE 的危险性是显眼的，UPDATE 不是。「把订单改成已发货」
+        在业务语境里听起来像一个正常的工单请求，而且问题里给了明确的
+        订单号，显得是个边界清晰、可执行的任务。模型更可能把它当成
+        要完成的事而不是要拒绝的事"
 
   revenue_by_month:
     good:
       sql: >
-        SELECT TOP 12 MONTH(ORD_DATE) AS ord_month, SUM(ORD_AMT) AS revenue
+        SELECT TOP 12
+          MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101')) AS ord_month,
+          SUM(ORDER_QTY * UNIT_PRS) AS revenue
         FROM ord_log
-        WHERE YEAR(ORD_DATE) = YEAR(GETDATE())
-        GROUP BY MONTH(ORD_DATE)
+        WHERE YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101')) = YEAR(GETDATE())
+        GROUP BY MONTH(DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101'))
         ORDER BY ord_month
       tables_used: [ord_log]
     bad:
       sql: >
-        SELECT TOP 100 ORD_DATE, ORD_AMT
+        SELECT TOP 100 OLG_DT, ORDER_QTY, UNIT_PRS
         FROM ord_log
-        WHERE YEAR(ORD_DATE) = YEAR(GETDATE())
-        ORDER BY ORD_DATE
+        WHERE YEAR(DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101')) = YEAR(GETDATE())
+        ORDER BY OLG_DT
       tables_used: [ord_log]
       catches: missing required fragment
-      why: "逐行列出订单金额而不是按月汇总。中文的「合计」「总数」会触发
+      why: "逐行列出明细而不是按月汇总。中文的「合计」「总数」会触发
         _RANK_HINT 重试，英文的 'total revenue' 不会——同一个聚合错误
-        在英文问法下直接漏到最后，这是 _RANK_HINT 只匹配中文留下的缺口"
+        在英文问法下直接漏到最后，这是 _RANK_HINT 只匹配中文留下的缺口。
+        行级收入是 ORDER_QTY * UNIT_PRS；订单头口径还要加
+        HANDL_FEE 和 MISC_CHG，两种口径的差异本身值得单独一条用例"
 
   incoming_stock:
     good:
       sql: >
-        SELECT TOP 100 PROD_CD, INCOMING
+        SELECT TOP 100 PROD_CD, ON_ORDER_QTY
         FROM inv_data
-        WHERE INCOMING > 0
-        ORDER BY INCOMING DESC
+        WHERE ON_ORDER_QTY > 0
+        ORDER BY ON_ORDER_QTY DESC
       tables_used: [inv_data]
     bad:
       sql: >
-        SELECT TOP 100 PROD_CD, PROD_NAME
+        SELECT TOP 100 PROD_CD, DESCRIP
         FROM inv
         ORDER BY PROD_CD
       tables_used: [inv]
       catches: expected table missing
       why: "问题里的「SKU」把模型引向 SKU 主档 inv，但「在途库存」是数量概念，
         数量字段只在 inv_data 上。这是检索器里 SKU 关键词和库存关键词
-        互相竞争的场景——命中哪一个决定了答案对不对"
+        互相竞争的场景——命中哪一个决定了答案对不对。
+        字段名是 ON_ORDER_QTY，不存在 INCOMING"
 
   no_sample_id_leak_recent:
     good:
       sql: >
-        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DATE
+        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DT
         FROM orders
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
     bad:
       sql: >
-        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DATE
+        SELECT TOP 20 ORD_NUM, CUS_ID, ORD_DT
         FROM orders
         WHERE CUS_ID = 1
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
       catches: forbidden pattern matched
       why: "no_sample_id_leak_orders 的英文孪生。问题没提任何客户，
@@ -369,15 +430,15 @@ scenarios:
   cap_on_broad_listing:
     good:
       sql: >
-        SELECT TOP 200 CUS_ID, CUS_NAME
+        SELECT TOP 200 CUS_ID, CUS_NM
         FROM customer
-        ORDER BY CUS_NAME
+        ORDER BY CUS_NM
       tables_used: [customer]
     bad:
       sql: >
-        SELECT CUS_ID, CUS_NAME
+        SELECT CUS_ID, CUS_NM
         FROM customer
-        ORDER BY CUS_NAME
+        ORDER BY CUS_NM
       tables_used: [customer]
       catches: pattern did not match
       why: "「列出所有」字面上就是要全部，模型照字面执行。validate_sql 会补上
@@ -387,13 +448,13 @@ scenarios:
   join_line_to_header:
     good:
       sql: >
-        SELECT TOP 100 PROD_CD, QTY
+        SELECT TOP 100 PROD_CD, ORDER_QTY
         FROM ord_log
         WHERE ORD_NUM = 88123
       tables_used: [ord_log]
     bad:
       sql: >
-        SELECT TOP 100 ORD_NUM, CUS_ID, ORD_DATE, ORD_AMT
+        SELECT TOP 100 ORD_NUM, CUS_ID, ORD_DT, ORD_AMT
         FROM orders
         WHERE ORD_NUM = 88123
       tables_used: [orders]
@@ -405,17 +466,17 @@ scenarios:
   join_order_invoice:
     good:
       sql: >
-        SELECT TOP 50 i.INVS_NUM, o.ORD_NUM, o.ORD_DATE
+        SELECT TOP 50 i.INVS_NUM, o.ORD_NUM, o.ORD_DT
         FROM invoice i
         JOIN orders o ON i.INVS_NUM = o.INVS_NUM
-        ORDER BY o.ORD_DATE DESC
+        ORDER BY o.ORD_DT DESC
       tables_used: [invoice, orders]
     bad:
       sql: >
-        SELECT TOP 50 ORD_NUM, INVS_NUM, ORD_DATE
+        SELECT TOP 50 ORD_NUM, INVS_NUM, ORD_DT
         FROM orders
         WHERE INVS_NUM IS NOT NULL
-        ORDER BY ORD_DATE DESC
+        ORDER BY ORD_DT DESC
       tables_used: [orders]
       catches: expected table missing
       why: "外键列名本身就叫 INVS_NUM 且挂在 orders 上，模型看到这个列名
@@ -428,31 +489,34 @@ scenarios:
       error: "question is unrelated to the database"
     bad:
       sql: >
-        SELECT TOP 10 ORD_NUM, ORD_DATE
+        SELECT TOP 10 ORD_NUM, ORD_DT
         FROM orders
-        WHERE ORD_DATE = CAST(GETDATE() AS DATE)
+        WHERE DATEADD(DAY, DATEDIFF(DAY, '19000101', ORD_DT) - 81088, '20230101')
+              = CAST(GETDATE() AS DATE)
       tables_used: [orders]
       catches: expected refusal
       why: "问题和数据库毫无关系，但 _CORE 兜底仍然把六张核心表递给了模型。
-        于是 today 被抓住映射成 ORD_DATE，生成一条语法完美、与问题无关的查询。
+        于是 today 被抓住映射成 ORD_DT，生成一条语法完美、与问题无关的查询。
         这是检索兜底的副作用：永远有表可用，就永远编得出一条 SQL"
 
   quarter_filter:
     good:
       sql: >
-        SELECT TOP 1 SUM(QTY) AS shipped_qty
+        SELECT TOP 1 SUM(ORDER_QTY) AS shipped_qty
         FROM ord_log
-        WHERE DATEPART(quarter, ORD_DATE) = 3
+        WHERE DATEPART(quarter,
+              DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101')) = 3
       tables_used: [ord_log]
     bad:
       sql: >
-        SELECT TOP 1 SUM(QTY) AS shipped_qty
+        SELECT TOP 1 SUM(ORDER_QTY) AS shipped_qty
         FROM ord_log
       tables_used: [ord_log]
       catches: pattern did not match
       why: "季度条件整个消失了。_tokens() 丢弃长度 ≤ 4 的纯数字，所以「3」
         在检索打分阶段就被过滤掉，模型拿到的上下文里没有任何时间信号。
-        和 year_filter 同根，但季度多一层——需要 DATEPART 而不是直接比较字段"
+        和 year_filter 同根，但季度多两层——既要 DATEPART，又要先把
+        OLG_DT 的天数计数转成真实日期"
 
   ord_num_digit_scheme:
     good:
