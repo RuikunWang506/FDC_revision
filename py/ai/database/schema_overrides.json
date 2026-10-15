@@ -20,51 +20,71 @@
     "收货": ["plog", "bin_pur"],
     "入库": ["plog", "bin_pur"],
     "po": ["plog", "pur_ord", "bin_pur"],
-    "柜": ["plog", "bin_pur", "pur_ord"]
+    "柜": ["plog", "pur_ord", "bin_pur"]
   },
+
   "inv": "Item master (SKU / style / color)",
   "inv.prod_cd": "SKU, often STYLE + color like M1141 BK",
+  "inv.descrip": "Item description — the current master name for this SKU",
   "inv.unit_color": "Color code",
+
   "inv_data": "Warehouse inventory quantities",
   "inv_data.prod_cd": "SKU",
   "inv_data.in_stock": "On-hand quantity",
   "inv_data.avail_qty": "Available = stock minus ordered",
   "inv_data.on_order_qty": "Incoming / on-order (prefer plog for ocean)",
   "inv_data.whs_num": "Warehouse number",
+
   "ord_log": "Sales order lines (who bought which SKU)",
   "ord_log.prod_cd": "SKU",
   "ord_log.cus_id": "Customer ID",
+  "ord_log.ord_num": "Order number; joins to orders.ORD_NUM",
   "ord_log.order_qty": "Quantity sold / ordered on that line",
-  "ord_log.olg_dt": "OMS integer order-line date",
+  "ord_log.unit_prs": "Unit price on that line. Line revenue = ORDER_QTY * UNIT_PRS",
+  "ord_log.ut_desc": "Item description as recorded on the line when the order was placed. This is a historical value and can differ from inv.DESCRIP, which is the current master description. Use UT_DESC to describe what was sold at the time; join inv for the current name",
+  "ord_log.olg_dt": "Order-line date, stored as an OMS day count, NOT a datetime and NOT YYYYMMDD. 81088 is 2023-01-01. Convert with DATEADD(DAY, DATEDIFF(DAY, '19000101', OLG_DT) - 81088, '20230101'); comparing this column directly against a date or calling YEAR()/MONTH()/DATEPART() on it gives wrong answers",
+
   "orders": "Sales order headers",
   "orders.ord_num": "Order number (5-digit FDC, 4-digit EF)",
   "orders.cus_id": "Customer ID",
-  "orders.ord_dt": "OMS integer order date",
   "orders.invs_num": "Invoice number",
+  "orders.status": "Order status code",
+  "orders.po_num": "Customer purchase order number",
+  "orders.ord_amt": "Order amount before fees. This is NOT the order total: total = ORD_AMT + HANDL_FEE + MISC_CHG",
+  "orders.handl_fee": "Handling fee; part of the order total",
+  "orders.misc_chg": "Miscellaneous charge; part of the order total",
+  "orders.ord_dt": "Order date, stored as an OMS day count, NOT a datetime and NOT YYYYMMDD. 81088 is 2023-01-01. Convert with DATEADD(DAY, DATEDIFF(DAY, '19000101', ORD_DT) - 81088, '20230101'); comparing this column directly against a date or calling YEAR()/MONTH()/DATEPART() on it gives wrong answers",
+
   "customer": "Customer master",
   "customer.cus_id": "Customer number",
   "customer.cus_nm": "Customer name",
+
   "invoice": "Invoice headers",
   "invoice.invs_num": "Invoice number",
   "invoice.cus_id": "Customer ID",
-  "invoice.invs_dt": "OMS integer invoice date",
   "invoice.invs_amt": "Invoice amount",
+  "invoice.invs_dt": "Invoice date, stored as an OMS day count, NOT a datetime and NOT YYYYMMDD. 81088 is 2023-01-01. Convert with DATEADD(DAY, DATEDIFF(DAY, '19000101', INVS_DT) - 81088, '20230101'); comparing this column directly against a date or calling YEAR()/MONTH()/DATEPART() on it gives wrong answers",
+
   "invt_log": "Invoice lines",
   "invt_log.invs_num": "Invoice number",
   "invt_log.prod_cd": "SKU",
   "invt_log.prod_qty": "Quantity invoiced",
+
   "plog": "Purchase / container PO lines; hdl_chg=0 is ocean, hdl_chg>0 is received",
   "plog.prod_cd": "SKU",
   "plog.pur_num": "PO / container id",
   "plog.log_qty": "PO qty",
   "plog.hdl_chg": "Received qty (0 = still ocean)",
-  "plog.log_date": "OMS PO/receive date",
+  "plog.log_date": "PO / receive date, stored as an OMS day count, NOT a datetime and NOT YYYYMMDD. 81088 is 2023-01-01. Convert with DATEADD(DAY, DATEDIFF(DAY, '19000101', LOG_DATE) - 81088, '20230101'); comparing this column directly against a date or calling YEAR()/MONTH()/DATEPART() on it gives wrong answers",
+
   "bin_pur": "PO bin lines with PO_QTY / RCVD_QTY",
   "bin_pur.prod_cd": "SKU",
   "bin_pur.pur_num": "PO / container id",
   "bin_pur.po_qty": "Ordered qty",
   "bin_pur.rcvd_qty": "Received qty at 827",
+
   "pur_ord": "Purchase order header",
+
   "_mysql": {
     "products": "Warehouse bin locations (one row per SKU + Location)",
     "products.SKU": "SKU — matches OMS inv.PROD_CD",
