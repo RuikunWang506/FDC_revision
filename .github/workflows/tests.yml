@@ -45,10 +45,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install test dependencies
-        run: pip install pytest pyyaml sqlglot
+        run: pip install pytest pyyaml sqlglot pillow numpy
 
       - name: Run offline test suite
         # `python -m pytest`, not `pytest`: the -m form puts the working
         # directory on sys.path, which tests/ai_eval needs to import
         # tests.ai_eval.checks.
-        run: python -m pytest tests/ai_eval tests/test_sql_validator.py -q
+        run: python -m pytest tests/ai_eval tests/test_sql_validator.py tests/test_dedupe.py -q
