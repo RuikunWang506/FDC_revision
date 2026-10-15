@@ -45,7 +45,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install test dependencies
-        run: pip install pytest pyyaml
+        run: pip install pytest pyyaml sqlglot
 
       - name: Run offline test suite
         # `python -m pytest`, not `pytest`: the -m form puts the working
