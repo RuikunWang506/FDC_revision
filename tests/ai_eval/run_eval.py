@@ -15,6 +15,7 @@ import argparse
 import json
 import sys
 import time
+import types
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,67 @@ REPORTS_DIR = HERE / "reports"
 
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+def _ensure_py_package() -> None:
+    """Make `py` resolve to this repo's py/ directory.
+
+    The project's top-level package is named `py`, and pytest installs a
+    top-level `py.py` compatibility shim into site-packages. Under PEP 420
+    a module file beats a namespace-package portion wherever it sits on
+    sys.path, so `import py.ai` finds the shim and fails even with the
+    repo root first. Binding the namespace explicitly settles it, and
+    unlike adding py/__init__.py it leaves pytest's own `import py` alone.
+    """
+    target = str(REPO_ROOT / "py")
+    existing = sys.modules.get("py")
+    if existing is not None and target in list(getattr(existing, "__path__", [])):
+        return
+    package = types.ModuleType("py")
+    package.__path__ = [target]
+    sys.modules["py"] = package
+
+def _stub_pyodbc() -> None:
+    """Keep the real pyodbc from loading; the eval never executes SQL.
+
+    The agent reaches database_utils on the SQL-generation path, and it
+    imports pyodbc at module level. pyodbc's wheel dlopens unixODBC, so
+    on a machine without it -- any CI runner, and this laptop -- the
+    import fails and the agent reports it as "Ollama SQL generation
+    failed". A missing driver manager then looks like a model failure.
+
+    run_eval grades the SQL text the model produced, not rows, so
+    nothing here needs a database. The stub lets the import succeed and
+    leaves an actual connection attempt to fail on its own terms.
+    """
+    try:
+        import pyodbc  # noqa: F401
+        return
+    except Exception:
+        pass
+
+    class _Unavailable(Exception):
+        pass
+
+    stub = types.ModuleType("pyodbc")
+    stub.Error = _Unavailable
+    stub.DatabaseError = _Unavailable
+    stub.InterfaceError = _Unavailable
+    stub.OperationalError = _Unavailable
+    stub.ProgrammingError = _Unavailable
+    stub.version = "0-stub"
+    stub.drivers = lambda: []
+
+    def _connect(*args, **kwargs):
+        raise _Unavailable("pyodbc is stubbed for offline evaluation")
+
+    stub.connect = _connect
+    sys.modules["pyodbc"] = stub
+
+
+_stub_pyodbc()
+
+
+_ensure_py_package()
 
 from tests.ai_eval.checks import CaseResult, check_case, summarize  # noqa: E402
 

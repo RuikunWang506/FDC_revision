@@ -1,0 +1,1637 @@
+{
+  "generated_at": "synthetic",
+  "database": "omsdata_FDC",
+  "table_count": 19,
+  "tables": {
+    "inv": {
+      "name": "inv",
+      "description": "",
+      "columns": {
+        "PROD_CD": "PROD_CD",
+        "DESCRIP": "DESCRIP",
+        "UNIT_COLOR": "UNIT_COLOR",
+        "ALT_CD": "ALT_CD",
+        "CLASS_CD": "CLASS_CD",
+        "RETAIL_PRS": "RETAIL_PRS"
+      },
+      "column_types": {
+        "PROD_CD": "varchar",
+        "DESCRIP": "varchar null",
+        "UNIT_COLOR": "varchar null",
+        "ALT_CD": "varchar null",
+        "CLASS_CD": "varchar null",
+        "RETAIL_PRS": "decimal null"
+      },
+      "primary_keys": [
+        "PROD_CD"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_inv (PROD_CD)",
+        "IX_inv_class (CLASS_CD)"
+      ],
+      "samples": [
+        {
+          "PROD_CD": "M1141 BK",
+          "DESCRIP": "SAMPLE ROW - NOT REAL DATA",
+          "UNIT_COLOR": "BK",
+          "ALT_CD": "",
+          "CLASS_CD": "HB",
+          "RETAIL_PRS": 39.99
+        }
+      ]
+    },
+    "inv_data": {
+      "name": "inv_data",
+      "description": "",
+      "columns": {
+        "PROD_CD": "PROD_CD",
+        "WHS_NUM": "WHS_NUM",
+        "IN_STOCK": "IN_STOCK",
+        "AVAIL_QTY": "AVAIL_QTY",
+        "ON_ORDER_QTY": "ON_ORDER_QTY"
+      },
+      "column_types": {
+        "PROD_CD": "varchar",
+        "WHS_NUM": "int",
+        "IN_STOCK": "int null",
+        "AVAIL_QTY": "int null",
+        "ON_ORDER_QTY": "int null"
+      },
+      "primary_keys": [
+        "PROD_CD",
+        "WHS_NUM"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_inv_data (PROD_CD, WHS_NUM)"
+      ],
+      "samples": [
+        {
+          "PROD_CD": "M1141 BK",
+          "WHS_NUM": 827,
+          "IN_STOCK": 144,
+          "AVAIL_QTY": 96,
+          "ON_ORDER_QTY": 240
+        }
+      ]
+    },
+    "ord_log": {
+      "name": "ord_log",
+      "description": "",
+      "columns": {
+        "ORD_NUM": "ORD_NUM",
+        "COMM_LN": "COMM_LN",
+        "CUS_ID": "CUS_ID",
+        "PROD_CD": "PROD_CD",
+        "UT_DESC": "UT_DESC",
+        "ORDER_QTY": "ORDER_QTY",
+        "UNIT_PRS": "UNIT_PRS",
+        "PC_UNIT": "PC_UNIT",
+        "OLG_DT": "OLG_DT"
+      },
+      "column_types": {
+        "ORD_NUM": "int",
+        "COMM_LN": "int",
+        "CUS_ID": "int null",
+        "PROD_CD": "varchar null",
+        "UT_DESC": "varchar null",
+        "ORDER_QTY": "int null",
+        "UNIT_PRS": "decimal null",
+        "PC_UNIT": "int null",
+        "OLG_DT": "int null"
+      },
+      "primary_keys": [
+        "ORD_NUM",
+        "COMM_LN"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_ord_log (ORD_NUM, COMM_LN)",
+        "IX_ord_log_prod (PROD_CD)",
+        "IX_ord_log_cus (CUS_ID)"
+      ],
+      "samples": [
+        {
+          "ORD_NUM": 88123,
+          "COMM_LN": 1,
+          "CUS_ID": 1,
+          "PROD_CD": "M1141 BK",
+          "UT_DESC": "SAMPLE ROW - NOT REAL DATA",
+          "ORDER_QTY": 12,
+          "UNIT_PRS": 18.5,
+          "PC_UNIT": 1,
+          "OLG_DT": 82454
+        }
+      ]
+    },
+    "orders": {
+      "name": "orders",
+      "description": "",
+      "columns": {
+        "ORD_NUM": "ORD_NUM",
+        "CUS_ID": "CUS_ID",
+        "ORD_DT": "ORD_DT",
+        "SHIP_DT": "SHIP_DT",
+        "CAN_DT": "CAN_DT",
+        "PO_NUM": "PO_NUM",
+        "INVS_NUM": "INVS_NUM",
+        "ORD_AMT": "ORD_AMT",
+        "HANDL_FEE": "HANDL_FEE",
+        "MISC_CHG": "MISC_CHG",
+        "DISCOUNT": "DISCOUNT",
+        "PAID_AMT": "PAID_AMT",
+        "STATUS": "STATUS",
+        "ORD_TYPE": "ORD_TYPE",
+        "TRK_NUM": "TRK_NUM",
+        "ATTN": "ATTN"
+      },
+      "column_types": {
+        "ORD_NUM": "int",
+        "CUS_ID": "int null",
+        "ORD_DT": "int null",
+        "SHIP_DT": "int null",
+        "CAN_DT": "int null",
+        "PO_NUM": "varchar null",
+        "INVS_NUM": "int null",
+        "ORD_AMT": "decimal null",
+        "HANDL_FEE": "decimal null",
+        "MISC_CHG": "decimal null",
+        "DISCOUNT": "decimal null",
+        "PAID_AMT": "decimal null",
+        "STATUS": "varchar null",
+        "ORD_TYPE": "varchar null",
+        "TRK_NUM": "varchar null",
+        "ATTN": "varchar null"
+      },
+      "primary_keys": [
+        "ORD_NUM"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_orders (ORD_NUM)",
+        "IX_orders_cus (CUS_ID)"
+      ],
+      "samples": [
+        {
+          "ORD_NUM": 88123,
+          "CUS_ID": 1,
+          "ORD_DT": 82454,
+          "SHIP_DT": 82458,
+          "CAN_DT": null,
+          "PO_NUM": "SAMPLE-PO",
+          "INVS_NUM": 50011,
+          "ORD_AMT": 222.0,
+          "HANDL_FEE": 15.0,
+          "MISC_CHG": 0.0,
+          "DISCOUNT": 0.0,
+          "PAID_AMT": 237.0,
+          "STATUS": "OP",
+          "ORD_TYPE": "R",
+          "TRK_NUM": "",
+          "ATTN": "SAMPLE ROW - NOT REAL DATA"
+        }
+      ]
+    },
+    "customer": {
+      "name": "customer",
+      "description": "",
+      "columns": {
+        "CUS_ID": "CUS_ID",
+        "CUS_NM": "CUS_NM"
+      },
+      "column_types": {
+        "CUS_ID": "int",
+        "CUS_NM": "varchar null"
+      },
+      "primary_keys": [
+        "CUS_ID"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_customer (CUS_ID)",
+        "IX_customer_nm (CUS_NM)"
+      ],
+      "samples": [
+        {
+          "CUS_ID": 1,
+          "CUS_NM": "SAMPLE ROW - NOT REAL DATA"
+        }
+      ]
+    },
+    "invoice": {
+      "name": "invoice",
+      "description": "",
+      "columns": {
+        "INVS_NUM": "INVS_NUM",
+        "CUS_ID": "CUS_ID",
+        "INVS_DT": "INVS_DT",
+        "INVS_AMT": "INVS_AMT",
+        "HANDL_FEE": "HANDL_FEE",
+        "MISC_CHG": "MISC_CHG",
+        "DISCOUNT": "DISCOUNT",
+        "INVS_TAX": "INVS_TAX",
+        "PAID_AMT": "PAID_AMT",
+        "PAID_BY": "PAID_BY",
+        "CHK_NUM": "CHK_NUM",
+        "INVS_TYPE": "INVS_TYPE"
+      },
+      "column_types": {
+        "INVS_NUM": "int",
+        "CUS_ID": "int null",
+        "INVS_DT": "int null",
+        "INVS_AMT": "decimal null",
+        "HANDL_FEE": "decimal null",
+        "MISC_CHG": "decimal null",
+        "DISCOUNT": "decimal null",
+        "INVS_TAX": "decimal null",
+        "PAID_AMT": "decimal null",
+        "PAID_BY": "varchar null",
+        "CHK_NUM": "varchar null",
+        "INVS_TYPE": "varchar null"
+      },
+      "primary_keys": [
+        "INVS_NUM"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_invoice (INVS_NUM)",
+        "IX_invoice_cus (CUS_ID)"
+      ],
+      "samples": [
+        {
+          "INVS_NUM": 50011,
+          "CUS_ID": 1,
+          "INVS_DT": 82458,
+          "INVS_AMT": 237.0,
+          "HANDL_FEE": 15.0,
+          "MISC_CHG": 0.0,
+          "DISCOUNT": 0.0,
+          "INVS_TAX": 0.0,
+          "PAID_AMT": 237.0,
+          "PAID_BY": "CHK",
+          "CHK_NUM": "SAMPLE",
+          "INVS_TYPE": "I"
+        }
+      ]
+    },
+    "invt_log": {
+      "name": "invt_log",
+      "description": "",
+      "columns": {
+        "INVS_NUM": "INVS_NUM",
+        "COMM_LN": "COMM_LN",
+        "PROD_CD": "PROD_CD",
+        "PROD_QTY": "PROD_QTY"
+      },
+      "column_types": {
+        "INVS_NUM": "int",
+        "COMM_LN": "int",
+        "PROD_CD": "varchar null",
+        "PROD_QTY": "int null"
+      },
+      "primary_keys": [
+        "INVS_NUM",
+        "COMM_LN"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_invt_log (INVS_NUM, COMM_LN)"
+      ],
+      "samples": [
+        {
+          "INVS_NUM": 50011,
+          "COMM_LN": 1,
+          "PROD_CD": "M1141 BK",
+          "PROD_QTY": 12
+        }
+      ]
+    },
+    "plog": {
+      "name": "plog",
+      "description": "",
+      "columns": {
+        "PUR_NUM": "PUR_NUM",
+        "COMM_LN": "COMM_LN",
+        "PROD_CD": "PROD_CD",
+        "LOG_QTY": "LOG_QTY",
+        "HDL_CHG": "HDL_CHG",
+        "LOG_DATE": "LOG_DATE",
+        "LOG_TIME": "LOG_TIME"
+      },
+      "column_types": {
+        "PUR_NUM": "varchar",
+        "COMM_LN": "int",
+        "PROD_CD": "varchar null",
+        "LOG_QTY": "int null",
+        "HDL_CHG": "int null",
+        "LOG_DATE": "int null",
+        "LOG_TIME": "int null"
+      },
+      "primary_keys": [
+        "PUR_NUM",
+        "COMM_LN"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_plog (PUR_NUM, COMM_LN)",
+        "IX_plog_prod (PROD_CD)"
+      ],
+      "samples": [
+        {
+          "PUR_NUM": "SAMPLE-CTR",
+          "COMM_LN": 1,
+          "PROD_CD": "M1141 BK",
+          "LOG_QTY": 600,
+          "HDL_CHG": 0,
+          "LOG_DATE": 82465,
+          "LOG_TIME": 1430
+        }
+      ]
+    },
+    "bin_pur": {
+      "name": "bin_pur",
+      "description": "",
+      "columns": {
+        "PUR_NUM": "PUR_NUM",
+        "PROD_CD": "PROD_CD",
+        "PO_QTY": "PO_QTY",
+        "RCVD_QTY": "RCVD_QTY"
+      },
+      "column_types": {
+        "PUR_NUM": "varchar",
+        "PROD_CD": "varchar",
+        "PO_QTY": "int null",
+        "RCVD_QTY": "int null"
+      },
+      "primary_keys": [
+        "PUR_NUM",
+        "PROD_CD"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_bin_pur (PUR_NUM, PROD_CD)"
+      ],
+      "samples": [
+        {
+          "PUR_NUM": "SAMPLE-CTR",
+          "PROD_CD": "M1141 BK",
+          "PO_QTY": 600,
+          "RCVD_QTY": 0
+        }
+      ]
+    },
+    "pur_ord": {
+      "name": "pur_ord",
+      "description": "",
+      "columns": {
+        "PUR_NUM": "PUR_NUM",
+        "VENDOR_CD": "VENDOR_CD"
+      },
+      "column_types": {
+        "PUR_NUM": "varchar",
+        "VENDOR_CD": "varchar null"
+      },
+      "primary_keys": [
+        "PUR_NUM"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "PK_pur_ord (PUR_NUM)"
+      ],
+      "samples": [
+        {
+          "PUR_NUM": "SAMPLE-CTR",
+          "VENDOR_CD": "SAMPLE"
+        }
+      ]
+    },
+    "whs": {
+      "name": "whs",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "vendor": {
+      "name": "vendor",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "terms": {
+      "name": "terms",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "sales_rep": {
+      "name": "sales_rep",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "ship_log": {
+      "name": "ship_log",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "tmp_ord_log": {
+      "name": "tmp_ord_log",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "qm_inv": {
+      "name": "qm_inv",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "orders_old": {
+      "name": "orders_old",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    },
+    "customer_bak": {
+      "name": "customer_bak",
+      "description": "",
+      "columns": {},
+      "column_types": {},
+      "primary_keys": [],
+      "foreign_keys": [],
+      "indexes": [],
+      "samples": []
+    }
+  },
+  "databases": {
+    "omsdata_FDC": {
+      "label": "FDC",
+      "name": "omsdata_FDC",
+      "engine": "sqlserver",
+      "table_count": 19,
+      "tables": {
+        "inv": {
+          "name": "inv",
+          "description": "",
+          "columns": {
+            "PROD_CD": "PROD_CD",
+            "DESCRIP": "DESCRIP",
+            "UNIT_COLOR": "UNIT_COLOR",
+            "ALT_CD": "ALT_CD",
+            "CLASS_CD": "CLASS_CD",
+            "RETAIL_PRS": "RETAIL_PRS"
+          },
+          "column_types": {
+            "PROD_CD": "varchar",
+            "DESCRIP": "varchar null",
+            "UNIT_COLOR": "varchar null",
+            "ALT_CD": "varchar null",
+            "CLASS_CD": "varchar null",
+            "RETAIL_PRS": "decimal null"
+          },
+          "primary_keys": [
+            "PROD_CD"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_inv (PROD_CD)",
+            "IX_inv_class (CLASS_CD)"
+          ],
+          "samples": [
+            {
+              "PROD_CD": "M1141 BK",
+              "DESCRIP": "SAMPLE ROW - NOT REAL DATA",
+              "UNIT_COLOR": "BK",
+              "ALT_CD": "",
+              "CLASS_CD": "HB",
+              "RETAIL_PRS": 39.99
+            }
+          ]
+        },
+        "inv_data": {
+          "name": "inv_data",
+          "description": "",
+          "columns": {
+            "PROD_CD": "PROD_CD",
+            "WHS_NUM": "WHS_NUM",
+            "IN_STOCK": "IN_STOCK",
+            "AVAIL_QTY": "AVAIL_QTY",
+            "ON_ORDER_QTY": "ON_ORDER_QTY"
+          },
+          "column_types": {
+            "PROD_CD": "varchar",
+            "WHS_NUM": "int",
+            "IN_STOCK": "int null",
+            "AVAIL_QTY": "int null",
+            "ON_ORDER_QTY": "int null"
+          },
+          "primary_keys": [
+            "PROD_CD",
+            "WHS_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_inv_data (PROD_CD, WHS_NUM)"
+          ],
+          "samples": [
+            {
+              "PROD_CD": "M1141 BK",
+              "WHS_NUM": 827,
+              "IN_STOCK": 144,
+              "AVAIL_QTY": 96,
+              "ON_ORDER_QTY": 240
+            }
+          ]
+        },
+        "ord_log": {
+          "name": "ord_log",
+          "description": "",
+          "columns": {
+            "ORD_NUM": "ORD_NUM",
+            "COMM_LN": "COMM_LN",
+            "CUS_ID": "CUS_ID",
+            "PROD_CD": "PROD_CD",
+            "UT_DESC": "UT_DESC",
+            "ORDER_QTY": "ORDER_QTY",
+            "UNIT_PRS": "UNIT_PRS",
+            "PC_UNIT": "PC_UNIT",
+            "OLG_DT": "OLG_DT"
+          },
+          "column_types": {
+            "ORD_NUM": "int",
+            "COMM_LN": "int",
+            "CUS_ID": "int null",
+            "PROD_CD": "varchar null",
+            "UT_DESC": "varchar null",
+            "ORDER_QTY": "int null",
+            "UNIT_PRS": "decimal null",
+            "PC_UNIT": "int null",
+            "OLG_DT": "int null"
+          },
+          "primary_keys": [
+            "ORD_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_ord_log (ORD_NUM, COMM_LN)",
+            "IX_ord_log_prod (PROD_CD)",
+            "IX_ord_log_cus (CUS_ID)"
+          ],
+          "samples": [
+            {
+              "ORD_NUM": 88123,
+              "COMM_LN": 1,
+              "CUS_ID": 1,
+              "PROD_CD": "M1141 BK",
+              "UT_DESC": "SAMPLE ROW - NOT REAL DATA",
+              "ORDER_QTY": 12,
+              "UNIT_PRS": 18.5,
+              "PC_UNIT": 1,
+              "OLG_DT": 82454
+            }
+          ]
+        },
+        "orders": {
+          "name": "orders",
+          "description": "",
+          "columns": {
+            "ORD_NUM": "ORD_NUM",
+            "CUS_ID": "CUS_ID",
+            "ORD_DT": "ORD_DT",
+            "SHIP_DT": "SHIP_DT",
+            "CAN_DT": "CAN_DT",
+            "PO_NUM": "PO_NUM",
+            "INVS_NUM": "INVS_NUM",
+            "ORD_AMT": "ORD_AMT",
+            "HANDL_FEE": "HANDL_FEE",
+            "MISC_CHG": "MISC_CHG",
+            "DISCOUNT": "DISCOUNT",
+            "PAID_AMT": "PAID_AMT",
+            "STATUS": "STATUS",
+            "ORD_TYPE": "ORD_TYPE",
+            "TRK_NUM": "TRK_NUM",
+            "ATTN": "ATTN"
+          },
+          "column_types": {
+            "ORD_NUM": "int",
+            "CUS_ID": "int null",
+            "ORD_DT": "int null",
+            "SHIP_DT": "int null",
+            "CAN_DT": "int null",
+            "PO_NUM": "varchar null",
+            "INVS_NUM": "int null",
+            "ORD_AMT": "decimal null",
+            "HANDL_FEE": "decimal null",
+            "MISC_CHG": "decimal null",
+            "DISCOUNT": "decimal null",
+            "PAID_AMT": "decimal null",
+            "STATUS": "varchar null",
+            "ORD_TYPE": "varchar null",
+            "TRK_NUM": "varchar null",
+            "ATTN": "varchar null"
+          },
+          "primary_keys": [
+            "ORD_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_orders (ORD_NUM)",
+            "IX_orders_cus (CUS_ID)"
+          ],
+          "samples": [
+            {
+              "ORD_NUM": 88123,
+              "CUS_ID": 1,
+              "ORD_DT": 82454,
+              "SHIP_DT": 82458,
+              "CAN_DT": null,
+              "PO_NUM": "SAMPLE-PO",
+              "INVS_NUM": 50011,
+              "ORD_AMT": 222.0,
+              "HANDL_FEE": 15.0,
+              "MISC_CHG": 0.0,
+              "DISCOUNT": 0.0,
+              "PAID_AMT": 237.0,
+              "STATUS": "OP",
+              "ORD_TYPE": "R",
+              "TRK_NUM": "",
+              "ATTN": "SAMPLE ROW - NOT REAL DATA"
+            }
+          ]
+        },
+        "customer": {
+          "name": "customer",
+          "description": "",
+          "columns": {
+            "CUS_ID": "CUS_ID",
+            "CUS_NM": "CUS_NM"
+          },
+          "column_types": {
+            "CUS_ID": "int",
+            "CUS_NM": "varchar null"
+          },
+          "primary_keys": [
+            "CUS_ID"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_customer (CUS_ID)",
+            "IX_customer_nm (CUS_NM)"
+          ],
+          "samples": [
+            {
+              "CUS_ID": 1,
+              "CUS_NM": "SAMPLE ROW - NOT REAL DATA"
+            }
+          ]
+        },
+        "invoice": {
+          "name": "invoice",
+          "description": "",
+          "columns": {
+            "INVS_NUM": "INVS_NUM",
+            "CUS_ID": "CUS_ID",
+            "INVS_DT": "INVS_DT",
+            "INVS_AMT": "INVS_AMT",
+            "HANDL_FEE": "HANDL_FEE",
+            "MISC_CHG": "MISC_CHG",
+            "DISCOUNT": "DISCOUNT",
+            "INVS_TAX": "INVS_TAX",
+            "PAID_AMT": "PAID_AMT",
+            "PAID_BY": "PAID_BY",
+            "CHK_NUM": "CHK_NUM",
+            "INVS_TYPE": "INVS_TYPE"
+          },
+          "column_types": {
+            "INVS_NUM": "int",
+            "CUS_ID": "int null",
+            "INVS_DT": "int null",
+            "INVS_AMT": "decimal null",
+            "HANDL_FEE": "decimal null",
+            "MISC_CHG": "decimal null",
+            "DISCOUNT": "decimal null",
+            "INVS_TAX": "decimal null",
+            "PAID_AMT": "decimal null",
+            "PAID_BY": "varchar null",
+            "CHK_NUM": "varchar null",
+            "INVS_TYPE": "varchar null"
+          },
+          "primary_keys": [
+            "INVS_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_invoice (INVS_NUM)",
+            "IX_invoice_cus (CUS_ID)"
+          ],
+          "samples": [
+            {
+              "INVS_NUM": 50011,
+              "CUS_ID": 1,
+              "INVS_DT": 82458,
+              "INVS_AMT": 237.0,
+              "HANDL_FEE": 15.0,
+              "MISC_CHG": 0.0,
+              "DISCOUNT": 0.0,
+              "INVS_TAX": 0.0,
+              "PAID_AMT": 237.0,
+              "PAID_BY": "CHK",
+              "CHK_NUM": "SAMPLE",
+              "INVS_TYPE": "I"
+            }
+          ]
+        },
+        "invt_log": {
+          "name": "invt_log",
+          "description": "",
+          "columns": {
+            "INVS_NUM": "INVS_NUM",
+            "COMM_LN": "COMM_LN",
+            "PROD_CD": "PROD_CD",
+            "PROD_QTY": "PROD_QTY"
+          },
+          "column_types": {
+            "INVS_NUM": "int",
+            "COMM_LN": "int",
+            "PROD_CD": "varchar null",
+            "PROD_QTY": "int null"
+          },
+          "primary_keys": [
+            "INVS_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_invt_log (INVS_NUM, COMM_LN)"
+          ],
+          "samples": [
+            {
+              "INVS_NUM": 50011,
+              "COMM_LN": 1,
+              "PROD_CD": "M1141 BK",
+              "PROD_QTY": 12
+            }
+          ]
+        },
+        "plog": {
+          "name": "plog",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "COMM_LN": "COMM_LN",
+            "PROD_CD": "PROD_CD",
+            "LOG_QTY": "LOG_QTY",
+            "HDL_CHG": "HDL_CHG",
+            "LOG_DATE": "LOG_DATE",
+            "LOG_TIME": "LOG_TIME"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "COMM_LN": "int",
+            "PROD_CD": "varchar null",
+            "LOG_QTY": "int null",
+            "HDL_CHG": "int null",
+            "LOG_DATE": "int null",
+            "LOG_TIME": "int null"
+          },
+          "primary_keys": [
+            "PUR_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_plog (PUR_NUM, COMM_LN)",
+            "IX_plog_prod (PROD_CD)"
+          ],
+          "samples": [
+            {
+              "PUR_NUM": "SAMPLE-CTR",
+              "COMM_LN": 1,
+              "PROD_CD": "M1141 BK",
+              "LOG_QTY": 600,
+              "HDL_CHG": 0,
+              "LOG_DATE": 82465,
+              "LOG_TIME": 1430
+            }
+          ]
+        },
+        "bin_pur": {
+          "name": "bin_pur",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "PROD_CD": "PROD_CD",
+            "PO_QTY": "PO_QTY",
+            "RCVD_QTY": "RCVD_QTY"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "PROD_CD": "varchar",
+            "PO_QTY": "int null",
+            "RCVD_QTY": "int null"
+          },
+          "primary_keys": [
+            "PUR_NUM",
+            "PROD_CD"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_bin_pur (PUR_NUM, PROD_CD)"
+          ],
+          "samples": [
+            {
+              "PUR_NUM": "SAMPLE-CTR",
+              "PROD_CD": "M1141 BK",
+              "PO_QTY": 600,
+              "RCVD_QTY": 0
+            }
+          ]
+        },
+        "pur_ord": {
+          "name": "pur_ord",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "VENDOR_CD": "VENDOR_CD"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "VENDOR_CD": "varchar null"
+          },
+          "primary_keys": [
+            "PUR_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_pur_ord (PUR_NUM)"
+          ],
+          "samples": [
+            {
+              "PUR_NUM": "SAMPLE-CTR",
+              "VENDOR_CD": "SAMPLE"
+            }
+          ]
+        },
+        "whs": {
+          "name": "whs",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "vendor": {
+          "name": "vendor",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "terms": {
+          "name": "terms",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "sales_rep": {
+          "name": "sales_rep",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "ship_log": {
+          "name": "ship_log",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "tmp_ord_log": {
+          "name": "tmp_ord_log",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "qm_inv": {
+          "name": "qm_inv",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "orders_old": {
+          "name": "orders_old",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "customer_bak": {
+          "name": "customer_bak",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        }
+      },
+      "error": null
+    },
+    "oms_EF": {
+      "label": "E_FAS / EF",
+      "name": "oms_EF",
+      "engine": "sqlserver",
+      "table_count": 19,
+      "tables": {
+        "inv": {
+          "name": "inv",
+          "description": "",
+          "columns": {
+            "PROD_CD": "PROD_CD",
+            "DESCRIP": "DESCRIP",
+            "UNIT_COLOR": "UNIT_COLOR",
+            "ALT_CD": "ALT_CD",
+            "CLASS_CD": "CLASS_CD",
+            "RETAIL_PRS": "RETAIL_PRS"
+          },
+          "column_types": {
+            "PROD_CD": "varchar",
+            "DESCRIP": "varchar null",
+            "UNIT_COLOR": "varchar null",
+            "ALT_CD": "varchar null",
+            "CLASS_CD": "varchar null",
+            "RETAIL_PRS": "decimal null"
+          },
+          "primary_keys": [
+            "PROD_CD"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_inv (PROD_CD)",
+            "IX_inv_class (CLASS_CD)"
+          ],
+          "samples": []
+        },
+        "inv_data": {
+          "name": "inv_data",
+          "description": "",
+          "columns": {
+            "PROD_CD": "PROD_CD",
+            "WHS_NUM": "WHS_NUM",
+            "IN_STOCK": "IN_STOCK",
+            "AVAIL_QTY": "AVAIL_QTY",
+            "ON_ORDER_QTY": "ON_ORDER_QTY"
+          },
+          "column_types": {
+            "PROD_CD": "varchar",
+            "WHS_NUM": "int",
+            "IN_STOCK": "int null",
+            "AVAIL_QTY": "int null",
+            "ON_ORDER_QTY": "int null"
+          },
+          "primary_keys": [
+            "PROD_CD",
+            "WHS_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_inv_data (PROD_CD, WHS_NUM)"
+          ],
+          "samples": []
+        },
+        "ord_log": {
+          "name": "ord_log",
+          "description": "",
+          "columns": {
+            "ORD_NUM": "ORD_NUM",
+            "COMM_LN": "COMM_LN",
+            "CUS_ID": "CUS_ID",
+            "PROD_CD": "PROD_CD",
+            "UT_DESC": "UT_DESC",
+            "ORDER_QTY": "ORDER_QTY",
+            "UNIT_PRS": "UNIT_PRS",
+            "PC_UNIT": "PC_UNIT",
+            "OLG_DT": "OLG_DT"
+          },
+          "column_types": {
+            "ORD_NUM": "int",
+            "COMM_LN": "int",
+            "CUS_ID": "int null",
+            "PROD_CD": "varchar null",
+            "UT_DESC": "varchar null",
+            "ORDER_QTY": "int null",
+            "UNIT_PRS": "decimal null",
+            "PC_UNIT": "int null",
+            "OLG_DT": "int null"
+          },
+          "primary_keys": [
+            "ORD_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_ord_log (ORD_NUM, COMM_LN)",
+            "IX_ord_log_prod (PROD_CD)",
+            "IX_ord_log_cus (CUS_ID)"
+          ],
+          "samples": []
+        },
+        "orders": {
+          "name": "orders",
+          "description": "",
+          "columns": {
+            "ORD_NUM": "ORD_NUM",
+            "CUS_ID": "CUS_ID",
+            "ORD_DT": "ORD_DT",
+            "SHIP_DT": "SHIP_DT",
+            "CAN_DT": "CAN_DT",
+            "PO_NUM": "PO_NUM",
+            "INVS_NUM": "INVS_NUM",
+            "ORD_AMT": "ORD_AMT",
+            "HANDL_FEE": "HANDL_FEE",
+            "MISC_CHG": "MISC_CHG",
+            "DISCOUNT": "DISCOUNT",
+            "PAID_AMT": "PAID_AMT",
+            "STATUS": "STATUS",
+            "ORD_TYPE": "ORD_TYPE",
+            "TRK_NUM": "TRK_NUM",
+            "ATTN": "ATTN"
+          },
+          "column_types": {
+            "ORD_NUM": "int",
+            "CUS_ID": "int null",
+            "ORD_DT": "int null",
+            "SHIP_DT": "int null",
+            "CAN_DT": "int null",
+            "PO_NUM": "varchar null",
+            "INVS_NUM": "int null",
+            "ORD_AMT": "decimal null",
+            "HANDL_FEE": "decimal null",
+            "MISC_CHG": "decimal null",
+            "DISCOUNT": "decimal null",
+            "PAID_AMT": "decimal null",
+            "STATUS": "varchar null",
+            "ORD_TYPE": "varchar null",
+            "TRK_NUM": "varchar null",
+            "ATTN": "varchar null"
+          },
+          "primary_keys": [
+            "ORD_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_orders (ORD_NUM)",
+            "IX_orders_cus (CUS_ID)"
+          ],
+          "samples": []
+        },
+        "customer": {
+          "name": "customer",
+          "description": "",
+          "columns": {
+            "CUS_ID": "CUS_ID",
+            "CUS_NM": "CUS_NM"
+          },
+          "column_types": {
+            "CUS_ID": "int",
+            "CUS_NM": "varchar null"
+          },
+          "primary_keys": [
+            "CUS_ID"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_customer (CUS_ID)",
+            "IX_customer_nm (CUS_NM)"
+          ],
+          "samples": []
+        },
+        "invoice": {
+          "name": "invoice",
+          "description": "",
+          "columns": {
+            "INVS_NUM": "INVS_NUM",
+            "CUS_ID": "CUS_ID",
+            "INVS_DT": "INVS_DT",
+            "INVS_AMT": "INVS_AMT",
+            "HANDL_FEE": "HANDL_FEE",
+            "MISC_CHG": "MISC_CHG",
+            "DISCOUNT": "DISCOUNT",
+            "INVS_TAX": "INVS_TAX",
+            "PAID_AMT": "PAID_AMT",
+            "PAID_BY": "PAID_BY",
+            "CHK_NUM": "CHK_NUM",
+            "INVS_TYPE": "INVS_TYPE"
+          },
+          "column_types": {
+            "INVS_NUM": "int",
+            "CUS_ID": "int null",
+            "INVS_DT": "int null",
+            "INVS_AMT": "decimal null",
+            "HANDL_FEE": "decimal null",
+            "MISC_CHG": "decimal null",
+            "DISCOUNT": "decimal null",
+            "INVS_TAX": "decimal null",
+            "PAID_AMT": "decimal null",
+            "PAID_BY": "varchar null",
+            "CHK_NUM": "varchar null",
+            "INVS_TYPE": "varchar null"
+          },
+          "primary_keys": [
+            "INVS_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_invoice (INVS_NUM)",
+            "IX_invoice_cus (CUS_ID)"
+          ],
+          "samples": []
+        },
+        "invt_log": {
+          "name": "invt_log",
+          "description": "",
+          "columns": {
+            "INVS_NUM": "INVS_NUM",
+            "COMM_LN": "COMM_LN",
+            "PROD_CD": "PROD_CD",
+            "PROD_QTY": "PROD_QTY"
+          },
+          "column_types": {
+            "INVS_NUM": "int",
+            "COMM_LN": "int",
+            "PROD_CD": "varchar null",
+            "PROD_QTY": "int null"
+          },
+          "primary_keys": [
+            "INVS_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_invt_log (INVS_NUM, COMM_LN)"
+          ],
+          "samples": []
+        },
+        "plog": {
+          "name": "plog",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "COMM_LN": "COMM_LN",
+            "PROD_CD": "PROD_CD",
+            "LOG_QTY": "LOG_QTY",
+            "HDL_CHG": "HDL_CHG",
+            "LOG_DATE": "LOG_DATE",
+            "LOG_TIME": "LOG_TIME"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "COMM_LN": "int",
+            "PROD_CD": "varchar null",
+            "LOG_QTY": "int null",
+            "HDL_CHG": "int null",
+            "LOG_DATE": "int null",
+            "LOG_TIME": "int null"
+          },
+          "primary_keys": [
+            "PUR_NUM",
+            "COMM_LN"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_plog (PUR_NUM, COMM_LN)",
+            "IX_plog_prod (PROD_CD)"
+          ],
+          "samples": []
+        },
+        "bin_pur": {
+          "name": "bin_pur",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "PROD_CD": "PROD_CD",
+            "PO_QTY": "PO_QTY",
+            "RCVD_QTY": "RCVD_QTY"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "PROD_CD": "varchar",
+            "PO_QTY": "int null",
+            "RCVD_QTY": "int null"
+          },
+          "primary_keys": [
+            "PUR_NUM",
+            "PROD_CD"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_bin_pur (PUR_NUM, PROD_CD)"
+          ],
+          "samples": []
+        },
+        "pur_ord": {
+          "name": "pur_ord",
+          "description": "",
+          "columns": {
+            "PUR_NUM": "PUR_NUM",
+            "VENDOR_CD": "VENDOR_CD"
+          },
+          "column_types": {
+            "PUR_NUM": "varchar",
+            "VENDOR_CD": "varchar null"
+          },
+          "primary_keys": [
+            "PUR_NUM"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PK_pur_ord (PUR_NUM)"
+          ],
+          "samples": []
+        },
+        "whs": {
+          "name": "whs",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "vendor": {
+          "name": "vendor",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "terms": {
+          "name": "terms",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "sales_rep": {
+          "name": "sales_rep",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "ship_log": {
+          "name": "ship_log",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "tmp_ord_log": {
+          "name": "tmp_ord_log",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "qm_inv": {
+          "name": "qm_inv",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "orders_old": {
+          "name": "orders_old",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "customer_bak": {
+          "name": "customer_bak",
+          "description": "",
+          "columns": {},
+          "column_types": {},
+          "primary_keys": [],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        }
+      },
+      "error": null
+    },
+    "onlinedb": {
+      "label": "MySQL app (onlinedb)",
+      "name": "onlinedb",
+      "engine": "mysql",
+      "table_count": 4,
+      "tables": {
+        "products": {
+          "name": "products",
+          "description": "",
+          "columns": {
+            "SKU": "SKU",
+            "Location": "Location",
+            "Update_Date": "Update_Date"
+          },
+          "column_types": {
+            "SKU": "varchar",
+            "Location": "varchar",
+            "Update_Date": "datetime null"
+          },
+          "primary_keys": [
+            "SKU",
+            "Location"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PRIMARY (SKU, Location)"
+          ],
+          "samples": [
+            {
+              "SKU": "M1141 BK",
+              "Location": "A-01-02",
+              "Update_Date": "2026-10-09 11:20:00"
+            }
+          ]
+        },
+        "users": {
+          "name": "users",
+          "description": "",
+          "columns": {
+            "id": "id",
+            "username": "username",
+            "created_at": "created_at"
+          },
+          "column_types": {
+            "id": "int",
+            "username": "varchar",
+            "created_at": "datetime null"
+          },
+          "primary_keys": [
+            "id"
+          ],
+          "foreign_keys": [],
+          "indexes": [
+            "PRIMARY (id)"
+          ],
+          "samples": []
+        },
+        "help_articles": {
+          "name": "help_articles",
+          "description": "",
+          "columns": {
+            "id": "id",
+            "title": "title"
+          },
+          "column_types": {
+            "id": "int",
+            "title": "varchar null"
+          },
+          "primary_keys": [
+            "id"
+          ],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        },
+        "fdc_ai_chats": {
+          "name": "fdc_ai_chats",
+          "description": "",
+          "columns": {
+            "id": "id",
+            "created_at": "created_at"
+          },
+          "column_types": {
+            "id": "int",
+            "created_at": "datetime null"
+          },
+          "primary_keys": [
+            "id"
+          ],
+          "foreign_keys": [],
+          "indexes": [],
+          "samples": []
+        }
+      },
+      "error": null
+    }
+  },
+  "known_joins": {
+    "oms": [
+      {
+        "left": "inv",
+        "left_col": "PROD_CD",
+        "right": "inv_data",
+        "right_col": "PROD_CD",
+        "source": "get_sku_inventory / product detail",
+        "note": "SKU master → warehouse qty (stock / ordered / available / incoming)"
+      },
+      {
+        "left": "ord_log",
+        "left_col": "PROD_CD",
+        "right": "inv",
+        "right_col": "PROD_CD",
+        "source": "who-bought / customer purchases",
+        "note": "Sales line SKU → item master"
+      },
+      {
+        "left": "ord_log",
+        "left_col": "CUS_ID",
+        "right": "customer",
+        "right_col": "CUS_ID",
+        "source": "get_sku_customers / get_order",
+        "note": "Order line → customer name"
+      },
+      {
+        "left": "ord_log",
+        "left_col": "ORD_NUM",
+        "right": "orders",
+        "right_col": "ORD_NUM",
+        "source": "get_order",
+        "note": "Order lines → order header (5-digit FDC / 4-digit EF)"
+      },
+      {
+        "left": "orders",
+        "left_col": "CUS_ID",
+        "right": "customer",
+        "right_col": "CUS_ID",
+        "source": "get_order / customer page",
+        "note": "Order header → customer"
+      },
+      {
+        "left": "orders",
+        "left_col": "INVS_NUM",
+        "right": "invoice",
+        "right_col": "INVS_NUM",
+        "source": "get_invoice",
+        "note": "Order header ↔ invoice number"
+      },
+      {
+        "left": "invoice",
+        "left_col": "CUS_ID",
+        "right": "customer",
+        "right_col": "CUS_ID",
+        "source": "get_invoice / invoice_lookup",
+        "note": "Invoice header → customer"
+      },
+      {
+        "left": "invt_log",
+        "left_col": "INVS_NUM",
+        "right": "invoice",
+        "right_col": "INVS_NUM",
+        "source": "get_invoice",
+        "note": "Invoice lines → invoice header"
+      },
+      {
+        "left": "invt_log",
+        "left_col": "PROD_CD",
+        "right": "inv",
+        "right_col": "PROD_CD",
+        "source": "invoice_lookup lines",
+        "note": "Invoiced SKU → item master"
+      },
+      {
+        "left": "plog",
+        "left_col": "PROD_CD",
+        "right": "inv",
+        "right_col": "PROD_CD",
+        "source": "get_sku_ocean / list_received_styles / boat",
+        "note": "PO/container lines. hdl_chg=0 ocean, hdl_chg>0 received"
+      },
+      {
+        "left": "plog",
+        "left_col": "PUR_NUM",
+        "right": "pur_ord",
+        "right_col": "PUR_NUM",
+        "source": "boat / container hub",
+        "note": "PO lines → purchase order header"
+      },
+      {
+        "left": "bin_pur",
+        "left_col": "PROD_CD",
+        "right": "inv",
+        "right_col": "PROD_CD",
+        "source": "ocean qty / receiving",
+        "note": "PO bin lines (PO_QTY / RCVD_QTY)"
+      },
+      {
+        "left": "bin_pur",
+        "left_col": "PUR_NUM",
+        "right": "pur_ord",
+        "right_col": "PUR_NUM",
+        "source": "ocean qty / receiving",
+        "note": "PO bin lines → PO header"
+      }
+    ],
+    "mysql": [
+      {
+        "left": "products",
+        "left_col": "SKU",
+        "right": "products",
+        "right_col": "Location",
+        "source": "get_sku_locations / location_service",
+        "note": "One row per SKU+bin. Same SKU can have many Location values."
+      }
+    ],
+    "cross_db": [
+      {
+        "left_db": "omsdata_FDC",
+        "left": "inv",
+        "left_col": "PROD_CD",
+        "right_db": "onlinedb",
+        "right": "products",
+        "right_col": "SKU",
+        "source": "product detail / location_service",
+        "note": "OMS SKU (PROD_CD) matches MySQL warehouse bin SKU. Same key on oms_EF.inv."
+      }
+    ]
+  },
+  "error": null,
+  "synthetic": true
+}
