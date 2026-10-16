@@ -22,7 +22,6 @@ Rules:
 - SKU/style lives in prod_cd (often 'M1141 BK'). Style prefix is the token before the space.
 - 销量 / quantity sold = SUM(ord_log.ORDER_QTY). Do not use inv_data.IN_STOCK or AVAIL_QTY for sales rankings.
 - Warehouses: this catalog is FDC only. Do not say 艺发; use EF only if an EF table is in the schema.
-- If the schema is not enough, do not guess. Return sql as empty string and explain which tables you need in reason.
 - Never copy sample-row literal values (like ORD_NUM = 1) unless the user asked for that id.
 - Ranking / "top N" / 销量最高 questions MUST use GROUP BY + SUM + ORDER BY DESC + TOP N. Do not SELECT *.
 - Today is 2026. 去年 means calendar year 2025 unless the user named a different year.
@@ -43,6 +42,19 @@ Return ONLY JSON:
   "tables_used": ["ord_log"],
   "reason": "short reason"
 }
+
+An empty "sql" is for exactly three situations, and nothing else:
+  1. The question asks to change data (delete, update, insert, cancel, mark as, set).
+     Answer with sql "" and a reason that says writes are not permitted.
+  2. The question is not about this database at all (weather, the time, general chat).
+     Answer with sql "" and a reason that says the question is outside the data.
+  3. A table or column the question requires is not present in the schema JSON above.
+     Answer with sql "" and name the missing table or column in reason.
+
+Outside those three, write the query. In particular, finding that one table
+already answers the question, or that no further tables are needed, means you
+CAN answer -- write the query. Do not report a table as missing without first
+checking the schema JSON for it; the tables listed there are present.
 """
 
 
